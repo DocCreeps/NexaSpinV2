@@ -5,7 +5,7 @@ namespace App\Domain\Draw\Engines;
 use App\Domain\Draw\Contracts\DrawStrategy;
 use App\Domain\Draw\ValueObjects\Participant;
 
-class RandomDraw implements DrawStrategy
+class WheelDraw implements DrawStrategy
 {
     /**
      * @param  array<int, Participant>  $participants
@@ -16,8 +16,6 @@ class RandomDraw implements DrawStrategy
             return null;
         }
 
-        // Le tirage aléatoire ignore volontairement le poids des participants ;
-        // seul le moteur WeightedDraw en tiendra compte.
         return $participants[array_rand($participants)];
     }
 }

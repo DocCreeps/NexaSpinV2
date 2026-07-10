@@ -2,7 +2,12 @@
 
 namespace App\Domain\Draw\Contracts;
 
+use App\Domain\Draw\ValueObjects\Participant;
+
 interface DrawStrategy
 {
-    public function draw(array $participants, array $options = []): mixed;
+    /**
+     * @param  array<int, Participant>  $participants
+     */
+    public function draw(array $participants, array $options = []): ?Participant;
 }

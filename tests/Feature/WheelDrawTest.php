@@ -1,11 +1,11 @@
 <?php
 
-use App\Domain\Draw\Engines\RandomDraw;
+use App\Domain\Draw\Engines\WheelDraw;
 use App\Domain\Draw\ValueObjects\Participant;
 
 it('returns a participant among the given ones', function () {
 
-    $engine = new RandomDraw();
+    $engine = new WheelDraw();
 
     $participants = [
         new Participant('John'),
@@ -21,7 +21,7 @@ it('returns a participant among the given ones', function () {
 
 it('returns null when there are no participants', function () {
 
-    $engine = new RandomDraw();
+    $engine = new WheelDraw();
 
     expect($engine->draw([]))->toBeNull();
 });
