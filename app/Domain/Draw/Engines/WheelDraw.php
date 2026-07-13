@@ -16,6 +16,9 @@ class WheelDraw implements DrawStrategy
             return null;
         }
 
+        // Le hasard est identique à RandomDraw : seule la présentation
+        // (roue tournante) diffère côté interface. Si un jour la roue doit
+        // avoir un biais différent, c'est ici qu'il faudra le faire.
         return $participants[array_rand($participants)];
     }
 }

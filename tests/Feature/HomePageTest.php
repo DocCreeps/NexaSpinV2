@@ -1,8 +1,17 @@
 <?php
 
-test('the home page loads the random draw component', function () {
+test('the home page lists the available draw modes', function () {
     $response = $this->get('/');
 
     $response->assertStatus(200)
-        ->assertSeeLivewire(\App\Livewire\Draw\RandomDraw::class);
+        ->assertSee('Roue classique')
+        ->assertSee('Roue par élimination');
+});
+
+test('the home page links to the wheel and elimination wheel pages', function () {
+    $response = $this->get('/');
+
+    $response->assertStatus(200)
+        ->assertSee(route('draw.wheel'), false)
+        ->assertSee(route('draw.wheel-elimination'), false);
 });

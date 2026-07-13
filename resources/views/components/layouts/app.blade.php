@@ -8,7 +8,7 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Roulette</title>
+    <title>NexaSpin — Tirage au sort</title>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
