@@ -9,7 +9,7 @@
                 }
             }, 2000)
         }
-    }">
+    ">
     {{-- EFFETS DE LUMIÈRE D'ARRIÈRE-PLAN --}}
     <div class="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-orange-200/20 rounded-full blur-[140px] pointer-events-none"></div>
     <div class="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-rose-200/10 rounded-full blur-[120px] pointer-events-none"></div>

@@ -5,7 +5,9 @@ namespace App\Domain\Draw\Exceptions;
 use DomainException;
 
 /**
- * Exception levée lorsqu'un tirage ne respecte
- * pas les règles métier.
+ * Exception du Domaine levée lors de la violation d'un invariant ou d'une règle métier.
+ *
+ * Note technique : Étend DomainException pour distinguer les erreurs fonctionnelles (liées aux règles)
+ * des erreurs d'infrastructure. Le mot-clé "final" empêche toute dérive par héritage.
  */
 final class InvalidDrawException extends DomainException {}
