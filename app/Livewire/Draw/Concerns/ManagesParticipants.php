@@ -8,82 +8,188 @@ trait ManagesParticipants
 
     protected int $maxParticipantNameLength = 50;
 
-    /** @var array<int, string> */
+
+    /** @var array<int,string> */
     public array $participants = [];
+
 
     public string $participant = '';
 
+
     public ?string $error = null;
 
+
+
+    /**
+     * Ajoute un participant après validation.
+     */
     public function addParticipant(): void
     {
         if ($this->participantsAreLocked()) {
             return;
         }
 
+
         $this->error = null;
 
+
         $name = trim($this->participant);
+
 
         if ($name === '') {
             return;
         }
 
-        if (mb_strlen($name) > $this->maxParticipantNameLength) {
-            $this->error = 'Le nom d\'un participant ne peut pas dépasser '.$this->maxParticipantNameLength.' caractères.';
+
+        if (
+            mb_strlen($name)
+            > $this->maxParticipantNameLength
+        ) {
+
+            $this->error =
+                'Le nom du participant ne peut pas dépasser '
+                . $this->maxParticipantNameLength
+                . ' caractères.';
 
             return;
         }
 
-        if (count($this->participants) >= $this->maxParticipants) {
-            $this->error = 'Vous ne pouvez pas ajouter plus de '.$this->maxParticipants.' participants.';
+
+        if (
+            count($this->participants)
+            >= $this->maxParticipants
+        ) {
+
+            $this->error =
+                'Vous ne pouvez pas ajouter plus de '
+                . $this->maxParticipants
+                . ' participants.';
 
             return;
         }
 
-        $alreadyExists = collect($this->participants)
-            ->contains(fn (string $existing) => mb_strtolower($existing) === mb_strtolower($name));
 
-        if ($alreadyExists) {
-            $this->error = 'Ce participant a déjà été ajouté.';
+
+        if ($this->participantExists($name)) {
+
+            $this->error =
+                'Ce participant existe déjà.';
 
             return;
         }
+
+
 
         $this->participants[] = $name;
 
+
         $this->participant = '';
+
 
         $this->afterParticipantsChanged();
     }
 
-    public function removeParticipant(int $index): void
-    {
+
+
+
+
+    /**
+     * Supprime un participant.
+     */
+    public function removeParticipant(
+        int $index
+    ): void {
+
         if ($this->participantsAreLocked()) {
             return;
         }
 
+
         unset($this->participants[$index]);
 
-        $this->participants = array_values($this->participants);
+
+        $this->participants =
+            array_values($this->participants);
+
 
         $this->afterParticipantsChanged();
     }
 
+
+
+
+
     /**
-     * Point d'extension appelé après tout ajout/suppression réussi, pour
-     * que les composants concrets puissent réagir (ex : invalider un
-     * résultat de tirage devenu obsolète). Ne fait rien par défaut.
+     * Vérifie si un participant existe déjà.
+     */
+    protected function participantExists(
+        string $name
+    ): bool {
+
+        return collect($this->participants)
+            ->contains(
+                fn(string $existing) =>
+                mb_strtolower($existing)
+                    === mb_strtolower($name)
+            );
+    }
+
+
+
+
+
+    /**
+     * Vérifie qu'un tirage peut être lancé.
+     */
+    protected function hasEnoughParticipants(
+        int $minimum = 2
+    ): bool {
+
+        return count($this->participants) >= $minimum;
+    }
+
+
+
+
+
+    /**
+     * Message commun d'erreur.
+     */
+    protected function requireParticipants(
+        int $minimum = 2
+    ): bool {
+
+        if ($this->hasEnoughParticipants($minimum)) {
+            return true;
+        }
+
+
+        $this->error =
+            "Ajoutez au moins {$minimum} participants avant de lancer le tirage.";
+
+
+        return false;
+    }
+
+
+
+
+
+    /**
+     * Hook exécuté après modification.
      */
     protected function afterParticipantsChanged(): void
     {
         //
     }
 
+
+
+
+
     /**
-     * Empêche l'ajout/la suppression, typiquement une fois un tirage lancé.
-     * Les composants qui n'ont pas cette notion (roue simple, jamais
-     * verrouillée) n'ont rien à surcharger.
+     * Permet de bloquer les modifications
+     * pendant un tirage.
      */
     protected function participantsAreLocked(): bool
     {

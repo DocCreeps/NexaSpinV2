@@ -6,8 +6,6 @@ enum DrawType: string
 {
     case RANDOM = 'random';
 
-    case WHEEL = 'wheel';
-
     case WEIGHTED = 'weighted';
 
 
@@ -17,9 +15,6 @@ enum DrawType: string
 
             self::RANDOM =>
             'Aléatoire',
-
-            self::WHEEL =>
-            'Roue',
 
             self::WEIGHTED =>
             'Pondéré',

@@ -4,18 +4,36 @@ namespace App\Domain\Draw\ValueObjects;
 
 use InvalidArgumentException;
 
-class Participant
+/**
+ * Représente un participant d'un tirage.
+ *
+ * Ce Value Object est immutable.
+ */
+final readonly class Participant
 {
     public function __construct(
-        public readonly string $name,
-        public readonly int $weight = 1,
+        public string $name,
+        public int $weight = 1,
     ) {
+        $this->validate();
+    }
+
+    /**
+     * Vérifie que le participant respecte
+     * les règles métier.
+     */
+    private function validate(): void
+    {
         if (trim($this->name) === '') {
-            throw new InvalidArgumentException('Le nom d\'un participant ne peut pas être vide.');
+            throw new InvalidArgumentException(
+                'Participant name cannot be empty.'
+            );
         }
 
         if ($this->weight < 1) {
-            throw new InvalidArgumentException('Le poids d\'un participant doit être supérieur ou égal à 1.');
+            throw new InvalidArgumentException(
+                'Weight must be greater than zero.'
+            );
         }
     }
 }
