@@ -45,10 +45,11 @@ jobs:
       - name: Add VPS to known hosts
         run: ssh-keyscan -T 10 -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
-      # 6. Envoyer TOUS les fichiers compilés sur le VPS via Rsync (en protégeant la prod)
+      # 6. Envoyer TOUS les fichiers compilés sur le VPS via Rsync (en mode Sudo)
       - name: Sync files to VPS
         run: |
           rsync -avz --delete \
+            --rsync-path="sudo rsync" \
             --exclude='.git/' \
             --exclude='.github/' \
             --exclude='node_modules/' \
