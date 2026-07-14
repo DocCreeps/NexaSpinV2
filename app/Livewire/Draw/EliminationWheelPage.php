@@ -73,8 +73,9 @@ class EliminationWheelPage extends Component
      * Action principale.
      */
     public function handleAction(
-        RunDrawAction $action
+        ?RunDrawAction $action = null
     ): void {
+        $action = $action ?? app(RunDrawAction::class);
 
         if (!$this->started()) {
 
@@ -150,8 +151,9 @@ class EliminationWheelPage extends Component
      * Sélectionne le participant à éliminer.
      */
     public function eliminateNext(
-        RunDrawAction $action
+        ?RunDrawAction $action = null
     ): void {
+        $action = $action ?? app(RunDrawAction::class);
 
 
         if (
