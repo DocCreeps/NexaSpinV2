@@ -1,0 +1,76 @@
+name: Deploy NexaSpinV2 (Rsync version)
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Récupérer le code du dépôt
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Installer PHP (sur GitHub Actions)
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2' # Modifie si ton VPS utilise une autre version (ex: 8.3)
+          extensions: mbstring, xml, bcmath
+
+      # 3. Installer les dépendances PHP (sur GitHub Actions)
+      - name: Install Composer dependencies
+        run: |
+          composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+
+      # 4. Installer Node et compiler les assets (sur GitHub Actions)
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build assets
+        run: |
+          npm ci
+          npm run build
+
+      # 5. Configurer la connexion SSH vers le VPS
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add VPS to known hosts
+        run: ssh-keyscan -T 10 -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      # 6. Envoyer TOUS les fichiers compilés sur le VPS via Rsync (en protégeant la prod)
+      - name: Sync files to VPS
+        run: |
+          rsync -avz --delete \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='node_modules/' \
+            --exclude='.env' \
+            --exclude='/storage/' \
+            -e "ssh" ./ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/html/NexaSpinV2/
+
+      # 7. Exécuter les commandes de fin sur le VPS
+      - name: Post-deploy commands on VPS
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} 'bash -s' << 'EOF'
+          set -e
+          APP_DIR="/var/www/html/NexaSpinV2"
+          cd $APP_DIR
+
+          # Fixer les permissions
+          sudo chown -R www-data:www-data storage bootstrap/cache
+          sudo chmod -R 775 storage bootstrap/cache
+
+          # Mettre en cache pour les performances
+          php artisan optimize:clear
+          php artisan config:cache
+          php artisan route:cache
+          php artisan view:cache
+          EOF
