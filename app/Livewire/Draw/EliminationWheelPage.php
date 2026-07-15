@@ -164,12 +164,6 @@ class EliminationWheelPage extends Component
         // Exécute le cas d'utilisation (Application) via le trait HandlesDraw
         $result = $this->executeDraw($action);
 
-        if (! $result) {
-            $this->processing = false;
-
-            return;
-        }
-
         $this->pendingElimination = $result->winner->name;
 
         $targetIndex = array_search($this->pendingElimination, $this->participants, true);

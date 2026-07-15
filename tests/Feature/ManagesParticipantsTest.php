@@ -45,6 +45,29 @@ it('removes a participant by index', function () {
         ->assertSet('participants', ['Jane']);
 });
 
+it('updates a participant name', function () {
+    Livewire::test(WheelPage::class)
+        ->set('participants', ['John', 'Jane'])
+        ->call('updateParticipant', 0, 'Johnny')
+        ->assertSet('participants', ['Johnny', 'Jane']);
+});
+
+it('rejects an empty name when updating a participant', function () {
+    Livewire::test(WheelPage::class)
+        ->set('participants', ['John', 'Jane'])
+        ->call('updateParticipant', 0, '   ')
+        ->assertSet('participants', ['John', 'Jane'])
+        ->assertSet('error', fn(?string $error) => $error !== null);
+});
+
+it('rejects a duplicate name when updating a participant, case-insensitively', function () {
+    Livewire::test(WheelPage::class)
+        ->set('participants', ['John', 'Jane'])
+        ->call('updateParticipant', 0, 'JANE')
+        ->assertSet('participants', ['John', 'Jane'])
+        ->assertSet('error', fn(?string $error) => $error !== null);
+});
+
 it('locks participant editing once the elimination wheel has started', function () {
     $component = Livewire::test(EliminationWheelPage::class)
         ->set('participants', ['John', 'Jane', 'Bob'])

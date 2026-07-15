@@ -1,0 +1,23 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    paths:
+        - app
+
+    level: 5
+
+    excludePaths:
+        - app/Providers/*
+
+    ignoreErrors:
+        # Garde-fou runtime dans Participants::validate() : PHPStan fait confiance
+        # au PHPDoc du constructeur et considère ce check comme du code mort,
+        # mais il protège contre un appelant qui violerait le contrat de type
+        # à l'exécution — chose que PHP ne peut pas vérifier lui-même (pas de generics).
+        -
+            identifier: instanceof.alwaysTrue
+            path: app/Domain/Draw/Collections/Participants.php
+        -
+            identifier: void.pure
+            path: app/Domain/Draw/Collections/Participants.php

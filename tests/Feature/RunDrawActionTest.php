@@ -8,6 +8,7 @@ use App\Domain\Draw\Enums\DrawType;
 use App\Domain\Draw\Exceptions\DrawTypeNotSupportedException;
 use App\Domain\Draw\Strategies\RandomDrawStrategy;
 use App\Domain\Draw\ValueObjects\DrawResult;
+use App\Domain\Draw\Exceptions\InvalidDrawException;
 
 it('runs a random draw and returns one of the given participants', function () {
     $action = new RunDrawAction(new DrawStrategyResolver(new RandomDrawStrategy));
@@ -38,3 +39,15 @@ it('throws a domain exception for an unsupported draw type', function () {
         )
     );
 })->throws(DrawTypeNotSupportedException::class);
+
+it('throws when trying to draw with fewer than two participants', function () {
+    $action = new RunDrawAction(new DrawStrategyResolver(new RandomDrawStrategy));
+
+    $action->execute(
+        new DrawData(
+            participants: ['John'],
+            type: DrawType::RANDOM,
+            display: DrawDisplay::SIMPLE,
+        )
+    );
+})->throws(InvalidDrawException::class);
