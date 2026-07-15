@@ -79,7 +79,7 @@
                 </div>
 
                 {{-- BOUTON D'ACTION PRINCIPAL --}}
-                <button wire:click="draw" :disabled="spinning" class="w-full rounded-2xl py-4 font-black text-white shadow-md bg-gradient-to-r from-indigo-600 to-purple-500 hover:from-indigo-700 hover:to-purple-600 active:scale-[0.98] transition disabled:opacity-50 disabled:pointer-events-none">
+                <button wire:click="draw" wire:loading.attr="disabled" wire:target="draw" :disabled="spinning" class="w-full rounded-2xl py-4 font-black text-white shadow-md bg-gradient-to-r from-indigo-600 to-purple-500 hover:from-indigo-700 hover:to-purple-600 active:scale-[0.98] transition disabled:opacity-50 disabled:pointer-events-none">
                     <span x-show="!spinning">
                         ⚡ Lancer le tirage
                     </span>
