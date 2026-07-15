@@ -14,14 +14,17 @@ use App\Domain\Draw\ValueObjects\Participant;
 final readonly class DrawData
 {
     /**
-     * @param  array<int,string>  $participants  Liste brute typée pour l'analyse statique (PHPStan).
+     * @param  array<int,string>  $participants  Liste brute des noms.
      * @param  array<string,mixed>  $options  Clés/valeurs de configuration optionnelles.
-     */
+     * @param  array<int,int>  $weights  Poids par index, parallèle à $participants.
+
+     **/
     public function __construct(
         public array $participants,
         public DrawType $type,
         public DrawDisplay $display,
         public array $options = [],
+        public array $weights = [],
     ) {}
 
     /**
@@ -34,8 +37,12 @@ final readonly class DrawData
     {
         return new Participants(
             array_map(
-                fn (string $name) => new Participant($name),
-                $this->participants
+                fn(string $name, int $index) => new Participant(
+                    name: $name,
+                    weight: $this->weights[$index] ?? 1,
+                ),
+                $this->participants,
+                array_keys($this->participants)
             )
         );
     }
