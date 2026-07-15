@@ -36,7 +36,7 @@
 | ⚔️ Roue par élimination (tours successifs) | ✅ Fonctionnel |
 | 🎯 Tirage pondéré (probabilités par poids) | 🔒 Non implémenté — verrouillé dans l'UI |
 
-> **Pas de persistance en base de données** pour les tirages : les participants et les résultats vivent uniquement dans l'état du composant Livewire, le temps de la session. Les seules migrations présentes sont celles par défaut de Laravel (`users`, `cache`, `jobs`).
+> **Pas de persistance en base de données** pour les tirages : les participants et les résultats vivent uniquement dans l'état du composant Livewire, le temps de la session. Les seules migrations présentes sont celles par défaut de Laravel (`users`, `cache`, `jobs`), et elles ne sont pas requises pour faire tourner l'application.
 
 <br>
 
@@ -102,6 +102,7 @@ Le pattern **Strategy** permet en théorie de faire cohabiter plusieurs façons 
 | `elimination` | Mode de tirage multi-étapes avec confirmation d'animation |
 | `refonte` puis `rename drawfactory` | Retour sur des noms et structure jugés bancals après coup |
 | `merge factory/resolver` | Fusion des deux mécanismes concurrents de résolution de stratégie en un seul, suite à audit |
+| `fix setup script + tests` | Réparation du script `composer run setup`, de `phpunit.xml` et d'un test Livewire cassé |
 
 </details>
 
@@ -113,16 +114,13 @@ Le pattern **Strategy** permet en théorie de faire cohabiter plusieurs façons 
 - 🔹 Générer une **roue SVG dynamiquement** en PHP (trigonométrie : coordonnées polaires → cartésiennes pour positionner segments et labels)
 - 🔹 Repérer et corriger du **code mort / dupliqué** (deux mécanismes concurrents de résolution de stratégie) plutôt que de les laisser cohabiter indéfiniment
 - 🔹 Tester des composants **Livewire** correctement, y compris les pièges de l'API de test (`->instance()` pour appeler une méthode custom du composant, plutôt qu'un appel direct proxyé vers la réponse HTTP)
+- 🔹 Comprendre l'impact de **la configuration d'environnement** (`.env.example`, scripts `composer`) sur l'expérience d'un clone frais, pas seulement sur le code applicatif
 
 <br>
 
 ## ⚠️ Limites connues / dette technique actuelle
 
-En toute transparence, l'architecture n'est pas encore cohérente de bout en bout.
-
-#### 🔴 Bloquant
-
-- **`composer run setup` casse toujours sur un clone frais** : `.env.example` définit `DB_CONNECTION=null` par défaut, mais le script enchaîne quand même `php artisan migrate --force`, qui échoue avec `Database connection [null] not configured.` Il faut soit repasser `DB_CONNECTION` à `sqlite` avant de lancer `migrate`, soit retirer cette étape du script tant que l'app ne persiste rien.
+En toute transparence, l'architecture n'est pas encore cohérente de bout en bout. Aucun point bloquant à ce jour — uniquement des zones fonctionnelles mais incomplètes, assumées comme telles.
 
 #### 🟡 Fonctionnel mais incomplet
 
@@ -135,6 +133,8 @@ En toute transparence, l'architecture n'est pas encore cohérente de bout en bou
 - L'ancien duo `DrawFactory` / `DrawStrategyResolver` (deux mécanismes concurrents pour résoudre une stratégie, dont l'un référençait `DrawType::WHEEL`, un cas d'enum inexistant) a été fusionné en un seul `DrawStrategyResolver`, exhaustif sur les cas réels de `DrawType` (`RANDOM`, `WEIGHTED`), testé, sans incohérence namespace/dossier.
 - `WheelDrawStrategy` (stub copie conforme de `RandomDrawStrategy`, jamais réellement branchée dans l'application) a été retirée du domaine plutôt que maintenue comme code mort.
 - La suite de tests est repassée entièrement au vert (**66 tests**) : testsuite `Unit` fantôme retirée de `phpunit.xml`, script `composer test` réparé, et un test Livewire (`EliminationWheelPageTest`) corrigé pour appeler `->instance()->started()` plutôt que de proxyer par erreur vers la réponse HTTP wrappée par `Testable`.
+- Le script `composer test` échouait avec les versions de Composer antérieures à 2.8 à cause d'un marqueur (`@no_additional_args`) non reconnu, passé tel quel comme argument à `artisan config:clear`. Retiré pour rester compatible avec toutes les versions de Composer.
+- `composer run setup` échouait sur un clone frais (`.env.example` en `DB_CONNECTION=null` mais le script lançait quand même `migrate --force`). L'étape `migrate` a été retirée du script, cohérent avec le fait que l'application ne persiste rien en base à ce stade.
 
 > Ces points sont volontairement listés ici plutôt que masqués : ils font partie du prochain cycle de refactor.
 
@@ -150,16 +150,11 @@ composer install
 cp .env.example .env
 php artisan key:generate
 
-touch database/database.sqlite
-php artisan migrate
-
 npm install
 npm run build
 ```
 
-**Alternative :** un script `composer run setup` regroupe ces étapes (`.env`, `key:generate`, `migrate --force`, `npm install --ignore-scripts`, `npm run build`).
-
-> **⚠️ Ce script échoue actuellement tel quel sur un clone frais.** `.env.example` définit `DB_CONNECTION=null` par défaut, mais le script lance quand même `migrate --force`, qui plante avec `Database connection [null] not configured.` En attendant un correctif, force `DB_CONNECTION=sqlite` dans ton `.env` (et `touch database/database.sqlite` si le fichier n'existe pas) avant de lancer `composer run setup` ou `migrate`.
+**Alternative :** un script `composer run setup` regroupe ces étapes (`.env`, `key:generate`, `npm install --ignore-scripts`, `npm run build`). Fonctionne tel quel sur un clone frais, sans configuration de base de données nécessaire.
 
 **Lancement en local** (serveur + build front en parallèle) :
 
@@ -195,8 +190,8 @@ composer test
 - [x] ~~Fusionner `DrawFactory` / `DrawStrategyResolver` en un point de résolution unique~~
 - [x] ~~Aligner namespace et dossier du Resolver~~
 - [x] ~~Réparer la suite de tests (`phpunit.xml`, script `composer test`, test Livewire cassé)~~
+- [x] ~~Corriger `composer run setup` pour un clone frais~~
 - [ ] Implémenter `WeightedDrawStrategy` (tirage pondéré par `Participant::$weight`)
-- [ ] Corriger `composer run setup` pour qu'il fonctionne avec `DB_CONNECTION=null` par défaut (retirer `migrate`, ou forcer `sqlite` avant)
 - [ ] Documenter et tester `ManagesParticipants::updateParticipant()` (édition inline)
 - [ ] Faire réellement passer les tirages par l'entité `Draw` (Domain) pour que son invariant (min. 2 participants) soit appliqué sur le chemin utilisé
 - [ ] Persistance optionnelle de l'historique des tirages
