@@ -31,9 +31,10 @@ class WheelSegmentBuilder
 
         $sliceAngle = 360 / $total;
 
-        return collect($names)
+        /** @var array<int, array{name: string, color: string, path: ?string, fullCircle: bool, labelTransform: string}> $segments */
+        $segments = collect($names)
             ->values()
-            ->map(function (string $name, int $index) use ($sliceAngle, $total, $colors) {
+            ->map(function (string $name, int $index) use ($sliceAngle, $total, $colors): array {
                 $startAngle = $index * $sliceAngle;
                 $endAngle = $startAngle + $sliceAngle;
                 $midAngle = $startAngle + ($sliceAngle / 2);
@@ -49,6 +50,8 @@ class WheelSegmentBuilder
                 ];
             })
             ->all();
+
+        return $segments;
     }
 
     /**
@@ -64,7 +67,7 @@ class WheelSegmentBuilder
 
         return collect($names)
             ->values()
-            ->mapWithKeys(fn (string $name, int $index) => [$name => self::colorFor($index, $total)])
+            ->mapWithKeys(fn(string $name, int $index) => [$name => self::colorFor($index, $total)])
             ->all();
     }
 
@@ -137,8 +140,8 @@ class WheelSegmentBuilder
         $angleRad = deg2rad($angleDeg - 90);
 
         return [
-            'x' => round($cx + $r * cos($angleRad), 2),
-            'y' => round($cy + $r * sin($angleRad), 2),
+            'x' => round($cx + $r * cos($angleRad), 4),
+            'y' => round($cy + $r * sin($angleRad), 4),
         ];
     }
 }

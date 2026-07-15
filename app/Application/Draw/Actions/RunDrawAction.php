@@ -4,6 +4,7 @@ namespace App\Application\Draw\Actions;
 
 use App\Application\Draw\DTOs\DrawData;
 use App\Application\Draw\Resolvers\DrawStrategyResolver;
+use App\Domain\Draw\Entities\Draw;
 use App\Domain\Draw\ValueObjects\DrawResult;
 
 /**
@@ -14,7 +15,7 @@ final class RunDrawAction
 {
     /**
      * Injection de dépendance via la promotion de propriété (PHP 8+).
-     * Le mot-clé "readonly" garantit que l'instance de la Factory reste immuable.
+     * Le mot-clé "readonly" garantit que l'instance du Resolver reste immuable.
      */
     public function __construct(
         private readonly DrawStrategyResolver $resolver
@@ -22,16 +23,17 @@ final class RunDrawAction
 
     /**
      * Point d'entrée de l'action.
-     * Coordonne la résolution de la stratégie et délègue l'exécution au Domaine.
+     * Construit l'entité du Domaine (garantissant ses invariants), résout la stratégie,
+     * puis délègue l'exécution du tirage à l'entité elle-même (Double Dispatch).
      */
     public function execute(DrawData $data): DrawResult
     {
-        // Résolution dynamique de la stratégie (découplage de l'instanciation).
         $strategy = $this->resolver->resolve($data->type);
 
-        // Passage de la collection typée issue du Domaine à la stratégie sélectionnée.
-        return $strategy->draw(
-            $data->participantsCollection()
-        );
+        // La construction de Draw applique l'invariant "min. 2 participants"
+        // avant même de tenter le tirage (Always-Valid Entity).
+        $draw = new Draw($data->participantsCollection());
+
+        return $draw->execute($strategy);
     }
 }
