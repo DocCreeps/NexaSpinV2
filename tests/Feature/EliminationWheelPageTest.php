@@ -77,7 +77,7 @@ it('restarts the game back to its initial participant list', function () {
         ->and($component->get('eliminated'))->toBe([])
         ->and($component->get('winner'))->toBeNull()
         ->and($component->get('pendingElimination'))->toBeNull()
-        ->and($component->started())->toBeFalse();
+        ->and($component->instance()->started())->toBeFalse();
 });
 
 it('locks participant editing once the elimination wheel has started', function () {

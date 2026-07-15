@@ -62,15 +62,14 @@ app/
 │   ├── ValueObjects/          # Participant, DrawResult (immuables)
 │   ├── Collections/           # Participants (typée, itérable)
 │   ├── Enums/                 # DrawType, DrawDisplay
-│   ├── Strategies/            # RandomDrawStrategy, WheelDrawStrategy
+│   ├── Strategies/            # RandomDrawStrategy
 │   ├── Contracts/             # DrawStrategy (interface)
 │   └── Exceptions/
 │
 ├── Application/Draw/         # Orchestration, fait le pont Domain ↔ UI
 │   ├── Actions/                # RunDrawAction
 │   ├── DTOs/                   # DrawData
-│   ├── Factories/               # DrawFactory
-│   ├── Resolver/                 # DrawStrategyResolver
+│   ├── Resolvers/               # DrawStrategyResolver (point d'entrée unique)
 │   └── Support/                   # WheelSegmentBuilder (calcul des segments SVG)
 │
 └── Livewire/Draw/             # Composants UI + traits partagés
@@ -84,7 +83,7 @@ app/
 - L'**Application** orchestre les cas d'usage
 - Les composants **Livewire** gèrent uniquement l'état UI et délèguent le calcul métier
 
-Le pattern **Strategy** permet en théorie de faire cohabiter plusieurs façons de tirer un gagnant (`RandomDrawStrategy`, `WheelDrawStrategy`, et demain une stratégie pondérée) sans toucher au reste du code.
+Le pattern **Strategy** permet en théorie de faire cohabiter plusieurs façons de tirer un gagnant (`RandomDrawStrategy`, et demain une stratégie pondérée) sans toucher au reste du code.
 
 <br>
 
@@ -102,6 +101,7 @@ Le pattern **Strategy** permet en théorie de faire cohabiter plusieurs façons 
 | `Début UI` puis `debug + ajout roue visuel` | Construction de la roue en SVG généré côté serveur (`WheelSegmentBuilder`) |
 | `elimination` | Mode de tirage multi-étapes avec confirmation d'animation |
 | `refonte` puis `rename drawfactory` | Retour sur des noms et structure jugés bancals après coup |
+| `merge factory/resolver` | Fusion des deux mécanismes concurrents de résolution de stratégie en un seul, suite à audit |
 
 </details>
 
@@ -111,6 +111,8 @@ Le pattern **Strategy** permet en théorie de faire cohabiter plusieurs façons 
 - 🔹 Utiliser des **DTO** (`DrawData`) pour faire transiter des données de l'UI vers le Domain sans lui exposer les objets Livewire
 - 🔹 Extraire la logique répétée entre composants Livewire dans des **traits** (`ManagesParticipants`, `HandlesDraw`) plutôt que de dupliquer
 - 🔹 Générer une **roue SVG dynamiquement** en PHP (trigonométrie : coordonnées polaires → cartésiennes pour positionner segments et labels)
+- 🔹 Repérer et corriger du **code mort / dupliqué** (deux mécanismes concurrents de résolution de stratégie) plutôt que de les laisser cohabiter indéfiniment
+- 🔹 Tester des composants **Livewire** correctement, y compris les pièges de l'API de test (`->instance()` pour appeler une méthode custom du composant, plutôt qu'un appel direct proxyé vers la réponse HTTP)
 
 <br>
 
@@ -120,21 +122,19 @@ En toute transparence, l'architecture n'est pas encore cohérente de bout en bou
 
 #### 🔴 Bloquant
 
-- `DrawType` n'a que deux cas (`RANDOM`, `WEIGHTED`) mais `DrawStrategyResolver` fait un `match` sur un cas `DrawType::WHEEL` **qui n'existe pas** dans l'enum — ce resolver n'est donc pas utilisable en l'état (et n'est d'ailleurs appelé nulle part dans le code).
-- `DrawFactory::make()` ne gère que `DrawType::RANDOM` dans son `match` (pas de `default`, pas de cas `WEIGHTED`) : l'appeler avec un autre type lève un `UnhandledMatchError`.
-- **`composer run setup` casse sur un clone frais** : `.env.example` définit désormais `DB_CONNECTION=null` par défaut, mais le script enchaîne quand même `php artisan migrate --force`, qui échoue avec `Database connection [null] not configured.` Il faut soit repasser `DB_CONNECTION` à `sqlite` avant de lancer `migrate`, soit retirer cette étape du script tant que l'app ne persiste rien.
-- `HandlesDraw` force `DrawType::RANDOM` pour tous les composants, y compris la roue — `WheelDrawStrategy` existe mais n'est donc **jamais réellement invoquée** via ce chemin.
+- **`composer run setup` casse toujours sur un clone frais** : `.env.example` définit `DB_CONNECTION=null` par défaut, mais le script enchaîne quand même `php artisan migrate --force`, qui échoue avec `Database connection [null] not configured.` Il faut soit repasser `DB_CONNECTION` à `sqlite` avant de lancer `migrate`, soit retirer cette étape du script tant que l'app ne persiste rien.
 
 #### 🟡 Fonctionnel mais incomplet
 
-- `WheelDrawStrategy` est pour l'instant une copie conforme de `RandomDrawStrategy` (`$participants->random()`) : c'est un **stub** en attente de vraie logique.
-- Le **tirage pondéré n'est pas implémenté** : `Participant::$weight` existe et `DrawTypeNotSupportedException` est prête à être levée, mais aucune `WeightedDrawStrategy` n'a encore été écrite.
+- Le **tirage pondéré n'est pas implémenté** : `Participant::$weight` existe et `DrawTypeNotSupportedException` est levée proprement par `DrawStrategyResolver`, mais aucune `WeightedDrawStrategy` n'a encore été écrite.
 - L'entité `Draw` (Domain) n'est appelée par **aucun code applicatif actuel** : `RunDrawAction` travaille directement avec `Participants` + une `Strategy`, sans jamais passer par cette entité. Sa règle métier (minimum 2 participants) n'est donc pas appliquée sur le chemin réellement utilisé.
-- `ManagesParticipants::updateParticipant()` (édition inline d'un participant) a été ajoutée mais n'est encore documentée nulle part dans ce README ni couverte par un test.
+- `ManagesParticipants::updateParticipant()` (édition inline d'un participant) est fonctionnelle mais n'est encore documentée nulle part ailleurs dans ce README ni couverte par un test dédié.
 
-#### ⚪ Dette esthétique
+#### ✅ Corrigé depuis le dernier audit
 
-- Namespace/dossier incohérents sur `DrawStrategyResolver` : le namespace déclaré est `App\Application\Draw\Resolvers` (pluriel) alors que le dossier réel est `Resolver` (singulier).
+- L'ancien duo `DrawFactory` / `DrawStrategyResolver` (deux mécanismes concurrents pour résoudre une stratégie, dont l'un référençait `DrawType::WHEEL`, un cas d'enum inexistant) a été fusionné en un seul `DrawStrategyResolver`, exhaustif sur les cas réels de `DrawType` (`RANDOM`, `WEIGHTED`), testé, sans incohérence namespace/dossier.
+- `WheelDrawStrategy` (stub copie conforme de `RandomDrawStrategy`, jamais réellement branchée dans l'application) a été retirée du domaine plutôt que maintenue comme code mort.
+- La suite de tests est repassée entièrement au vert (**66 tests**) : testsuite `Unit` fantôme retirée de `phpunit.xml`, script `composer test` réparé, et un test Livewire (`EliminationWheelPageTest`) corrigé pour appeler `->instance()->started()` plutôt que de proxyer par erreur vers la réponse HTTP wrappée par `Testable`.
 
 > Ces points sont volontairement listés ici plutôt que masqués : ils font partie du prochain cycle de refactor.
 
@@ -180,25 +180,25 @@ composer test
 ```
 
 **Zones couvertes :**
-- ✅ Ajout / suppression de participants
-- ✅ Exécution d'un tirage simple
-- ✅ Déroulé complet d'une élimination (tour par tour jusqu'au dernier survivant)
+- ✅ Ajout / suppression / édition inline de participants
+- ✅ Résolution de stratégie et exécution d'un tirage (`DrawStrategyResolver`, `RunDrawAction`)
+- ✅ Déroulé complet d'une élimination (tour par tour jusqu'au dernier survivant, restart)
 - ✅ Chargement des routes
 - ✅ Génération des segments SVG
 
-> ⚠️ **État réel de la suite (2ᵉ audit) :** les tests obsolètes de l'audit précédent ont été corrigés/remplacés (classes supprimées d'une ancienne architecture, mauvaise méthode testée sur le flux d'élimination, nommage `InvalidDrawException`). Mais un refactor plus récent de `DrawFactory` (passée de statique à méthode d'instance) et `RunDrawAction` (constructeur exigeant désormais `DrawFactory $factory`) a fait régresser deux fichiers : `RunDrawActionTest.php` et `DrawFactoryTest.php` instancient encore ces classes à l'ancienne (`new RunDrawAction()`, `DrawFactory::make()` en statique) et échouent de nouveau. Correctif en attente d'intégration.
+**État réel de la suite : 66 tests, tous au vert.**
 
 <br>
 
 ## 🗺️ Pistes pour la suite
 
-- [ ] Ajouter le cas `WHEEL` à l'enum `DrawType` (ou supprimer `DrawStrategyResolver` s'il fait doublon avec `DrawFactory`)
+- [x] ~~Fusionner `DrawFactory` / `DrawStrategyResolver` en un point de résolution unique~~
+- [x] ~~Aligner namespace et dossier du Resolver~~
+- [x] ~~Réparer la suite de tests (`phpunit.xml`, script `composer test`, test Livewire cassé)~~
 - [ ] Implémenter `WeightedDrawStrategy` (tirage pondéré par `Participant::$weight`)
-- [ ] Différencier réellement `WheelDrawStrategy` de `RandomDrawStrategy`
-- [ ] Aligner namespace et dossier de `DrawStrategyResolver` (`Resolver/` vs `App\...\Resolvers`)
 - [ ] Corriger `composer run setup` pour qu'il fonctionne avec `DB_CONNECTION=null` par défaut (retirer `migrate`, ou forcer `sqlite` avant)
-- [ ] Remettre à jour `RunDrawActionTest.php` et `DrawFactoryTest.php` suite au passage de `DrawFactory::make()` en méthode d'instance
 - [ ] Documenter et tester `ManagesParticipants::updateParticipant()` (édition inline)
+- [ ] Faire réellement passer les tirages par l'entité `Draw` (Domain) pour que son invariant (min. 2 participants) soit appliqué sur le chemin utilisé
 - [ ] Persistance optionnelle de l'historique des tirages
 
 <br>
