@@ -9,14 +9,16 @@ namespace App\Application\Draw\Support;
 class WheelSegmentBuilder
 {
     private const RADIUS = 150;       // Rayon de la roue en pixels.
+
     private const CENTER = 150;       // Coordonnées X/Y du centre (conçu pour une viewBox de 300x300).
+
     private const DEFAULT_SPINS = 6;  // Nombre de rotations complètes pour simuler l'élan visuel.
 
     /**
      * Calcule et formate les données SVG (paths, couleurs, positions de texte) de chaque part.
      *
      * @param  array<int, string>  $names
-     * @param  array<string, string>|null  $colors Mappage optionnel pour figer les couleurs lors d'éliminations.
+     * @param  array<string, string>|null  $colors  Mappage optionnel pour figer les couleurs lors d'éliminations.
      * @return array<int, array{name: string, color: string, path: ?string, fullCircle: bool, labelTransform: string}>
      */
     public static function build(array $names, ?array $colors = null): array
@@ -62,7 +64,7 @@ class WheelSegmentBuilder
 
         return collect($names)
             ->values()
-            ->mapWithKeys(fn(string $name, int $index) => [$name => self::colorFor($index, $total)])
+            ->mapWithKeys(fn (string $name, int $index) => [$name => self::colorFor($index, $total)])
             ->all();
     }
 

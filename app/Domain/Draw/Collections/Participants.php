@@ -4,9 +4,9 @@ namespace App\Domain\Draw\Collections;
 
 use App\Domain\Draw\Exceptions\InvalidDrawException;
 use App\Domain\Draw\ValueObjects\Participant;
+use ArrayIterator;
 use Countable;
 use IteratorAggregate;
-use ArrayIterator;
 use Traversable;
 
 /**
@@ -16,7 +16,7 @@ use Traversable;
 final class Participants implements Countable, IteratorAggregate
 {
     /**
-     * @param array<int, Participant> $items
+     * @param  array<int, Participant>  $items
      */
     public function __construct(
         private array $items

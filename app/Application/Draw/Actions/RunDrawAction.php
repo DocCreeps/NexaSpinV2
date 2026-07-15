@@ -3,7 +3,7 @@
 namespace App\Application\Draw\Actions;
 
 use App\Application\Draw\DTOs\DrawData;
-use App\Application\Draw\Factories\DrawFactory;
+use App\Application\Draw\Resolvers\DrawStrategyResolver;
 use App\Domain\Draw\ValueObjects\DrawResult;
 
 /**
@@ -17,7 +17,7 @@ final class RunDrawAction
      * Le mot-clé "readonly" garantit que l'instance de la Factory reste immuable.
      */
     public function __construct(
-        private readonly DrawFactory $factory
+        private readonly DrawStrategyResolver $resolver
     ) {}
 
     /**
@@ -27,7 +27,7 @@ final class RunDrawAction
     public function execute(DrawData $data): DrawResult
     {
         // Résolution dynamique de la stratégie (découplage de l'instanciation).
-        $strategy = $this->factory->make($data->type);
+        $strategy = $this->resolver->resolve($data->type);
 
         // Passage de la collection typée issue du Domaine à la stratégie sélectionnée.
         return $strategy->draw(

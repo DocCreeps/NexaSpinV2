@@ -2,12 +2,12 @@
 
 namespace App\Livewire\Draw;
 
-use Livewire\Attributes\Computed;
-use Livewire\Component;
 use App\Application\Draw\Actions\RunDrawAction;
 use App\Application\Draw\Support\WheelSegmentBuilder;
-use App\Livewire\Draw\Concerns\ManagesParticipants;
 use App\Livewire\Draw\Concerns\HandlesDraw;
+use App\Livewire\Draw\Concerns\ManagesParticipants;
+use Livewire\Attributes\Computed;
+use Livewire\Component;
 
 /**
  * Page de tirage classique sous forme de Roue de la Fortune.
@@ -15,8 +15,8 @@ use App\Livewire\Draw\Concerns\HandlesDraw;
  */
 class WheelPage extends Component
 {
-    use ManagesParticipants;
     use HandlesDraw;
+    use ManagesParticipants;
 
     /**
      * Nombre maximal de segments pour lesquels on affiche encore le texte sur la roue.
@@ -47,6 +47,7 @@ class WheelPage extends Component
 
         if (count($this->participants) < 2) {
             $this->error = 'Ajoutez au moins deux participants.';
+
             return;
         }
 
@@ -58,6 +59,7 @@ class WheelPage extends Component
 
         if ($index === false) {
             $this->error = 'Gagnant introuvable.';
+
             return;
         }
 

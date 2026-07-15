@@ -2,10 +2,10 @@
 
 namespace App\Domain\Draw\Entities;
 
+use App\Domain\Draw\Collections\Participants;
 use App\Domain\Draw\Contracts\DrawStrategy;
 use App\Domain\Draw\Exceptions\InvalidDrawException;
 use App\Domain\Draw\ValueObjects\DrawResult;
-use App\Domain\Draw\Collections\Participants;
 
 /**
  * Entité du Domaine (Aggregate Root).

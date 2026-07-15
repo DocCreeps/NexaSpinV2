@@ -57,6 +57,7 @@ trait ManagesParticipants
                 'Le nom du participant ne peut pas dépasser %d caractères.',
                 $this->maxParticipantNameLength
             );
+
             return;
         }
 
@@ -66,12 +67,14 @@ trait ManagesParticipants
                 'Vous ne pouvez pas ajouter plus de %d participants.',
                 $this->maxParticipants
             );
+
             return;
         }
 
         // Validation : Unicité du nom
         if ($this->participantExists($name)) {
             $this->error = 'Ce participant existe déjà.';
+
             return;
         }
 
@@ -96,6 +99,7 @@ trait ManagesParticipants
         // Validation : Nom vide
         if ($newName === '') {
             $this->error = 'Le nom du participant ne peut pas être vide.';
+
             return;
         }
 
@@ -105,6 +109,7 @@ trait ManagesParticipants
                 'Le nom du participant ne peut pas dépasser %d caractères.',
                 $this->maxParticipantNameLength
             );
+
             return;
         }
 
@@ -116,6 +121,7 @@ trait ManagesParticipants
             && $this->participantExists($newName)
         ) {
             $this->error = 'Ce participant existe déjà.';
+
             return;
         }
 
@@ -150,7 +156,7 @@ trait ManagesParticipants
     {
         return collect($this->participants)
             ->contains(
-                fn(string $existing) => mb_strtolower($existing) === mb_strtolower($name)
+                fn (string $existing) => mb_strtolower($existing) === mb_strtolower($name)
             );
     }
 

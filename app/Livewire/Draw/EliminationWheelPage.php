@@ -2,12 +2,12 @@
 
 namespace App\Livewire\Draw;
 
-use Livewire\Attributes\Computed;
-use Livewire\Component;
 use App\Application\Draw\Actions\RunDrawAction;
 use App\Application\Draw\Support\WheelSegmentBuilder;
-use App\Livewire\Draw\Concerns\ManagesParticipants;
 use App\Livewire\Draw\Concerns\HandlesDraw;
+use App\Livewire\Draw\Concerns\ManagesParticipants;
+use Livewire\Attributes\Computed;
+use Livewire\Component;
 
 /**
  * Page de tirage de la Roue d'Élimination (Battle Royale).
@@ -15,8 +15,8 @@ use App\Livewire\Draw\Concerns\HandlesDraw;
  */
 class EliminationWheelPage extends Component
 {
-    use ManagesParticipants;
     use HandlesDraw;
+    use ManagesParticipants;
 
     /**
      * Nombre maximal de segments pour lesquels on affiche encore le texte sur la roue.
@@ -31,18 +31,21 @@ class EliminationWheelPage extends Component
 
     /**
      * Copie de sauvegarde de la liste de départ pour pouvoir relancer une partie.
+     *
      * @var array<int, string>
      */
     public array $initialParticipants = [];
 
     /**
      * Liste ordonnée des participants éliminés.
+     *
      * @var array<int, string>
      */
     public array $eliminated = [];
 
     /**
      * Couleurs HSL figées par nom de participant au lancement du jeu.
+     *
      * @var array<string, string>
      */
     public array $colors = [];
@@ -124,6 +127,7 @@ class EliminationWheelPage extends Component
 
         if (count($this->participants) < 2) {
             $this->error = "Ajoutez au moins deux participants avant de lancer l'élimination.";
+
             return;
         }
 
@@ -162,6 +166,7 @@ class EliminationWheelPage extends Component
 
         if (! $result) {
             $this->processing = false;
+
             return;
         }
 
@@ -171,6 +176,7 @@ class EliminationWheelPage extends Component
 
         if ($targetIndex === false) {
             $this->processing = false;
+
             return;
         }
 
@@ -210,6 +216,7 @@ class EliminationWheelPage extends Component
     {
         if (! $this->processing || ! $this->pendingElimination) {
             $this->processing = false;
+
             return;
         }
 

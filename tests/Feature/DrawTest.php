@@ -56,7 +56,7 @@ it('works end-to-end with the real RandomDrawStrategy', function () {
     $names = ['John', 'Jane', 'Bob'];
     $draw = new Draw(new Participants(array_map(fn (string $n) => new Participant($n), $names)));
 
-    $result = $draw->execute(new RandomDrawStrategy());
+    $result = $draw->execute(new RandomDrawStrategy);
 
     expect($names)->toContain($result->winner->name);
 });

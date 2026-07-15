@@ -1,11 +1,9 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-
-use App\Livewire\Draw\WheelPage;
-use App\Livewire\Draw\EliminationWheelPage;
-
 use App\Http\Controllers\HomeController;
+use App\Livewire\Draw\EliminationWheelPage;
+use App\Livewire\Draw\WheelPage;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
 

@@ -11,8 +11,8 @@ use InvalidArgumentException;
 final readonly class Participant
 {
     /**
-     * @param string $name Nom du participant (sera nettoyé des espaces superflus).
-     * @param int $weight Poids d'influence pour les tirages pondérés (par défaut 1).
+     * @param  string  $name  Nom du participant (sera nettoyé des espaces superflus).
+     * @param  int  $weight  Poids d'influence pour les tirages pondérés (par défaut 1).
      */
     public function __construct(
         public string $name,

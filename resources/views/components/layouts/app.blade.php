@@ -9,7 +9,6 @@
 </head>
 <body class="min-h-full bg-slate-50 text-gray-900 antialiased">
 
-    {{-- Suppression du py-10 ici pour laisser les pages gérer leur propre espacement --}}
     <main>
         {{ $slot }}
     </main>

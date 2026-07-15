@@ -2,8 +2,8 @@
 
 namespace App\Domain\Draw\Strategies;
 
-use App\Domain\Draw\Contracts\DrawStrategy;
 use App\Domain\Draw\Collections\Participants;
+use App\Domain\Draw\Contracts\DrawStrategy;
 use App\Domain\Draw\ValueObjects\DrawResult;
 
 /**
