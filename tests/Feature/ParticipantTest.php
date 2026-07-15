@@ -19,6 +19,12 @@ it('rejects an empty name', function () {
     new Participant('');
 })->throws(InvalidArgumentException::class, 'Participant name cannot be empty.');
 
+it('trims surrounding whitespace from the name', function () {
+    $participant = new Participant('  John  ');
+
+    expect($participant->name)->toBe('John');
+});
+
 it('rejects a name made only of whitespace', function () {
     new Participant('   ');
 })->throws(InvalidArgumentException::class, 'Participant name cannot be empty.');

@@ -66,7 +66,9 @@ final class Participants implements Countable, IteratorAggregate
             );
         }
 
-        return $this->items[0];
+        // reset() renvoie le premier élément quelles que soient les clés du tableau
+        // (contrairement à $this->items[0], qui suppose à tort une ré-indexation à 0).
+        return reset($this->items);
     }
 
     /**

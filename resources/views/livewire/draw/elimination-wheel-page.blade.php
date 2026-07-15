@@ -137,7 +137,7 @@
                     ⏸️ Mettre en pause
                 </button>
                 @else
-                <button wire:click="handleAction" x-bind:disabled="busy" class="w-full rounded-2xl py-4 font-black text-white shadow-md bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-700 hover:to-orange-600 disabled:opacity-50 active:scale-[0.98] transition disabled:pointer-events-none">
+                <button wire:click="handleAction" wire:loading.attr="disabled" wire:target="handleAction,eliminateNext" x-bind:disabled="busy" class="w-full rounded-2xl py-4 font-black text-white shadow-md bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-700 hover:to-orange-600 disabled:opacity-50 active:scale-[0.98] transition disabled:pointer-events-none">
                     <span x-show="!busy">
                         @if($this->started())
                         ❌ Éliminer le prochain
