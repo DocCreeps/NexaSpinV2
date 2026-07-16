@@ -18,13 +18,17 @@ trait ManagesParticipants
      */
     protected int $maxParticipantNameLength = 50;
 
+    protected int $minParticipantWeight = 1;
+
+    protected int $maxParticipantWeight = 100;
+
     /**
      * Liste réactive des participants (indexée numériquement).
      *
      * @var array<int, string>
      */
     public array $participants = [];
-
+    public array $participantWeights = [];
     /**
      * Champ de saisie lié au formulaire d'ajout d'un participant.
      */
@@ -79,6 +83,7 @@ trait ManagesParticipants
         }
 
         $this->participants[] = $name;
+        $this->participantWeights[] = $this->minParticipantWeight;
         $this->participant = '';
 
         $this->afterParticipantsChanged();
@@ -131,7 +136,35 @@ trait ManagesParticipants
             $this->afterParticipantsChanged();
         }
     }
+    /**
+     * Met à jour le poids d'un participant (utilisé par les modes de tirage pondérés uniquement).
+     */
+    public function updateParticipantWeight(int $index, int $weight): void
+    {
+        if ($this->participantsAreLocked()) {
+            return;
+        }
 
+        if (! array_key_exists($index, $this->participants)) {
+            return;
+        }
+
+        $this->error = null;
+
+        if ($weight < $this->minParticipantWeight || $weight > $this->maxParticipantWeight) {
+            $this->error = sprintf(
+                'Le poids doit être compris entre %d et %d.',
+                $this->minParticipantWeight,
+                $this->maxParticipantWeight
+            );
+
+            return;
+        }
+
+        $this->participantWeights[$index] = $weight;
+
+        $this->afterParticipantsChanged();
+    }
     /**
      * Supprime un participant et réindexe proprement le tableau.
      */
@@ -142,9 +175,12 @@ trait ManagesParticipants
         }
 
         unset($this->participants[$index]);
+        unset($this->participantWeights[$index]);
 
         // Réindexation pour éviter les trous de clés dans le tableau JS/JSON côté frontend
         $this->participants = array_values($this->participants);
+
+        $this->participantWeights = array_values($this->participantWeights);
 
         $this->afterParticipantsChanged();
     }

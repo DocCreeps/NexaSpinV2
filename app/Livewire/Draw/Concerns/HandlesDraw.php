@@ -29,6 +29,7 @@ trait HandlesDraw
                 participants: $this->getParticipantsForDraw(),
                 type: DrawType::RANDOM,
                 display: DrawDisplay::WHEEL,
+                weights: $this->participantWeights,
             )
         );
     }
