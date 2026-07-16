@@ -22,6 +22,7 @@
     <meta name="twitter:description" content="Prenez des décisions ou lancez des concours facilement grâce à nos différents modes de tirages au sort interactifs et gratuits.">
     <meta name="twitter:image" content="{{ asset('images/og-card.png') }}">
 
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
