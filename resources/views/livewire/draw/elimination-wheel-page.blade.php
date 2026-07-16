@@ -112,7 +112,7 @@
                 </div>
 
                 {{-- MODE AUTO --}}
-                @if(!$winner && count($participants) >= 2)
+                @if(!$winner && ($this->started() || $this->canStart()))
                 <div class="bg-white rounded-3xl border border-slate-200/50 shadow-sm p-5 flex items-center justify-between">
                     <div class="flex flex-col">
                         <span class="font-bold text-sm text-slate-800">
@@ -137,9 +137,11 @@
                     ⏸️ Mettre en pause
                 </button>
                 @else
-                <button wire:click="handleAction" wire:loading.attr="disabled" wire:target="handleAction,eliminateNext" x-bind:disabled="busy" class="w-full rounded-2xl py-4 font-black text-white shadow-md bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-700 hover:to-orange-600 disabled:opacity-50 active:scale-[0.98] transition disabled:pointer-events-none">
+                <button wire:click="handleAction" wire:loading.attr="disabled" wire:target="handleAction,eliminateNext" x-bind:disabled="busy || {{ (!$this->started() && !$this->canStart()) ? 'true' : 'false' }}" @disabled(!$this->started() && !$this->canStart()) class="w-full rounded-2xl py-4 font-black text-white shadow-md bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-700 hover:to-orange-600 disabled:from-slate-300 disabled:to-slate-400 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] transition disabled:pointer-events-none">
                     <span x-show="!busy">
-                        @if($this->started())
+                        @if(!$this->started() && !$this->canStart())
+                        👥 Ajoutez au moins 5 participants
+                        @elseif($this->started())
                         ❌ Éliminer le prochain
                         @else
                         🚀 Commencer la partie
@@ -151,6 +153,8 @@
                 </button>
                 @endif
                 @endif
+
+
 
                 {{-- HISTORIQUE DES ÉLIMINATIONS --}}
                 @if(count($eliminated))

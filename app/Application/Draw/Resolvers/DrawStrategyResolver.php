@@ -4,8 +4,8 @@ namespace App\Application\Draw\Resolvers;
 
 use App\Domain\Draw\Contracts\DrawStrategy;
 use App\Domain\Draw\Enums\DrawType;
-use App\Domain\Draw\Exceptions\DrawTypeNotSupportedException;
 use App\Domain\Draw\Strategies\RandomDrawStrategy;
+use App\Domain\Draw\Strategies\WeightedDrawStrategy;
 
 /**
  * Associe un type de tirage (DrawType) à sa stratégie concrète (Pattern Strategy).
@@ -17,6 +17,8 @@ final class DrawStrategyResolver
      */
     public function __construct(
         private readonly RandomDrawStrategy $random,
+
+        private readonly WeightedDrawStrategy $weighted,
     ) {}
 
     /**
@@ -29,7 +31,7 @@ final class DrawStrategyResolver
             DrawType::RANDOM => $this->random,
 
             // Lève une exception de Domaine typée via un constructeur statique nommé.
-            DrawType::WEIGHTED => throw DrawTypeNotSupportedException::forType($type),
+            DrawType::WEIGHTED => $this->weighted,
         };
     }
 }

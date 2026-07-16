@@ -7,14 +7,17 @@ use App\Application\Draw\DTOs\DrawData;
 use App\Domain\Draw\Enums\DrawDisplay;
 use App\Domain\Draw\Enums\DrawType;
 use App\Domain\Draw\ValueObjects\DrawResult;
-use RuntimeException;
 
 /**
  * Trait Livewire centralisant l'exécution d'un tirage au sort.
- * Fait la passerelle entre l'état du composant (UI) et le cas d'utilisation (Application).
  */
 trait HandlesDraw
 {
+    /**
+     * @var array<int, string>
+     */
+    public array $participants = [];
+
     /**
      * Instancie le DTO de transition et exécute l'action de tirage.
      */
@@ -26,6 +29,7 @@ trait HandlesDraw
                 participants: $this->getParticipantsForDraw(),
                 type: DrawType::RANDOM,
                 display: DrawDisplay::WHEEL,
+                weights: $this->participantWeights,
             )
         );
     }
@@ -37,14 +41,7 @@ trait HandlesDraw
      */
     private function getParticipantsForDraw(): array
     {
-        // Optionnel : on sécurise le fait que le composant doit posséder la propriété
-        if (! property_exists($this, 'participants')) {
-            throw new RuntimeException(
-                sprintf('The component [%s] must define a $participants property to use HandlesDraw.', static::class)
-            );
-        }
-
-        /** @var array<int, string> */
+        // Plus besoin de property_exists() ! PHP assure lui-même que $participants est là.
         return $this->participants;
     }
 }

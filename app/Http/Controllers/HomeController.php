@@ -47,10 +47,10 @@ class HomeController extends Controller
                 icon: '🎯',
                 title: 'Tirage pondéré',
                 description: 'Attribuez des probabilités différentes selon un système de poids personnalisé.',
-                route: null,
-                available: false,
-                color: 'from-slate-400 to-slate-500',
-                shadow: 'shadow-gray-500/5',
+                route: route('draw.wheel-weighted'),
+                available: true,
+                color: 'from-orange-500 to-amber-500',
+                shadow: 'shadow-orange-500/10 hover:shadow-orange-500/20',
             ),
         ];
 

@@ -25,6 +25,11 @@ class EliminationWheelPage extends Component
     private const MAX_LABELS_ON_WHEEL = 10;
 
     /**
+     * Nombre minimal de participants requis pour démarrer une partie.
+     */
+    private const MIN_PARTICIPANTS = 5;
+
+    /**
      * Stocke les erreurs de validation ou de logique à afficher à l'utilisateur.
      */
     public ?string $error = null;
@@ -125,8 +130,11 @@ class EliminationWheelPage extends Component
     {
         $this->error = null;
 
-        if (count($this->participants) < 2) {
-            $this->error = "Ajoutez au moins deux participants avant de lancer l'élimination.";
+        if (count($this->participants) < self::MIN_PARTICIPANTS) {
+            $this->error = sprintf(
+                "Ajoutez au moins %d participants avant de lancer l'élimination.",
+                self::MIN_PARTICIPANTS
+            );
 
             return;
         }
@@ -269,6 +277,14 @@ class EliminationWheelPage extends Component
     public function started(): bool
     {
         return $this->colors !== [];
+    }
+
+    /**
+     * Indique si le nombre minimal de participants est atteint pour démarrer la partie.
+     */
+    public function canStart(): bool
+    {
+        return count($this->participants) >= self::MIN_PARTICIPANTS;
     }
 
     /**
