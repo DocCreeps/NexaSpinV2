@@ -3,6 +3,7 @@
 namespace App\Livewire\Draw;
 
 use App\Application\Draw\Actions\RunDrawAction;
+use App\Application\Draw\Enums\DrawModeType;
 use App\Application\Draw\Support\WheelSegmentBuilder;
 use App\Livewire\Draw\Concerns\HandlesDraw;
 use App\Livewire\Draw\Concerns\ManagesParticipants;
@@ -114,7 +115,13 @@ class WheelPage extends Component
      */
     public function render()
     {
+        $mode = DrawModeType::CLASSIC->toDto();
+
         return view('livewire.draw.wheel-page')
-            ->layout('layouts.app');
+            ->layout('layouts.app', [
+                'title' => $mode->metaTitle,
+                'metaDescription' => $mode->metaDescription,
+            ]);
     }
 }
+

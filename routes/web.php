@@ -11,3 +11,5 @@ Route::get('/', HomeController::class)->name('home');
 Route::get('/roue', WheelPage::class)->name('draw.wheel');
 Route::get('/roue-elimination', EliminationWheelPage::class)->name('draw.wheel-elimination');
 Route::get('/roue-ponderee', WeightedWheelPage::class)->name('draw.wheel-weighted');
+
+

@@ -11,6 +11,8 @@ class HomeController extends Controller
     {
         return view('home', [
             'modes' => DrawModeType::all(),
+            'title' => 'NexaSpin — Tirages au Sort & Roues de la Décision Aléatoires',
+            'metaDescription' => 'Créez des tirages au sort gratuits et instantanés. Utilisez notre roue de la décision classique, par élimination ou tirage pondéré pour animer vos jeux et concours.',
         ]);
     }
 }
