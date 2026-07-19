@@ -17,7 +17,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3' # Modifie si ton VPS utilise une autre version (ex: 8.3)
+          php-version: '8.4' # Modifie si ton VPS utilise une autre version (ex: 8.3)
           extensions: mbstring, xml, bcmath
 
       # 3. Installer les dépendances PHP (sur GitHub Actions)
