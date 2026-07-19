@@ -27,6 +27,8 @@ enum DrawModeType: string
                 color: 'from-indigo-500 to-violet-600',
                 shadow: 'shadow-indigo-500/10 hover:shadow-indigo-500/20',
                 minParticipants: 2,
+                metaTitle: 'Roue Classique — Tirage au Sort Instantané | NexaSpin',
+                metaDescription: 'Créez votre roue de la fortune en ligne : ajoutez vos participants, lancez le tirage et désignez un gagnant en un clic. 100% gratuit, sans inscription.',
             ),
             self::ELIMINATION => new DrawMode(
                 icon: '⚔️',
@@ -37,6 +39,8 @@ enum DrawModeType: string
                 color: 'from-rose-500 to-red-600',
                 shadow: 'shadow-rose-500/10 hover:shadow-rose-500/20',
                 minParticipants: 5,
+                metaTitle: 'Roue par Élimination — Tirage au Sort Progressif | NexaSpin',
+                metaDescription: 'Éliminez vos participants un par un jusqu’au dernier survivant. Idéal pour vos concours, jeux entre amis ou sélections progressives, gratuit et sans inscription.',
             ),
             self::WEIGHTED => new DrawMode(
                 icon: '🎯',
@@ -47,6 +51,8 @@ enum DrawModeType: string
                 color: 'from-emerald-500 to-teal-600',
                 shadow: 'shadow-emerald-500/10 hover:shadow-emerald-500/20',
                 minParticipants: 3,
+                metaTitle: 'Tirage au Sort Pondéré — Chances Personnalisées | NexaSpin',
+                metaDescription: 'Donnez plus ou moins de chances à chaque participant grâce à un système de poids personnalisable. Le tirage au sort équitable et flexible, gratuit en ligne.',
             ),
             self::COIN_FLIP => new DrawMode(
                 icon: '🪙',

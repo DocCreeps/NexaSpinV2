@@ -1,2 +1,8 @@
 User-agent: *
-Disallow:
+Allow: /
+
+Disallow: /livewire/
+Disallow: /storage/
+Disallow: /*?*
+
+Sitemap: https://nexaspinv2.dorianvericel.fr/sitemap.xml

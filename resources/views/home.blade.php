@@ -1,4 +1,4 @@
-<x-layouts.app>
+<x-layouts.app :title="$title" :meta-description="$metaDescription">
     <div class="h-dvh w-full overflow-hidden flex items-center justify-center bg-slate-50/50 relative antialiased selection:bg-indigo-500 selection:text-white">
 
         <div class="absolute -top-24 -left-24 w-96 h-96 bg-indigo-200/30 rounded-full blur-[100px] pointer-events-none"></div>

@@ -16,5 +16,8 @@ final readonly class DrawMode
         public string $color,
         public string $shadow,
         public ?int $minParticipants = null,
+
+        public ?string $metaTitle = null,
+        public ?string $metaDescription = null,
     ) {}
 }
