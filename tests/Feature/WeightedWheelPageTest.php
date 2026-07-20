@@ -54,3 +54,21 @@ it('keeps weights in sync when a participant is removed', function () {
         ->assertSet('participants', ['John', 'Bob'])
         ->assertSet('participantWeights', [1, 10]);
 });
+
+it('actually uses the configured weights end-to-end when drawing', function () {
+    $names = ['Rare', 'Frequent', 'Filler'];
+
+    $wins = ['Rare' => 0, 'Frequent' => 0, 'Filler' => 0];
+
+    for ($i = 0; $i < 200; $i++) {
+        $component = Livewire::test(WeightedWheelPage::class)
+            ->set('participants', $names)
+            ->set('participantWeights', [1, 97, 1])
+            ->call('draw')
+            ->assertSet('error', null);
+
+        $wins[$component->get('result')]++;
+    }
+
+    expect($wins['Frequent'])->toBeGreaterThan(($wins['Rare'] + $wins['Filler']) * 5);
+});

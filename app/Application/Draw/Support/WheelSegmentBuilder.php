@@ -19,9 +19,10 @@ class WheelSegmentBuilder
      *
      * @param  array<int, string>  $names
      * @param  array<string, string>|null  $colors  Mappage optionnel pour figer les couleurs lors d'éliminations.
+     * @param  array<int, int>|null  $weights  Poids optionnels (même index que $names) ; parts proportionnelles si fourni, égales sinon.
      * @return array<int, array{name: string, color: string, path: ?string, fullCircle: bool, labelTransform: string}>
      */
-    public static function build(array $names, ?array $colors = null): array
+    public static function build(array $names, ?array $colors = null, ?array $weights = null): array
     {
         $total = count($names);
 
@@ -29,15 +30,14 @@ class WheelSegmentBuilder
             return [];
         }
 
-        $sliceAngle = 360 / $total;
+        $bounds = self::segmentBounds($total, $weights);
 
         /** @var array<int, array{name: string, color: string, path: ?string, fullCircle: bool, labelTransform: string}> $segments */
         $segments = collect($names)
             ->values()
-            ->map(function (string $name, int $index) use ($sliceAngle, $total, $colors): array {
-                $startAngle = $index * $sliceAngle;
-                $endAngle = $startAngle + $sliceAngle;
-                $midAngle = $startAngle + ($sliceAngle / 2);
+            ->map(function (string $name, int $index) use ($bounds, $total, $colors): array {
+                [$startAngle, $endAngle] = $bounds[$index];
+                $midAngle = $startAngle + (($endAngle - $startAngle) / 2);
 
                 return [
                     'name' => $name,
@@ -74,14 +74,74 @@ class WheelSegmentBuilder
     /**
      * Calcule l'angle de rotation CSS final (en degrés) pour que la part ciblée s'arrête
      * précisément sous le curseur de sélection (situé au sommet à 12h / 90° de décalage).
+     *
+     * @param  array<int, int>|null  $weights  Mêmes poids que ceux passés à build(), pour cibler le centre exact d'une part de taille variable.
      */
-    public static function rotationFor(int $targetIndex, int $total, int $spins = self::DEFAULT_SPINS): float
-    {
-        $sliceAngle = 360 / $total;
-        $targetAngle = ($targetIndex * $sliceAngle) + ($sliceAngle / 2);
+    public static function rotationFor(
+        int $targetIndex,
+        int $total,
+        int $spins = self::DEFAULT_SPINS,
+        ?array $weights = null
+    ): float {
+        $bounds = self::segmentBounds($total, $weights);
+        [$startAngle, $endAngle] = $bounds[$targetIndex] ?? [0.0, 360 / max($total, 1)];
+        $targetAngle = $startAngle + (($endAngle - $startAngle) / 2);
 
         // Somme des tours complets + complément angulaire pour ramener le centre de la part à 12h.
         return ($spins * 360) + (360 - $targetAngle);
+    }
+
+    /**
+     * Calcule les bornes [startAngle, endAngle] de chaque part.
+     * Sans poids (ou poids invalides/somme nulle) : parts égales (comportement historique).
+     * Avec poids : chaque part occupe une portion du cercle proportionnelle à son poids.
+     *
+     * @param  array<int, int>|null  $weights
+     * @return array<int, array{0: float, 1: float}>
+     */
+    private static function segmentBounds(int $total, ?array $weights): array
+    {
+        if ($total <= 0) {
+            return [];
+        }
+
+        $normalizedWeights = self::normalizeWeights($total, $weights);
+        $totalWeight = array_sum($normalizedWeights);
+
+        $bounds = [];
+        $cursor = 0.0;
+
+        for ($index = 0; $index < $total; $index++) {
+            $sliceAngle = ($normalizedWeights[$index] / $totalWeight) * 360;
+            $bounds[$index] = [$cursor, $cursor + $sliceAngle];
+            $cursor += $sliceAngle;
+        }
+
+        return $bounds;
+    }
+
+    /**
+     * Nettoie et complète le tableau de poids : poids manquants ou <= 0 remplacés par 1
+     * (un participant sans poids valide garde une part minimale plutôt que de disparaître).
+     * Retombe sur des poids uniformes si $weights est absent ou vide.
+     *
+     * @param  array<int, int>|null  $weights
+     * @return array<int, int>
+     */
+    private static function normalizeWeights(int $total, ?array $weights): array
+    {
+        if ($weights === null || $weights === [] || array_sum($weights) <= 0) {
+            return array_fill(0, $total, 1);
+        }
+
+        $normalized = [];
+
+        for ($index = 0; $index < $total; $index++) {
+            $weight = $weights[$index] ?? 1;
+            $normalized[$index] = $weight > 0 ? $weight : 1;
+        }
+
+        return $normalized;
     }
 
     /**

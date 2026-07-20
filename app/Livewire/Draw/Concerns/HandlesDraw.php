@@ -27,11 +27,22 @@ trait HandlesDraw
         return $action->execute(
             new DrawData(
                 participants: $this->getParticipantsForDraw(),
-                type: DrawType::RANDOM,
+                type: $this->drawType(),
                 display: DrawDisplay::WHEEL,
                 weights: $this->participantWeights,
             )
         );
+    }
+
+    /**
+     * Type de tirage à utiliser par le composant hôte.
+     * Par défaut : tirage aléatoire uniforme. Les composants pondérés
+     * (ex: WeightedWheelPage) doivent surcharger cette méthode pour
+     * activer réellement la prise en compte des poids.
+     */
+    protected function drawType(): DrawType
+    {
+        return DrawType::RANDOM;
     }
 
     /**
