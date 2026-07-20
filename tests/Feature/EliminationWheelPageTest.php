@@ -3,8 +3,15 @@
 use App\Livewire\Draw\EliminationWheelPage;
 use Livewire\Livewire;
 
+// Note : EliminationWheelPage::MIN_PARTICIPANTS = 5 (contrairement à
+// WheelPage/WeightedWheelPage). Avec moins de 5 participants, start()
+// échoue silencieusement (error positionné, colors jamais initialisé),
+// donc started()/participantsAreLocked() restent false et toute la suite
+// du scénario testé (élimination, verrouillage...) ne se produit jamais.
+// Tous les tests ci-dessous utilisent donc au moins 5 participants.
+
 it('eliminates participants one by one until a single winner remains', function () {
-    $names = ['John', 'Jane', 'Bob', 'Alice'];
+    $names = ['John', 'Jane', 'Bob', 'Alice', 'Eve'];
 
     // Important : start() initialise l'état (couleurs, reset) mais NE lance
     // PAS de tirage — il remet même explicitement pendingElimination à null.
@@ -30,8 +37,8 @@ it('eliminates participants one by one until a single winner remains', function 
 
     expect($component->get('winner'))->not->toBeNull()
         ->and($names)->toContain($component->get('winner'))
-        ->and($component->get('eliminated'))->toHaveCount(3)
-        ->and(array_unique($component->get('eliminated')))->toHaveCount(3)
+        ->and($component->get('eliminated'))->toHaveCount(4)
+        ->and(array_unique($component->get('eliminated')))->toHaveCount(4)
         ->and($component->get('eliminated'))->not->toContain($component->get('winner'));
 });
 
@@ -47,7 +54,7 @@ it('requires at least two participants to start', function () {
 
 it('does not let a second round start while one is already pending', function () {
     $component = Livewire::test(EliminationWheelPage::class)
-        ->set('participants', ['John', 'Jane', 'Bob'])
+        ->set('participants', ['John', 'Jane', 'Bob', 'Alice', 'Eve'])
         ->call('handleAction');
 
     $pending = $component->get('pendingElimination');
@@ -62,7 +69,7 @@ it('does not let a second round start while one is already pending', function ()
 });
 
 it('restarts the game back to its initial participant list', function () {
-    $names = ['John', 'Jane', 'Bob'];
+    $names = ['John', 'Jane', 'Bob', 'Alice', 'Eve'];
 
     $component = Livewire::test(EliminationWheelPage::class)
         ->set('participants', $names)
@@ -81,14 +88,25 @@ it('restarts the game back to its initial participant list', function () {
 });
 
 it('locks participant editing once the elimination wheel has started', function () {
+    $names = ['John', 'Jane', 'Bob', 'Alice', 'Eve'];
+
     $component = Livewire::test(EliminationWheelPage::class)
-        ->set('participants', ['John', 'Jane', 'Bob'])
+        ->set('participants', $names)
         ->call('start');
 
+    // Précondition : si start() a échoué silencieusement (ex: participants
+    // < MIN_PARTICIPANTS), started() est false et ce test ne vérifierait
+    // plus rien du tout — on s'assure donc explicitement d'être verrouillé
+    // avant de tester le verrouillage lui-même.
+    expect($component->instance()->started())->toBeTrue();
+
     $component
-        ->set('participant', 'Alice')
+        ->set('participant', 'Zoe')
         ->call('addParticipant')
         ->call('removeParticipant', 0);
 
-    expect($component->get('participants'))->toHaveCount(3); // rien n'a changé : verrouillé
+    // Comparaison de contenu (pas seulement de taille) : un ajout suivi
+    // d'une suppression peut accidentellement retomber sur le même nombre
+    // d'éléments tout en ayant changé le contenu réel de la liste.
+    expect($component->get('participants'))->toBe($names);
 });

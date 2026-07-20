@@ -15,10 +15,9 @@ use Livewire\Component;
 /**
  * Page de tirage pondéré : chaque participant a une probabilité de gagner
  * proportionnelle à son poids plutôt qu'une chance strictement égale.
- *
- * Limite connue : les segments visuels de la roue restent de taille égale
- * (WheelSegmentBuilder n'a pas encore de variante pondérée) — seule la
- * probabilité de tirage réelle (côté Domain) tient compte du poids.
+ * Les segments visuels de la roue (WheelSegmentBuilder::build/rotationFor)
+ * reflètent également ce poids : un participant à 100 occupe une part
+ * bien plus large qu'un participant à 1.
  */
 class WeightedWheelPage extends Component
 {
@@ -39,6 +38,11 @@ class WeightedWheelPage extends Component
         $this->result = null;
     }
 
+    // Note : pas de #[\Override] ici — cet attribut ne valide que les
+    // méthodes héritées d'une classe mère ou d'une interface, pas celles
+    // fournies par un trait `use`d (HandlesDraw). Un #[\Override] sur une
+    // méthode qui ne fait que redéfinir une méthode de trait provoque un
+    // Fatal error à la compilation en PHP 8.3+.
     protected function drawType(): DrawType
     {
         return DrawType::WEIGHTED;
@@ -71,7 +75,8 @@ class WeightedWheelPage extends Component
             'wheel-spin',
             rotation: WheelSegmentBuilder::rotationFor(
                 $index,
-                count($this->participants)
+                count($this->participants),
+                weights: $this->participantWeights
             )
         );
     }
@@ -91,7 +96,8 @@ class WeightedWheelPage extends Component
     public function segments(): array
     {
         return WheelSegmentBuilder::build(
-            $this->participants
+            $this->participants,
+            weights: $this->participantWeights
         );
     }
 
@@ -111,4 +117,3 @@ class WeightedWheelPage extends Component
             ]);
     }
 }
-
