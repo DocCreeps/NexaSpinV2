@@ -12,6 +12,8 @@ $detectedColor = 'indigo';
 $detectedColor = 'rose';
 } elseif (str_contains($colorString, 'emerald') || str_contains($colorString, 'green')) {
 $detectedColor = 'emerald';
+} elseif (str_contains($colorString, 'amber') || str_contains($colorString, 'yellow')) {
+$detectedColor = 'amber';
 }
 
 // 3. On applique les classes correspondantes
@@ -27,6 +29,10 @@ $hoverClasses = $mode->available ? match ($detectedColor) {
 'emerald' => [
 'title' => 'group-hover:text-emerald-600',
 'button' => 'group-hover:bg-emerald-600 group-hover:text-white group-hover:border-transparent',
+],
+'amber' => [
+'title' => 'group-hover:text-amber-600',
+'button' => 'group-hover:bg-amber-600 group-hover:text-white group-hover:border-transparent',
 ],
 default => [
 'title' => 'group-hover:text-slate-600',
