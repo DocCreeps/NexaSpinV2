@@ -63,20 +63,6 @@
                     </div>
                     @endif
 
-                    {{-- RETOUR SUR LE PARI --}}
-                    @if($lastGuessCorrect !== null)
-                    <div x-show="finished" x-cloak @class([
-                        'mt-3 px-6 py-2.5 rounded-full font-bold text-sm shadow-sm flex items-center gap-2 border',
-                        'bg-emerald-50 text-emerald-600 border-emerald-200' => $lastGuessCorrect,
-                        'bg-red-50 text-red-600 border-red-200' => ! $lastGuessCorrect,
-                        ])>
-                        @if($lastGuessCorrect)
-                        ✅ Bien deviné, vous aviez parié sur {{ $guess }} !
-                        @else
-                        ❌ Raté, vous aviez parié sur {{ $guess }}
-                        @endif
-                    </div>
-                    @endif
 
 
                     {{-- BOUTON D'ACTION PRINCIPAL --}}
@@ -96,28 +82,43 @@
             {{-- COLONNE DROITE : AUTO + STATISTIQUES + HISTORIQUE --}}
             <div class="lg:col-span-5 space-y-6">
 
-                {{-- TIRAGE AUTOMATIQUE --}}
-                <div class="bg-white rounded-3xl shadow-sm border border-slate-200/50 p-5">
-                    <h2 class="font-black text-lg text-slate-800 mb-1 flex items-center gap-2">
-                        <span>🎲</span> Tirage automatique
-                    </h2>
-                    <p class="text-xs text-slate-400 mb-4">
-                        Enchaînez plusieurs tirages d'un coup, sans re-cliquer à chaque fois.
-                    </p>
+               {{-- TIRAGE AUTOMATIQUE --}}
+               <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-5 transition-all">
+                   <div class="mb-4">
+                       <h3 class="font-extrabold text-slate-800 flex items-center gap-2 text-base mb-1">
+                           <span class="text-lg">🎲</span> Tirage automatique
+                       </h3>
+                       <p class="text-xs text-slate-500 leading-relaxed">
+                           Enchaînez plusieurs lancés en une seule action.
+                       </p>
+                   </div>
 
-                    <div class="flex items-center gap-3">
-                        <input type="number" wire:model="autoFlipCount" min="2" max="100" class="w-24 rounded-xl border border-slate-200 px-3 py-2.5 text-center font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400">
+                   <div class="flex items-center gap-2.5">
+                       {{-- Champ Nombre avec suffixe visuel --}}
+                       <div class="relative w-28">
+                           <input type="number" wire:model.blur="autoFlipCount" min="2" max="100" class="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-center font-extrabold text-slate-800 text-sm focus:outline-none focus:bg-white focus:border-amber-400 focus:ring-4 focus:ring-amber-400/10 transition-all">
+                       </div>
 
-                        <button wire:click="flipMultiple" wire:loading.attr="disabled" wire:target="flip,flipMultiple" :disabled="flipping" class="flex-1 rounded-xl py-2.5 font-bold text-white shadow-sm bg-slate-800 hover:bg-slate-900 active:scale-[0.98] transition disabled:opacity-50 disabled:pointer-events-none">
-                            <span x-show="!flipping">
-                                Lancer {{ $autoFlipCount }} tirages
-                            </span>
-                            <span x-show="flipping" x-cloak>
-                                En cours...
-                            </span>
-                        </button>
-                    </div>
-                </div>
+                       {{-- Bouton d'action principal --}}
+                       <button wire:click="flipMultiple" wire:loading.attr="disabled" wire:target="flip,flipMultiple" :disabled="flipping" class="flex-1 rounded-2xl py-2.5 px-4 font-bold text-sm text-white bg-slate-900 hover:bg-slate-800 active:scale-[0.98] shadow-sm hover:shadow transition-all disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2">
+
+                           {{-- État normal --}}
+                           <span x-show="!flipping" class="flex items-center gap-2">
+                               Lancer {{ $autoFlipCount }} tirages
+                           </span>
+
+                           {{-- État pendant l'animation / chargement --}}
+                           <span x-show="flipping" x-cloak class="flex items-center gap-2">
+                               <svg class="animate-spin h-4 w-4 text-white/80" fill="none" viewBox="0 0 24 24">
+                                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                               </svg>
+                               <span>Tirage en cours...</span>
+                           </span>
+                       </button>
+                   </div>
+               </div>
+
 
                 {{-- STATISTIQUES --}}
                 <div class="bg-white rounded-3xl shadow-sm border border-slate-200/50 p-5">
@@ -157,7 +158,7 @@
 
                         @if(count($history))
                         <span class="text-[11px] font-semibold text-slate-400 bg-slate-100 px-2.5 py-0.5 rounded-full">
-                            {{ count($history) }} / {{ \App\Livewire\CoinFlip\CoinFlipPage::MAX_HISTORY ?? 200 }} max
+                            {{ count($history) }} / {{ \App\Livewire\CoinFlip\CoinFlipPage::MAX_HISTORY ?? 1000 }} max
                         </span>
                         @endif
                     </div>

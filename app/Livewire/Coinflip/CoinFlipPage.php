@@ -52,26 +52,6 @@ class CoinFlipPage extends Component
      */
     public int $autoFlipCount = 10;
 
-    /**
-     * Pari actif de l'utilisateur ("Pile" ou "Face").
-     */
-    public ?string $guess = null;
-
-    /**
-     * Indique si le dernier tirage correspondait au pari (null si aucun pari actif).
-     */
-    public ?bool $lastGuessCorrect = null;
-
-    /**
-     * Nombre total de tirages effectués avec un pari actif.
-     */
-    public int $guessedFlips = 0;
-
-    /**
-     * Nombre de paris réussis.
-     */
-    public int $correctGuesses = 0;
-
 
     /**
      * Effectue un tirage simple et déclenche l'animation.
@@ -117,10 +97,7 @@ class CoinFlipPage extends Component
         $this->result = null;
         $this->history = [];
         $this->error = null;
-        $this->guess = null;
-        $this->lastGuessCorrect = null;
-        $this->guessedFlips = 0;
-        $this->correctGuesses = 0;
+
 
         $this->dispatch('coin-flip-reset');
     }
@@ -167,17 +144,6 @@ class CoinFlipPage extends Component
 
         if (count($this->history) > self::MAX_HISTORY) {
             $this->history = array_slice($this->history, -self::MAX_HISTORY);
-        }
-
-        if ($this->guess !== null) {
-            $this->guessedFlips++;
-            $this->lastGuessCorrect = $this->guess === $face;
-
-            if ($this->lastGuessCorrect) {
-                $this->correctGuesses++;
-            }
-        } else {
-            $this->lastGuessCorrect = null;
         }
 
         return $face;
