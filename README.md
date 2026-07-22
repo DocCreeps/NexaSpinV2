@@ -1,3 +1,4 @@
+<div align="center">
 # 🎲 NexaSpin
 
 **Un projet d'apprentissage : refaire un tirage au sort en s'imposant une architecture propre**
@@ -7,7 +8,7 @@
 [![Livewire](https://img.shields.io/badge/Livewire-4-fb70a9?style=for-the-badge&logo=livewire&logoColor=white)](https://livewire.laravel.com)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com)
 [![Pest](https://img.shields.io/badge/Pest-4-019733?style=for-the-badge&logo=pest&logoColor=white)](https://pestphp.com)
-
+</div>
 ---
 
 ## 📖 Sommaire
