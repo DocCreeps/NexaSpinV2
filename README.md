@@ -46,7 +46,7 @@
 
 
 > **Aucune persistance en base de données** : les participants et résultats vivent dans l’état des composants Livewire (session uniquement).
-> **Déploiement continu** : synchronisation automatique de `master` vers un VPS via GitHub Actions (sans porte de qualité, voir [Dette technique](#-dette-technique)).
+> **Déploiement continu** : synchronisation automatique de `master` vers un VPS via GitHub Actions (sans porte de qualité, voir [Dette technique](#-dette-technique-et-limites-connues)).
 
 ---
 
