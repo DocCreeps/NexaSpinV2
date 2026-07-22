@@ -4,73 +4,70 @@ namespace App\Livewire\CoinFlip;
 
 use App\Application\CoinFlip\Actions\FlipCoinAction;
 use App\Application\Draw\Enums\DrawModeType;
+use App\Domain\CoinFlip\Enums\CoinSide;
+use App\Domain\CoinFlip\ValueObjects\CoinFlipBet;
+use App\Domain\CoinFlip\ValueObjects\CoinFlipResult;
 use Livewire\Component;
 
-/**
- * Composant de la page de tirage "Pile ou Face".
- */
 class CoinFlipPage extends Component
 {
-    /**
-     * Faces autorisées pour valider les paris.
-     *
-     * @var array<int, string>
-     */
     private const SIDES = ['Pile', 'Face'];
-
-    /**
-     * Limite de l'historique conservé en mémoire.
-     */
     private const MAX_HISTORY = 1000;
-
-    /**
-     * Limites de tirages pour le mode automatique.
-     */
     private const MIN_AUTO_FLIPS = 2;
-
     private const MAX_AUTO_FLIPS = 1000;
 
-    /**
-     * Dernier résultat tiré ("Pile" ou "Face").
-     */
     public ?string $result = null;
-
-    /**
-     * Historique chronologique des tirages de la session.
-     *
-     * @var array<int, string>
-     */
     public array $history = [];
-
-    /**
-     * Message d'erreur de validation pour l'interface utilisateur.
-     */
     public ?string $error = null;
 
     /**
-     * Nombre de tirages à exécuter en mode automatique.
+     * Par défaut à 1 (tirage simple). Si > 1, bascule automatiquement en tirage multiple.
      */
-    public int $autoFlipCount = 10;
+    public int $autoFlipCount = 1;
 
+    public ?string $bet = null;
+    public ?bool $lastBetWon = null;
+    public array $betHistory = [];
 
     /**
-     * Effectue un tirage simple et déclenche l'animation.
+     * Point d'entrée unique du bouton de lancement.
      */
+    public function launch(FlipCoinAction $action): void
+    {
+        if ($this->autoFlipCount > 1) {
+            $this->flipMultiple($action);
+        } else {
+            $this->flip($action);
+        }
+    }
+
+    public function selectBet(string $side): void
+    {
+        if (! in_array($side, ['pile', 'face'], true)) {
+            return;
+        }
+
+        $this->bet = $this->bet === $side ? null : $side;
+    }
+
     public function flip(FlipCoinAction $action): void
     {
         $this->error = null;
+        $this->lastBetWon = null;
 
-        $this->result = $this->performFlip($action);
+        $result = $this->performFlip($action);
+        $this->result = $result->side->label();
+
+        $this->evaluateBet($result);
 
         $this->dispatch('coin-flip', face: $this->result);
     }
 
-    /**
-     * Exécute une série de tirages automatiques et anime la pièce sur le dernier résultat.
-     */
     public function flipMultiple(FlipCoinAction $action): void
     {
         $this->error = null;
+        $this->bet = null;
+        $this->lastBetWon = null;
 
         if ($this->autoFlipCount < self::MIN_AUTO_FLIPS || $this->autoFlipCount > self::MAX_AUTO_FLIPS) {
             $this->error = sprintf(
@@ -83,36 +80,30 @@ class CoinFlipPage extends Component
         }
 
         for ($i = 0; $i < $this->autoFlipCount; $i++) {
-            $this->result = $this->performFlip($action);
+            $result = $this->performFlip($action);
+            $this->result = $result->side->label();
         }
 
         $this->dispatch('coin-flip', face: $this->result);
     }
 
-    /**
-     * Réinitialise l'historique et les statistiques de la session.
-     */
     public function resetHistory(): void
     {
         $this->result = null;
         $this->history = [];
         $this->error = null;
-
+        $this->bet = null;
+        $this->lastBetWon = null;
+        $this->betHistory = [];
 
         $this->dispatch('coin-flip-reset');
     }
 
-    /**
-     * Retourne le nombre total de tirages effectués.
-     */
     public function totalFlips(): int
     {
         return count($this->history);
     }
 
-    /**
-     * Retourne le nombre de tirages "Pile".
-     */
     public function pileCount(): int
     {
         return count(array_filter(
@@ -121,9 +112,6 @@ class CoinFlipPage extends Component
         ));
     }
 
-    /**
-     * Retourne le nombre de tirages "Face".
-     */
     public function faceCount(): int
     {
         return count(array_filter(
@@ -132,26 +120,50 @@ class CoinFlipPage extends Component
         ));
     }
 
-    /**
-     * Exécute la logique métier d'un tirage (historique, paris, limites).
-     */
-    private function performFlip(FlipCoinAction $action): string
+    public function betWinCount(): int
+    {
+        return count(array_filter($this->betHistory, fn(bool $won) => $won));
+    }
+
+    public function betLossCount(): int
+    {
+        return count(array_filter($this->betHistory, fn(bool $won) => ! $won));
+    }
+
+    public function betTotal(): int
+    {
+        return count($this->betHistory);
+    }
+
+    private function performFlip(FlipCoinAction $action): CoinFlipResult
     {
         $result = $action->execute();
-        $face = $result->side->label();
 
-        $this->history[] = $face;
+        $this->history[] = $result->side->label();
 
         if (count($this->history) > self::MAX_HISTORY) {
             $this->history = array_slice($this->history, -self::MAX_HISTORY);
         }
 
-        return $face;
+        return $result;
     }
 
-    /**
-     * Rendu de la vue Livewire avec son layout principal.
-     */
+    private function evaluateBet(CoinFlipResult $result): void
+    {
+        if ($this->bet === null) {
+            return;
+        }
+
+        $bet = new CoinFlipBet(CoinSide::from($this->bet), $result);
+
+        $this->lastBetWon = $bet->won();
+        $this->betHistory[] = $this->lastBetWon;
+
+        if (count($this->betHistory) > self::MAX_HISTORY) {
+            $this->betHistory = array_slice($this->betHistory, -self::MAX_HISTORY);
+        }
+    }
+
     public function render()
     {
         $mode = DrawModeType::COIN_FLIP->toDto();
