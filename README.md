@@ -267,7 +267,7 @@ composer run analyse
 *Par ordre de priorité.*
 
 
-- [ ] *Design** :
+- [ ] **Design** :
   - Responsive, accessibilité. 
 - [ ] **Ajouter des tests pour Pile ou face** :
   - `FlipCoinAction`, `RandomCoinFlipStrategy`, `CoinFlipPage`.
