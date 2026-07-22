@@ -33,13 +33,15 @@
 ## 📌 Statut du projet
 *Terrain d’expérimentation : une fonctionnalité simple (tirage au sort) pour se concentrer sur l’architecture.*
 
-| Mode | État | Détails |
-|------|------|---------|
-| 🎡 **Roue classique** | ✅ Fonctionnel | 1 tirage, 1 gagnant, immédiat. |
-| ⚔️ **Roue par élimination** | ✅ Fonctionnel | Tours successifs jusqu’au dernier survivant. |
-| 🎯 **Roue pondérée** | ✅ Fonctionnel | Les poids sont pris en compte dans le calcul du gagnant **et** dans la taille visuelle des segments SVG. |
-| 🪙 **Pile ou face** | ⚠️ **Fonctionnel mais non testé** | Carte active sur l’accueil, route et composant Livewire opérationnels. **Aucun test écrit** (voir [Fonctionnel mais incomplet](#-fonctionnel-mais-incomplet)). |
-| 👥 **Tirage par équipes** | 🔒 Non implémenté | Carte visible mais grisée sur l’accueil. |
+| Mode | Description | État | Détails |
+| --- | --- | --- | --- |
+| 🎡 Roue classique | Tirage aléatoire simple et rapide pour désigner un seul gagnant. | ✅ Fonctionnel |  |
+| ⚔️ Roue par élimination | Élimination progressive des participants jusqu'à ce qu'il n'en reste qu'un. | ✅ Fonctionnel |  |
+| 🎯 Roue pondérée | Tirage aléatoire où chaque participant a un poids personnalisé pour influencer les résultats. | ✅ Fonctionnel | |
+| 🪙 Pile ou face | Simule un lancer de pièce équitable entre deux options. | ⚠️ Fonctionnel mais non testé | Carte active sur l’accueil, route et composant Livewire opérationnels. Aucun test écrit (voir [Fonctionnel mais incomplet](#-fonctionnel-mais-incomplet)). |
+| 👥 Tirage par équipes | Permet de former des équipes de manière aléatoire (non encore développé). | 🔒 Non implémenté | Carte visible mais grisée sur l’accueil. |
+
+
 
 > **Aucune persistance en base de données** : les participants et résultats vivent dans l’état des composants Livewire (session uniquement).
 > **Déploiement continu** : synchronisation automatique de `master` vers un VPS via GitHub Actions (sans porte de qualité, voir [Dette technique](#-dette-technique)).
@@ -266,6 +268,9 @@ composer run analyse
   - `FlipCoinAction`, `RandomCoinFlipStrategy`, `CoinFlipPage`.
 - [ ] **Améliorer le pipeline de déploiement** :
   - Ajouter `composer test` et `composer run analyse` comme portes de qualité dans `deploy.yml`.
+- [ ] **Ajout des paris sur le résultats pile ou face** :
+  - Si un tirage a la fois score de paris sous le resulatta du nombre de pile/face.
+  - Ne pas mettre de paris pour tirage auto (inutile).
 - [ ] **Implémenter le mode manquant** :
   - Tirage par équipes (`DrawModeType::TEAMS`).
 - [ ] **Peaufiner Pile ou face** (voir `TODO`) :
