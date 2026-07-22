@@ -12,9 +12,9 @@ use Livewire\Component;
 class CoinFlipPage extends Component
 {
     private const SIDES = ['Pile', 'Face'];
-    private const MAX_HISTORY = 1000;
+    private const MAX_HISTORY = 5000;
     private const MIN_AUTO_FLIPS = 2;
-    private const MAX_AUTO_FLIPS = 1000;
+    private const MAX_AUTO_FLIPS = 500;
 
     public ?string $result = null;
     public array $history = [];
