@@ -1,5 +1,6 @@
 <div align="center">
-# 🎲 NexaSpin
+<h1>🎲 NexaSpin </h1>
+
 
 **Un projet d'apprentissage : refaire un tirage au sort en s'imposant une architecture propre**
 
