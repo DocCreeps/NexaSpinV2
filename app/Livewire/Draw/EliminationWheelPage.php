@@ -77,6 +77,19 @@ class EliminationWheelPage extends Component
     public bool $processing = false;
 
     /**
+     * Horodatage (microtime) du début du dernier spin, utilisé pour détecter un état bloqué
+     * (ex : la requête AJAX confirmElimination() ne part jamais suite à une coupure réseau
+     * pendant les 4.5s d'animation côté client).
+     */
+    public ?float $processingStartedAt = null;
+
+    /**
+     * Durée maximale (en secondes) au-delà de laquelle un "processing" est considéré bloqué.
+     * L'animation dure 4.5s côté frontend : on laisse une marge confortable.
+     */
+    private const STUCK_THRESHOLD_SECONDS = 8.0;
+
+    /**
      * Angle de rotation cumulé de la roue (évite les retours en arrière lors des lancers successifs).
      */
     public int $wheelRotation = 0;
@@ -148,6 +161,7 @@ class EliminationWheelPage extends Component
         $this->pendingElimination = null;
         $this->lastEliminated = null;
         $this->processing = false;
+        $this->processingStartedAt = null;
         $this->wheelRotation = 0;
 
         // Force Livewire à recalculer la propriété computed lors du prochain cycle de rendu
@@ -183,32 +197,19 @@ class EliminationWheelPage extends Component
             return;
         }
 
-        $totalParticipants = count($this->participants);
-        $slice = 360 / $totalParticipants;
+        // Délègue le calcul de rotation à WheelSegmentBuilder (source unique de vérité,
+        // partagée et testée indépendamment — voir WheelSegmentBuilderTest).
+        $rotation = WheelSegmentBuilder::cumulativeRotationFor(
+            targetIndex: $targetIndex,
+            total: count($this->participants),
+            currentRotation: $this->wheelRotation,
+        );
 
-        // Calcule l'angle cible pour amener le centre du segment sélectionné
-        // directement sous le pointeur situé à 12h (sommet).
-        $targetAngle = 360 - (($targetIndex * $slice) + ($slice / 2));
-        $targetAngle = fmod($targetAngle, 360);
-
-        if ($targetAngle < 0) {
-            $targetAngle += 360;
-        }
-
-        // Calcule une rotation minimale d'au moins 5 tours complets (1800°)
-        // cumulée à la rotation précédente pour éviter que la roue ne tourne à l'envers.
-        $minRotation = $this->wheelRotation + 1800;
-        $current = fmod($minRotation, 360);
-
-        $nextRotation = $targetAngle >= $current
-            ? $minRotation + ($targetAngle - $current)
-            : $minRotation + (360 - $current) + $targetAngle;
-
-        $delta = $nextRotation - $this->wheelRotation;
-        $this->wheelRotation = (int) $nextRotation;
+        $this->wheelRotation = $rotation['newRotation'];
 
         // On dispatch l'événement avec le delta de rotation pour que l'animation CSS s'applique correctement
-        $this->dispatch('wheel-spin', rotation: $delta);
+        $this->processingStartedAt = microtime(true);
+        $this->dispatch('wheel-spin', rotation: $rotation['delta']);
     }
 
     /**
@@ -246,6 +247,7 @@ class EliminationWheelPage extends Component
         }
 
         $this->processing = false;
+        $this->processingStartedAt = null;
 
         $this->dispatch('elimination-confirmed');
     }
@@ -263,6 +265,7 @@ class EliminationWheelPage extends Component
         $this->lastEliminated = null;
         $this->winner = null;
         $this->processing = false;
+        $this->processingStartedAt = null;
         $this->error = null;
         $this->wheelRotation = 0;
         $this->autoMode = false;
@@ -270,6 +273,35 @@ class EliminationWheelPage extends Component
         unset($this->segments);
 
         $this->dispatch('game-restarted');
+    }
+
+    /**
+     * Détecte un état "processing" resté bloqué anormalement longtemps — typiquement suite
+     * à une coupure réseau côté client pendant l'animation, empêchant confirmElimination()
+     * d'être jamais appelée. Utilisé côté vue pour proposer un bouton de déblocage.
+     */
+    public function isStuck(): bool
+    {
+        return $this->processing
+            && $this->processingStartedAt !== null
+            && (microtime(true) - $this->processingStartedAt) > self::STUCK_THRESHOLD_SECONDS;
+    }
+
+    /**
+     * Débloque manuellement un état "processing" figé, sans confirmer l'élimination en cours
+     * (le participant ciblé reste dans la partie ; l'utilisateur peut relancer un tirage).
+     * N'agit que si isStuck() est vrai, pour éviter toute interruption d'une animation légitime.
+     */
+    public function unstick(): void
+    {
+        if (! $this->isStuck()) {
+            return;
+        }
+
+        $this->processing = false;
+        $this->processingStartedAt = null;
+        $this->pendingElimination = null;
+        $this->error = "La roue semble bloquée : nouvelle tentative possible.";
     }
 
     /**

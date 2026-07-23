@@ -61,6 +61,20 @@
         </div>
         @endif
 
+        {{-- RÉCUPÉRATION EN CAS DE BLOCAGE (ex : coupure réseau pendant l'animation) --}}
+        {{-- wire:poll ne tourne que pendant "processing" : coût nul le reste du temps --}}
+        @if($processing)
+        <div wire:poll.3s="$refresh" x-data></div>
+        @endif
+        @if($this->isStuck())
+        <div class="rounded-2xl bg-amber-50 border border-amber-200 p-4 text-amber-700 flex items-center justify-between gap-4">
+            <span>⏳ La roue semble bloquée (connexion perdue pendant l'animation ?)</span>
+            <button wire:click="unstick" class="shrink-0 rounded-xl bg-amber-600 text-white font-bold text-sm px-4 py-2 hover:bg-amber-700 transition">
+                Débloquer
+            </button>
+        </div>
+        @endif
+
         {{-- GRILLE PRINCIPALE --}}
         <div class="grid lg:grid-cols-12 gap-8 items-start">
 

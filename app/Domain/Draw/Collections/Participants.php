@@ -72,7 +72,13 @@ final class Participants implements Countable, IteratorAggregate
     }
 
     /**
-     * Sélectionne un participant au hasard via array_rand (conservation des clés).
+     * Sélectionne un participant au hasard via random_int (CSPRNG).
+     *
+     * Note technique : on utilise volontairement random_int() plutôt qu'array_rand().
+     * array_rand() s'appuie sur le générateur Mersenne Twister de PHP, qui n'est pas
+     * cryptographiquement sûr et est prévisible si l'état interne est connu ou
+     * partiellement déduit. random_int() garantit un tirage réellement imprévisible,
+     * cohérent avec celui déjà utilisé par WeightedDrawStrategy.
      */
     public function random(): Participant
     {
@@ -82,7 +88,11 @@ final class Participants implements Countable, IteratorAggregate
             );
         }
 
-        return $this->items[array_rand($this->items)];
+        // On travaille sur les valeurs réindexées : $this->items peut contenir
+        // des clés non contiguës après suppression/élimination de participants.
+        $values = array_values($this->items);
+
+        return $values[random_int(0, count($values) - 1)];
     }
 
     /**

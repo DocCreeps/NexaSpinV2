@@ -92,6 +92,48 @@ class WheelSegmentBuilder
     }
 
     /**
+     * Calcule le delta de rotation (en degrés) à appliquer à une roue qui tourne déjà,
+     * de façon à ce qu'elle s'arrête sur la part ciblée sans jamais "reculer" visuellement.
+     *
+     * Centralise ici la logique auparavant dupliquée dans EliminationWheelPage::eliminateNext(),
+     * pour n'avoir qu'un seul endroit à maintenir/tester si l'algorithme évolue.
+     *
+     * @param  int  $currentRotation  Rotation cumulée déjà appliquée à la roue (degrés, peut dépasser 360).
+     * @param  int  $minSpins  Nombre minimal de tours complets à ajouter pour l'effet visuel (défaut : 5).
+     * @param  array<int, int>|null  $weights
+     * @return array{delta: int, newRotation: int} Delta à dispatcher au frontend, et nouvelle rotation cumulée à mémoriser.
+     */
+    public static function cumulativeRotationFor(
+        int $targetIndex,
+        int $total,
+        int $currentRotation,
+        int $minSpins = 5,
+        ?array $weights = null
+    ): array {
+        $bounds = self::segmentBounds($total, $weights);
+        [$startAngle, $endAngle] = $bounds[$targetIndex] ?? [0.0, 360 / max($total, 1)];
+        $midAngle = $startAngle + (($endAngle - $startAngle) / 2);
+
+        // Angle cible pour amener le centre de la part sous le pointeur (12h / sommet).
+        $targetAngle = fmod(360 - $midAngle, 360);
+        if ($targetAngle < 0) {
+            $targetAngle += 360;
+        }
+
+        $minRotation = $currentRotation + ($minSpins * 360);
+        $current = fmod($minRotation, 360);
+
+        $newRotation = $targetAngle >= $current
+            ? $minRotation + ($targetAngle - $current)
+            : $minRotation + (360 - $current) + $targetAngle;
+
+        return [
+            'delta' => (int) round($newRotation - $currentRotation),
+            'newRotation' => (int) round($newRotation),
+        ];
+    }
+
+    /**
      * Calcule les bornes [startAngle, endAngle] de chaque part.
      * Sans poids (ou poids invalides/somme nulle) : parts égales (comportement historique).
      * Avec poids : chaque part occupe une portion du cercle proportionnelle à son poids.
