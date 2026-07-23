@@ -12,104 +12,43 @@ use Livewire\Component;
 
 /**
  * Page de tirage de la Roue d'Élimination (Battle Royale).
- * Gère l'état d'un jeu où les participants sont éliminés un par un jusqu'au vainqueur final.
  */
 class EliminationWheelPage extends Component
 {
     use HandlesDraw;
     use ManagesParticipants;
 
-    /**
-     * Nombre maximal de segments pour lesquels on affiche encore le texte sur la roue.
-     * Au-delà, l'affichage devient illisible.
-     */
     private const MAX_LABELS_ON_WHEEL = 10;
-
-    /**
-     * Nombre minimal de participants requis pour démarrer une partie.
-     */
     private const MIN_PARTICIPANTS = 5;
 
-    /**
-     * Stocke les erreurs de validation ou de logique à afficher à l'utilisateur.
-     */
-    public ?string $error = null;
-
-    /**
-     * Copie de sauvegarde de la liste de départ pour pouvoir relancer une partie.
-     *
-     * @var array<int, string>
-     */
-    public array $initialParticipants = [];
-
-    /**
-     * Liste ordonnée des participants éliminés.
-     *
-     * @var array<int, string>
-     */
-    public array $eliminated = [];
-
-    /**
-     * Couleurs HSL figées par nom de participant au lancement du jeu.
-     *
-     * @var array<string, string>
-     */
-    public array $colors = [];
-
-    /**
-     * Participant désigné par le tirage en cours d'élimination (pendant que la roue tourne).
-     */
-    public ?string $pendingElimination = null;
-
-    /**
-     * Dernier participant à avoir été éliminé.
-     */
-    public ?string $lastEliminated = null;
-
-    /**
-     * Le vainqueur final de la roue (le dernier survivant).
-     */
-    public ?string $winner = null;
-
-    /**
-     * Indique si un tirage et son animation de rotation sont en cours.
-     */
-    public bool $processing = false;
-
-    /**
-     * Horodatage (microtime) du début du dernier spin, utilisé pour détecter un état bloqué
-     * (ex : la requête AJAX confirmElimination() ne part jamais suite à une coupure réseau
-     * pendant les 4.5s d'animation côté client).
-     */
-    public ?float $processingStartedAt = null;
-
-    /**
-     * Durée maximale (en secondes) au-delà de laquelle un "processing" est considéré bloqué.
-     * L'animation dure 4.5s côté frontend : on laisse une marge confortable.
-     */
+    /** Seuil d'abandon en secondes (animation frontend = 4.5s). */
     private const STUCK_THRESHOLD_SECONDS = 8.0;
 
-    /**
-     * Angle de rotation cumulé de la roue (évite les retours en arrière lors des lancers successifs).
-     */
-    public int $wheelRotation = 0;
+    public ?string $error = null;
 
-    /**
-     * Mode automatique : enchaîne les éliminations sans intervention de l'utilisateur.
-     */
+    /** @var array<int, string> */
+    public array $initialParticipants = [];
+
+    /** @var array<int, string> */
+    public array $eliminated = [];
+
+    /** @var array<string, string> */
+    public array $colors = [];
+
+    public ?string $pendingElimination = null;
+    public ?string $lastEliminated = null;
+    public ?string $winner = null;
+
+    public bool $processing = false;
+    public ?float $processingStartedAt = null;
+    public int $wheelRotation = 0;
     public bool $autoMode = false;
 
-    /**
-     * Verrouille la modification de la liste des participants dès que le jeu commence.
-     */
     protected function participantsAreLocked(): bool
     {
         return $this->started();
     }
 
-    /**
-     * Déclenche automatiquement l'action suivante lorsque le mode auto est activé.
-     */
     public function updatedAutoMode(bool $value): void
     {
         if ($value && ! $this->processing && ! $this->winner) {
@@ -117,10 +56,6 @@ class EliminationWheelPage extends Component
         }
     }
 
-    /**
-     * Point d'entrée unique de l'action utilisateur (Bouton principal).
-     * Lance le jeu s'il n'est pas commencé, ou procède à l'élimination suivante.
-     */
     public function handleAction(?RunDrawAction $action = null): void
     {
         $action = $action ?? app(RunDrawAction::class);
@@ -136,10 +71,6 @@ class EliminationWheelPage extends Component
         $this->eliminateNext($action);
     }
 
-    /**
-     * Initialise la partie : fige les participants, génère la palette de couleurs stables
-     * et réinitialise les états de progression.
-     */
     public function start(): void
     {
         $this->error = null;
@@ -164,16 +95,11 @@ class EliminationWheelPage extends Component
         $this->processingStartedAt = null;
         $this->wheelRotation = 0;
 
-        // Force Livewire à recalculer la propriété computed lors du prochain cycle de rendu
         unset($this->segments);
 
         $this->dispatch('start-ready');
     }
 
-    /**
-     * Sélectionne le prochain participant à éliminer via le Domaine, calcule l'angle
-     * de rotation requis et notifie le frontend (Alpine.js) pour lancer l'animation.
-     */
     public function eliminateNext(?RunDrawAction $action = null): void
     {
         $action = $action ?? app(RunDrawAction::class);
@@ -184,9 +110,7 @@ class EliminationWheelPage extends Component
 
         $this->processing = true;
 
-        // Exécute le cas d'utilisation (Application) via le trait HandlesDraw
         $result = $this->executeDraw($action);
-
         $this->pendingElimination = $result->winner->name;
 
         $targetIndex = array_search($this->pendingElimination, $this->participants, true);
@@ -197,8 +121,6 @@ class EliminationWheelPage extends Component
             return;
         }
 
-        // Délègue le calcul de rotation à WheelSegmentBuilder (source unique de vérité,
-        // partagée et testée indépendamment — voir WheelSegmentBuilderTest).
         $rotation = WheelSegmentBuilder::cumulativeRotationFor(
             targetIndex: $targetIndex,
             total: count($this->participants),
@@ -206,15 +128,13 @@ class EliminationWheelPage extends Component
         );
 
         $this->wheelRotation = $rotation['newRotation'];
-
-        // On dispatch l'événement avec le delta de rotation pour que l'animation CSS s'applique correctement
         $this->processingStartedAt = microtime(true);
+
         $this->dispatch('wheel-spin', rotation: $rotation['delta']);
     }
 
     /**
-     * Confirme l'élimination du participant désigné.
-     * Cette méthode est appelée par le frontend (Alpine.js) une fois l'animation de la roue terminée.
+     * Confirme l'élimination du participant (appelé par Alpine.js fin d'animation).
      */
     public function confirmElimination(): void
     {
@@ -230,7 +150,6 @@ class EliminationWheelPage extends Component
             $this->eliminated[] = $player;
             $this->lastEliminated = $player;
 
-            // Retire le joueur de la liste active et réindexe le tableau
             $this->participants = array_values(
                 array_diff($this->participants, [$player])
             );
@@ -240,7 +159,6 @@ class EliminationWheelPage extends Component
 
         $this->pendingElimination = null;
 
-        // S'il ne reste qu'un seul survivant, le jeu est terminé et nous avons notre vainqueur !
         if (count($this->participants) === 1) {
             $this->winner = $this->participants[0];
             $this->autoMode = false;
@@ -252,9 +170,6 @@ class EliminationWheelPage extends Component
         $this->dispatch('elimination-confirmed');
     }
 
-    /**
-     * Réinitialise complètement l'état de la page pour rejouer avec la liste initiale.
-     */
     public function restart(): void
     {
         $this->participants = $this->initialParticipants;
@@ -276,9 +191,7 @@ class EliminationWheelPage extends Component
     }
 
     /**
-     * Détecte un état "processing" resté bloqué anormalement longtemps — typiquement suite
-     * à une coupure réseau côté client pendant l'animation, empêchant confirmElimination()
-     * d'être jamais appelée. Utilisé côté vue pour proposer un bouton de déblocage.
+     * Détecte un état "processing" bloqué (ex: déconnexion réseau durant le spin).
      */
     public function isStuck(): bool
     {
@@ -287,11 +200,6 @@ class EliminationWheelPage extends Component
             && (microtime(true) - $this->processingStartedAt) > self::STUCK_THRESHOLD_SECONDS;
     }
 
-    /**
-     * Débloque manuellement un état "processing" figé, sans confirmer l'élimination en cours
-     * (le participant ciblé reste dans la partie ; l'utilisateur peut relancer un tirage).
-     * N'agit que si isStuck() est vrai, pour éviter toute interruption d'une animation légitime.
-     */
     public function unstick(): void
     {
         if (! $this->isStuck()) {
@@ -304,25 +212,17 @@ class EliminationWheelPage extends Component
         $this->error = "La roue semble bloquée : nouvelle tentative possible.";
     }
 
-    /**
-     * Indique si la partie a démarré (palette de couleurs initialisée).
-     */
     public function started(): bool
     {
         return $this->colors !== [];
     }
 
-    /**
-     * Indique si le nombre minimal de participants est atteint pour démarrer la partie.
-     */
     public function canStart(): bool
     {
         return count($this->participants) >= self::MIN_PARTICIPANTS;
     }
 
     /**
-     * Propriété calculée (Computed) contenant les tracés et configurations géométriques SVG des parts.
-     *
      * @return array<int, array{name: string, color: string, path: ?string, fullCircle: bool, labelTransform: string}>
      */
     #[Computed]
@@ -334,17 +234,11 @@ class EliminationWheelPage extends Component
         );
     }
 
-    /**
-     * Détermine s'il convient d'afficher les textes sur les segments de la roue.
-     */
     public function showLabelsOnWheel(): bool
     {
         return count($this->participants) <= self::MAX_LABELS_ON_WHEEL;
     }
 
-    /**
-     * Rendu du composant Livewire au sein du layout de l'application.
-     */
     public function render()
     {
         $mode = DrawModeType::ELIMINATION->toDto();
@@ -356,4 +250,3 @@ class EliminationWheelPage extends Component
             ]);
     }
 }
-

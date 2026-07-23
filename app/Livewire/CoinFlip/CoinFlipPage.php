@@ -9,6 +9,9 @@ use App\Domain\CoinFlip\ValueObjects\CoinFlipBet;
 use App\Domain\CoinFlip\ValueObjects\CoinFlipResult;
 use Livewire\Component;
 
+/**
+ * Composant de pile ou face (tirage unique, multiple et gestion des paris).
+ */
 class CoinFlipPage extends Component
 {
     private const SIDES = ['Pile', 'Face'];
@@ -21,30 +24,17 @@ class CoinFlipPage extends Component
     public array $history = [];
     public ?string $error = null;
 
-    /**
-     * Par défaut à 1 (tirage simple). Si > 1, bascule automatiquement en tirage multiple.
-     */
+    /** Si > 1, bascule automatiquement en tirage multiple */
     public int $autoFlipCount = 1;
 
     public ?string $bet = null;
     public ?bool $lastBetWon = null;
     public array $betHistory = [];
 
-    /**
-     * Libellés personnalisables des deux faces.
-     * Le reste du composant (pièce, paris, historique, statistiques) ne
-     * manipule jamais ces textes directement : il travaille toujours avec
-     * l'identifiant stable de la face (CoinSide::PILE->value / FACE->value)
-     * et ne fait appel à $pileLabel / $faceLabel qu'au moment de l'affichage,
-     * via label(). Cela garantit que renommer les faces se répercute
-     * immédiatement partout, y compris sur l'historique déjà généré.
-     */
+    /** Libellés personnalisables des faces (la logique utilise CoinSide::value) */
     public string $pileLabel = 'Pile';
     public string $faceLabel = 'Face';
 
-    /**
-     * Point d'entrée unique du bouton de lancement.
-     */
     public function launch(FlipCoinAction $action): void
     {
         if ($this->autoFlipCount > 1) {
@@ -64,20 +54,13 @@ class CoinFlipPage extends Component
     }
 
     /**
-     * Retourne le libellé personnalisé (ou par défaut) pour une face donnée.
-     * Point d'entrée unique utilisé par la vue pour l'affichage : le pari,
-     * la pièce, l'historique et les statistiques y font tous appel afin
-     * qu'un changement de libellé se répercute partout instantanément.
+     * Retourne le libellé personnalisé d'une face pour l'affichage dans la vue.
      */
     public function label(string $side): string
     {
         return $side === CoinSide::PILE->value ? $this->pileLabel : $this->faceLabel;
     }
 
-    /**
-     * Nettoie et borne un libellé saisi par l'utilisateur : espaces superflus
-     * retirés, longueur limitée, et retour au libellé par défaut si vide.
-     */
     public function updatedPileLabel(): void
     {
         $this->pileLabel = $this->sanitizeLabel($this->pileLabel, 'Pile');
@@ -88,9 +71,6 @@ class CoinFlipPage extends Component
         $this->faceLabel = $this->sanitizeLabel($this->faceLabel, 'Face');
     }
 
-    /**
-     * Réinitialise les deux libellés à leurs valeurs par défaut.
-     */
     public function resetLabels(): void
     {
         $this->pileLabel = 'Pile';

@@ -3,23 +3,20 @@
 namespace App\Application\Draw\Support;
 
 /**
- * Générateur géométrique et visuel (SVG) pour afficher une roue de la fortune.
- * Calcule les coordonnées, tracés et rotations des portions de la roue.
+ * Générateur géométrique SVG et calculateur de rotation pour roue de la fortune.
  */
 class WheelSegmentBuilder
 {
-    private const RADIUS = 150;       // Rayon de la roue en pixels.
-
-    private const CENTER = 150;       // Coordonnées X/Y du centre (conçu pour une viewBox de 300x300).
-
-    private const DEFAULT_SPINS = 6;  // Nombre de rotations complètes pour simuler l'élan visuel.
+    private const RADIUS = 150;
+    private const CENTER = 150; // Pour viewBox 300x300
+    private const DEFAULT_SPINS = 6;
 
     /**
-     * Calcule et formate les données SVG (paths, couleurs, positions de texte) de chaque part.
+     * Génère les données SVG (paths, couleurs, positions de texte) de chaque segment.
      *
      * @param  array<int, string>  $names
-     * @param  array<string, string>|null  $colors  Mappage optionnel pour figer les couleurs lors d'éliminations.
-     * @param  array<int, int>|null  $weights  Poids optionnels (même index que $names) ; parts proportionnelles si fourni, égales sinon.
+     * @param  array<string, string>|null  $colors Mappage optionnel des couleurs
+     * @param  array<int, int>|null  $weights Poids optionnels par index
      * @return array<int, array{name: string, color: string, path: ?string, fullCircle: bool, labelTransform: string}>
      */
     public static function build(array $names, ?array $colors = null, ?array $weights = null): array
@@ -32,8 +29,7 @@ class WheelSegmentBuilder
 
         $bounds = self::segmentBounds($total, $weights);
 
-        /** @var array<int, array{name: string, color: string, path: ?string, fullCircle: bool, labelTransform: string}> $segments */
-        $segments = collect($names)
+        return collect($names)
             ->values()
             ->map(function (string $name, int $index) use ($bounds, $total, $colors): array {
                 [$startAngle, $endAngle] = $bounds[$index];
@@ -42,21 +38,16 @@ class WheelSegmentBuilder
                 return [
                     'name' => $name,
                     'color' => $colors[$name] ?? self::colorFor($index, $total),
-                    // Un seul participant = cercle complet (360°). Un tracé SVG standard échoue si départ = arrivée.
-                    // On bascule donc l'affichage sur une balise <circle> côté frontend.
-                    'fullCircle' => $total === 1,
+                    'fullCircle' => $total === 1, // Repli sur balise <circle> si participant unique
                     'path' => $total === 1 ? null : self::arcPath($startAngle, $endAngle),
                     'labelTransform' => self::labelTransform($midAngle),
                 ];
             })
             ->all();
-
-        return $segments;
     }
 
     /**
-     * Génère une palette statique de couleurs HSL basée sur la liste initiale de noms.
-     * Permet de conserver les mêmes couleurs par participant même si le nombre de parts diminue.
+     * Génère une palette HSL statique indexée par nom.
      *
      * @param  array<int, string>  $names
      * @return array<string, string>
@@ -72,10 +63,9 @@ class WheelSegmentBuilder
     }
 
     /**
-     * Calcule l'angle de rotation CSS final (en degrés) pour que la part ciblée s'arrête
-     * précisément sous le curseur de sélection (situé au sommet à 12h / 90° de décalage).
+     * Calcule la rotation CSS finale (degrés) pour stopper la cible à 12h.
      *
-     * @param  array<int, int>|null  $weights  Mêmes poids que ceux passés à build(), pour cibler le centre exact d'une part de taille variable.
+     * @param  array<int, int>|null  $weights
      */
     public static function rotationFor(
         int $targetIndex,
@@ -87,34 +77,26 @@ class WheelSegmentBuilder
         [$startAngle, $endAngle] = $bounds[$targetIndex] ?? [0.0, 360 / max($total, 1)];
         $targetAngle = $startAngle + (($endAngle - $startAngle) / 2);
 
-        // Somme des tours complets + complément angulaire pour ramener le centre de la part à 12h.
         return ($spins * 360) + (360 - $targetAngle);
     }
 
     /**
-     * Calcule le delta de rotation (en degrés) à appliquer à une roue qui tourne déjà,
-     * de façon à ce qu'elle s'arrête sur la part ciblée sans jamais "reculer" visuellement.
+     * Calcule la rotation cumulée minimale sans effet de retour en arrière.
      *
-     * Centralise ici la logique auparavant dupliquée dans EliminationWheelPage::eliminateNext(),
-     * pour n'avoir qu'un seul endroit à maintenir/tester si l'algorithme évolue.
-     *
-     * @param  int  $currentRotation  Rotation cumulée déjà appliquée à la roue (degrés, peut dépasser 360).
-     * @param  int  $minSpins  Nombre minimal de tours complets à ajouter pour l'effet visuel (défaut : 5).
      * @param  array<int, int>|null  $weights
-     * @return array{delta: int, newRotation: int} Delta à dispatcher au frontend, et nouvelle rotation cumulée à mémoriser.
+     * @return array{delta: int, newRotation: int}
      */
     public static function cumulativeRotationFor(
         int $targetIndex,
         int $total,
         int $currentRotation,
-        int $minSpins = 5,
+        int $minSpins = self::DEFAULT_SPINS,
         ?array $weights = null
     ): array {
         $bounds = self::segmentBounds($total, $weights);
         [$startAngle, $endAngle] = $bounds[$targetIndex] ?? [0.0, 360 / max($total, 1)];
         $midAngle = $startAngle + (($endAngle - $startAngle) / 2);
 
-        // Angle cible pour amener le centre de la part sous le pointeur (12h / sommet).
         $targetAngle = fmod(360 - $midAngle, 360);
         if ($targetAngle < 0) {
             $targetAngle += 360;
@@ -134,9 +116,7 @@ class WheelSegmentBuilder
     }
 
     /**
-     * Calcule les bornes [startAngle, endAngle] de chaque part.
-     * Sans poids (ou poids invalides/somme nulle) : parts égales (comportement historique).
-     * Avec poids : chaque part occupe une portion du cercle proportionnelle à son poids.
+     * Calcule les angles [startAngle, endAngle] de chaque part selon leur poids.
      *
      * @param  array<int, int>|null  $weights
      * @return array<int, array{0: float, 1: float}>
@@ -163,9 +143,7 @@ class WheelSegmentBuilder
     }
 
     /**
-     * Nettoie et complète le tableau de poids : poids manquants ou <= 0 remplacés par 1
-     * (un participant sans poids valide garde une part minimale plutôt que de disparaître).
-     * Retombe sur des poids uniformes si $weights est absent ou vide.
+     * Normalise le tableau de poids (remplace les poids invalides ou <= 0 par 1).
      *
      * @param  array<int, int>|null  $weights
      * @return array<int, int>
@@ -187,7 +165,7 @@ class WheelSegmentBuilder
     }
 
     /**
-     * Distribue équitablement les couleurs sur le cercle chromatique (de 0° à 360°).
+     * Génère une couleur HSL équilibrée sur le cercle chromatique.
      */
     private static function colorFor(int $index, int $total): string
     {
@@ -197,7 +175,7 @@ class WheelSegmentBuilder
     }
 
     /**
-     * Calcule la commande d'un chemin (path) SVG représentant une portion (arc de cercle) de la roue.
+     * Génère le path SVG d'un arc de cercle.
      */
     private static function arcPath(float $startAngle, float $endAngle): string
     {
@@ -206,34 +184,24 @@ class WheelSegmentBuilder
 
         $start = self::polarToCartesian($center, $center, $radius, $endAngle);
         $end = self::polarToCartesian($center, $center, $radius, $startAngle);
-
-        // Si l'arc de la part fait plus de 180°, le drapeau SVG Large Arc doit passer à 1.
         $largeArcFlag = ($endAngle - $startAngle) > 180 ? 1 : 0;
 
-        // Commande d'arc SVG : Déplacement au centre -> Ligne vers le point de départ -> Tracé de l'arc -> Retour au centre (Z).
         return "M {$center},{$center} L {$start['x']},{$start['y']} A {$radius},{$radius} 0 {$largeArcFlag},0 {$end['x']},{$end['y']} Z";
     }
 
     /**
-     * Positionne et oriente l'étiquette de texte au sein de sa portion de roue.
+     * Calcule la transformation CSS (position et rotation) du texte du segment.
      */
     private static function labelTransform(float $midAngle): string
     {
-        $labelRadius = self::RADIUS * 0.65; // Place le texte à 65% du rayon (centré visuellement).
-        $center = self::CENTER;
-
-        $point = self::polarToCartesian($center, $center, $labelRadius, $midAngle);
-
-        // Retourne le texte de 180° sur la partie gauche du cercle (entre 180° et 360°)
-        // pour qu'il soit écrit de gauche à droite et lisible sans pencher la tête.
-        $rotation = $midAngle <= 180 ? $midAngle - 90 : $midAngle + 90;
+        $point = self::polarToCartesian(self::CENTER, self::CENTER, self::RADIUS * 0.65, $midAngle);
+        $rotation = $midAngle <= 180 ? $midAngle - 90 : $midAngle + 90; // Inverse le texte sur le demi-cercle gauche pour la lisibilité
 
         return "translate({$point['x']}, {$point['y']}) rotate({$rotation})";
     }
 
     /**
-     * Convertit un angle polaire (rayon, angle) en coordonnées cartésiennes (X, Y).
-     * Le décalage de -90° réaligne le point d'origine (0°) au sommet du cercle (12h).
+     * Convertit des coordonnées polaires en cartésiennes (-90° pour caler 0° à 12h).
      *
      * @return array{x: float, y: float}
      */

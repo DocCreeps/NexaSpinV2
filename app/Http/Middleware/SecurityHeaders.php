@@ -7,11 +7,7 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Ajoute des en-têtes de sécurité HTTP en défense en profondeur.
- *
- * Aucune faille XSS connue dans l'application (pas d'echo brut Blade),
- * mais ces en-têtes limitent l'impact d'une éventuelle régression future
- * (ex: ajout accidentel de {!! !!} ou d'un innerHTML côté JS).
+ * Middleware d'injection des en-têtes de sécurité HTTP (défense en profondeur).
  */
 class SecurityHeaders
 {
@@ -20,10 +16,7 @@ class SecurityHeaders
         /** @var Response $response */
         $response = $next($request);
 
-        // En développement, Vite sert les assets (dont le CSS compilé par Tailwind) et le HMR
-        // depuis une origine séparée (ex: http://localhost:5173) via <script type="module">
-        // + une connexion WebSocket. Une CSP stricte en 'self' casse ce chargement — d'où
-        // l'absence totale de style Tailwind observée. On n'applique donc la CSP qu'en prod.
+        // CSP appliquée uniquement en prod (Vite/HMR requièrent un serveur d'assets séparé en dev)
         if (app()->environment('production')) {
             $response->headers->set(
                 'Content-Security-Policy',
