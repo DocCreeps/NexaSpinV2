@@ -4,7 +4,6 @@ namespace App\Livewire\Draw;
 
 use App\Application\Draw\Actions\RunDrawAction;
 use App\Application\Draw\Enums\DrawModeType;
-
 use App\Application\Draw\Support\WheelSegmentBuilder;
 use App\Domain\Draw\Enums\DrawType;
 use App\Livewire\Draw\Concerns\HandlesDraw;
@@ -13,11 +12,7 @@ use Livewire\Attributes\Computed;
 use Livewire\Component;
 
 /**
- * Page de tirage pondéré : chaque participant a une probabilité de gagner
- * proportionnelle à son poids plutôt qu'une chance strictement égale.
- * Les segments visuels de la roue (WheelSegmentBuilder::build/rotationFor)
- * reflètent également ce poids : un participant à 100 occupe une part
- * bien plus large qu'un participant à 1.
+ * Composant de tirage au sort pondéré (roue de la fortune avec probabilités).
  */
 class WeightedWheelPage extends Component
 {
@@ -25,24 +20,19 @@ class WeightedWheelPage extends Component
     use ManagesParticipants;
 
     private const MAX_LABELS_ON_WHEEL = 10;
-
-    /**
-     * Nombre minimal de participants requis pour lancer un tirage pondéré.
-     */
     private const MIN_PARTICIPANTS = 3;
 
     public ?string $result = null;
+
+    /** Rotation cumulée appliquée à la roue (degrés) */
+    public int $wheelRotation = 0;
 
     protected function afterParticipantsChanged(): void
     {
         $this->result = null;
     }
 
-    // Note : pas de #[\Override] ici — cet attribut ne valide que les
-    // méthodes héritées d'une classe mère ou d'une interface, pas celles
-    // fournies par un trait `use`d (HandlesDraw). Un #[\Override] sur une
-    // méthode qui ne fait que redéfinir une méthode de trait provoque un
-    // Fatal error à la compilation en PHP 8.3+.
+    // Pas de #[\Override] : redéfinit une méthode de trait (HandlesDraw), ce qui déclenche un Fatal Error en PHP 8.3+
     protected function drawType(): DrawType
     {
         return DrawType::WEIGHTED;
@@ -71,19 +61,18 @@ class WeightedWheelPage extends Component
 
         $this->result = $winner->name;
 
-        $this->dispatch(
-            'wheel-spin',
-            rotation: WheelSegmentBuilder::rotationFor(
-                $index,
-                count($this->participants),
-                weights: $this->participantWeights
-            )
+        $rotation = WheelSegmentBuilder::cumulativeRotationFor(
+            targetIndex: $index,
+            total: count($this->participants),
+            currentRotation: $this->wheelRotation,
+            weights: $this->participantWeights,
         );
+
+        $this->wheelRotation = $rotation['newRotation'];
+
+        $this->dispatch('wheel-spin', rotation: $rotation['delta']);
     }
 
-    /**
-     * Indique si le nombre minimal de participants est atteint pour activer le bouton de tirage.
-     */
     public function canDraw(): bool
     {
         return count($this->participants) >= self::MIN_PARTICIPANTS;

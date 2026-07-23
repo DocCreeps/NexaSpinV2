@@ -9,29 +9,32 @@ use App\Domain\CoinFlip\ValueObjects\CoinFlipBet;
 use App\Domain\CoinFlip\ValueObjects\CoinFlipResult;
 use Livewire\Component;
 
+/**
+ * Composant de pile ou face (tirage unique, multiple et gestion des paris).
+ */
 class CoinFlipPage extends Component
 {
     private const SIDES = ['Pile', 'Face'];
     private const MAX_HISTORY = 5000;
     private const MIN_AUTO_FLIPS = 2;
     private const MAX_AUTO_FLIPS = 500;
+    private const MAX_LABEL_LENGTH = 16;
 
     public ?string $result = null;
     public array $history = [];
     public ?string $error = null;
 
-    /**
-     * Par défaut à 1 (tirage simple). Si > 1, bascule automatiquement en tirage multiple.
-     */
+    /** Si > 1, bascule automatiquement en tirage multiple */
     public int $autoFlipCount = 1;
 
     public ?string $bet = null;
     public ?bool $lastBetWon = null;
     public array $betHistory = [];
 
-    /**
-     * Point d'entrée unique du bouton de lancement.
-     */
+    /** Libellés personnalisables des faces (la logique utilise CoinSide::value) */
+    public string $pileLabel = 'Pile';
+    public string $faceLabel = 'Face';
+
     public function launch(FlipCoinAction $action): void
     {
         if ($this->autoFlipCount > 1) {
@@ -50,13 +53,48 @@ class CoinFlipPage extends Component
         $this->bet = $this->bet === $side ? null : $side;
     }
 
+    /**
+     * Retourne le libellé personnalisé d'une face pour l'affichage dans la vue.
+     */
+    public function label(string $side): string
+    {
+        return $side === CoinSide::PILE->value ? $this->pileLabel : $this->faceLabel;
+    }
+
+    public function updatedPileLabel(): void
+    {
+        $this->pileLabel = $this->sanitizeLabel($this->pileLabel, 'Pile');
+    }
+
+    public function updatedFaceLabel(): void
+    {
+        $this->faceLabel = $this->sanitizeLabel($this->faceLabel, 'Face');
+    }
+
+    public function resetLabels(): void
+    {
+        $this->pileLabel = 'Pile';
+        $this->faceLabel = 'Face';
+    }
+
+    private function sanitizeLabel(string $value, string $default): string
+    {
+        $value = trim($value);
+
+        if ($value === '') {
+            return $default;
+        }
+
+        return mb_substr($value, 0, self::MAX_LABEL_LENGTH);
+    }
+
     public function flip(FlipCoinAction $action): void
     {
         $this->error = null;
         $this->lastBetWon = null;
 
         $result = $this->performFlip($action);
-        $this->result = $result->side->label();
+        $this->result = $result->side->value;
 
         $this->evaluateBet($result);
 
@@ -81,7 +119,7 @@ class CoinFlipPage extends Component
 
         for ($i = 0; $i < $this->autoFlipCount; $i++) {
             $result = $this->performFlip($action);
-            $this->result = $result->side->label();
+            $this->result = $result->side->value;
         }
 
         $this->dispatch('coin-flip', face: $this->result);
@@ -108,7 +146,7 @@ class CoinFlipPage extends Component
     {
         return count(array_filter(
             $this->history,
-            fn(string $face) => $face === 'Pile'
+            fn(string $side) => $side === CoinSide::PILE->value
         ));
     }
 
@@ -116,7 +154,7 @@ class CoinFlipPage extends Component
     {
         return count(array_filter(
             $this->history,
-            fn(string $face) => $face === 'Face'
+            fn(string $side) => $side === CoinSide::FACE->value
         ));
     }
 
@@ -139,7 +177,7 @@ class CoinFlipPage extends Component
     {
         $result = $action->execute();
 
-        $this->history[] = $result->side->label();
+        $this->history[] = $result->side->value;
 
         if (count($this->history) > self::MAX_HISTORY) {
             $this->history = array_slice($this->history, -self::MAX_HISTORY);
