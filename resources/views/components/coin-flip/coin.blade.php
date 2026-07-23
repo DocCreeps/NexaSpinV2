@@ -1,5 +1,7 @@
 @props([
 'event' => 'coin-flip',
+'pileLabel' => 'Pile',
+'faceLabel' => 'Face',
 ])
 
 <div {{ $attributes->class(['relative w-44 h-44 sm:w-52 sm:h-52 mx-auto select-none']) }} style="perspective: 1000px;" x-data="{
@@ -9,7 +11,7 @@
      }" x-on:{{ $event }}.window="
         isFlipping = true;
         spins++;
-        rotation = (spins * 1080) + ($event.detail.face === 'Pile' ? 180 : 0);
+        rotation = (spins * 1080) + ($event.detail.face === 'pile' ? 180 : 0);
 
         setTimeout(() => {
             isFlipping = false;
@@ -33,9 +35,9 @@
                     bg-gradient-to-br from-amber-300 via-amber-400 to-amber-500
                     border-4 border-amber-200 shadow-lg" style="backface-visibility: hidden;">
 
-            <div class="w-[88%] h-[88%] rounded-full border border-amber-600/30 flex items-center justify-center">
-                <span class="text-2xl sm:text-3xl font-extrabold text-amber-950 tracking-wider">
-                    FACE
+            <div class="w-[88%] h-[88%] rounded-full border border-amber-600/30 flex items-center justify-center px-2">
+                <span class="text-xl sm:text-2xl font-extrabold text-amber-950 tracking-wider uppercase text-center break-words">
+                    {{ $faceLabel }}
                 </span>
             </div>
         </div>
@@ -45,9 +47,9 @@
                     bg-gradient-to-br from-slate-200 via-slate-300 to-slate-400
                     border-4 border-slate-100 shadow-lg" style="backface-visibility: hidden; transform: rotateY(180deg);">
 
-            <div class="w-[88%] h-[88%] rounded-full border border-slate-500/30 flex items-center justify-center">
-                <span class="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-wider">
-                    PILE
+            <div class="w-[88%] h-[88%] rounded-full border border-slate-500/30 flex items-center justify-center px-2">
+                <span class="text-xl sm:text-2xl font-extrabold text-slate-800 tracking-wider uppercase text-center break-words">
+                    {{ $pileLabel }}
                 </span>
             </div>
         </div>

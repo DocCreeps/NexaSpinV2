@@ -50,10 +50,32 @@
             <div class="lg:col-span-7">
                 <div class="bg-white rounded-3xl shadow-sm border border-slate-200/50 p-8 flex flex-col items-center min-h-[420px] justify-center">
 
+                    {{-- PERSONNALISATION DES LIBELLÉS --}}
+                    <div class="w-full max-w-sm mb-8">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                                Personnaliser les faces
+                            </span>
+                            <button type="button" wire:click="resetLabels" class="text-[11px] font-semibold text-slate-400 hover:text-amber-600 transition">
+                                Réinitialiser
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <div class="relative">
+                                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Pile</label>
+                                <input type="text" wire:model.live.debounce.400ms="pileLabel" maxlength="16" placeholder="Pile" class="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-sm font-bold text-slate-800 focus:outline-none focus:bg-white focus:border-amber-400 focus:ring-4 focus:ring-amber-400/10 transition-all">
+                            </div>
+                            <div class="relative">
+                                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Face</label>
+                                <input type="text" wire:model.live.debounce.400ms="faceLabel" maxlength="16" placeholder="Face" class="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-sm font-bold text-slate-800 focus:outline-none focus:bg-white focus:border-amber-400 focus:ring-4 focus:ring-amber-400/10 transition-all">
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="relative" wire:key="coin-wrapper">
                         {{-- Halo lumineux derrière la pièce --}}
                         <div class="absolute inset-0 bg-amber-400/10 blur-3xl rounded-full"></div>
-                        <x-coin-flip.coin />
+                        <x-coin-flip.coin :pile-label="$pileLabel" :face-label="$faceLabel" />
                     </div>
 
                     {{-- CONTRÔLE DE LANCER UNIQUE & CHOIX DU NOMBRE DE TIRAGES --}}
@@ -115,12 +137,12 @@
                         <button type="button" wire:click="selectBet('pile')" :disabled="flipping" @class([ 'rounded-2xl py-3 font-bold text-sm border transition-all active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none' , 'bg-slate-900 border-slate-900 text-white shadow-sm'=> $bet === 'pile',
                             'bg-slate-50 border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-100' => $bet !== 'pile',
                             ])>
-                            Pile
+                            {{ $pileLabel }}
                         </button>
                         <button type="button" wire:click="selectBet('face')" :disabled="flipping" @class([ 'rounded-2xl py-3 font-bold text-sm border transition-all active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none' , 'bg-gradient-to-r from-amber-500 to-yellow-500 border-amber-500 text-white shadow-sm'=> $bet === 'face',
                             'bg-slate-50 border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-100' => $bet !== 'face',
                             ])>
-                            Face
+                            {{ $faceLabel }}
                         </button>
                     </div>
 
@@ -170,8 +192,8 @@
 
                 <div class="grid grid-cols-2 gap-3">
                     <div class="bg-amber-50/60 border border-amber-100 rounded-2xl px-4 py-3 text-center">
-                        <div class="text-[10px] font-bold uppercase tracking-wider text-amber-500">
-                            Face
+                        <div class="text-[10px] font-bold uppercase tracking-wider text-amber-500 truncate" title="{{ $faceLabel }}">
+                            {{ $faceLabel }}
                         </div>
                         <div class="text-2xl font-black text-amber-600 mt-0.5">
                             {{ $this->faceCount() }}
@@ -179,8 +201,8 @@
                     </div>
 
                     <div class="bg-slate-100/60 border border-slate-200 rounded-2xl px-4 py-3 text-center">
-                        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                            Pile
+                        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 truncate" title="{{ $pileLabel }}">
+                            {{ $pileLabel }}
                         </div>
                         <div class="text-2xl font-black text-slate-600 mt-0.5">
                             {{ $this->pileCount() }}
@@ -205,17 +227,17 @@
 
                 @if(count($history))
                 <div class="space-y-2 max-h-[300px] overflow-y-auto pr-1.5 custom-scrollbar">
-                    @foreach(array_reverse($history, true) as $index => $face)
-                    <div @class([ 'flex items-center justify-between rounded-2xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 border' , 'bg-amber-50/60 border-amber-200/50 text-amber-900 hover:bg-amber-100/50'=> $face === 'Face',
-                        'bg-slate-50 border-slate-200/60 text-slate-800 hover:bg-slate-100/70' => $face === 'Pile',
+                    @foreach(array_reverse($history, true) as $index => $side)
+                    <div @class([ 'flex items-center justify-between rounded-2xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 border' , 'bg-amber-50/60 border-amber-200/50 text-amber-900 hover:bg-amber-100/50'=> $side === 'face',
+                        'bg-slate-50 border-slate-200/60 text-slate-800 hover:bg-slate-100/70' => $side === 'pile',
                         ])>
                         <div class="flex items-center gap-2.5">
-                            <span @class([ 'w-2 h-2 rounded-full' , 'bg-amber-500 shadow-sm shadow-amber-500/50'=> $face === 'Face',
-                                'bg-slate-400 shadow-sm shadow-slate-400/50' => $face === 'Pile',
+                            <span @class([ 'w-2 h-2 rounded-full' , 'bg-amber-500 shadow-sm shadow-amber-500/50'=> $side === 'face',
+                                'bg-slate-400 shadow-sm shadow-slate-400/50' => $side === 'pile',
                                 ])></span>
 
                             <span class="font-bold tracking-wide">
-                                {{ $face }}
+                                {{ $this->label($side) }}
                             </span>
                         </div>
 
@@ -247,3 +269,4 @@
 
 </div>
 </div>
+

@@ -15,6 +15,7 @@ class CoinFlipPage extends Component
     private const MAX_HISTORY = 5000;
     private const MIN_AUTO_FLIPS = 2;
     private const MAX_AUTO_FLIPS = 500;
+    private const MAX_LABEL_LENGTH = 16;
 
     public ?string $result = null;
     public array $history = [];
@@ -28,6 +29,18 @@ class CoinFlipPage extends Component
     public ?string $bet = null;
     public ?bool $lastBetWon = null;
     public array $betHistory = [];
+
+    /**
+     * Libellés personnalisables des deux faces.
+     * Le reste du composant (pièce, paris, historique, statistiques) ne
+     * manipule jamais ces textes directement : il travaille toujours avec
+     * l'identifiant stable de la face (CoinSide::PILE->value / FACE->value)
+     * et ne fait appel à $pileLabel / $faceLabel qu'au moment de l'affichage,
+     * via label(). Cela garantit que renommer les faces se répercute
+     * immédiatement partout, y compris sur l'historique déjà généré.
+     */
+    public string $pileLabel = 'Pile';
+    public string $faceLabel = 'Face';
 
     /**
      * Point d'entrée unique du bouton de lancement.
@@ -50,13 +63,58 @@ class CoinFlipPage extends Component
         $this->bet = $this->bet === $side ? null : $side;
     }
 
+    /**
+     * Retourne le libellé personnalisé (ou par défaut) pour une face donnée.
+     * Point d'entrée unique utilisé par la vue pour l'affichage : le pari,
+     * la pièce, l'historique et les statistiques y font tous appel afin
+     * qu'un changement de libellé se répercute partout instantanément.
+     */
+    public function label(string $side): string
+    {
+        return $side === CoinSide::PILE->value ? $this->pileLabel : $this->faceLabel;
+    }
+
+    /**
+     * Nettoie et borne un libellé saisi par l'utilisateur : espaces superflus
+     * retirés, longueur limitée, et retour au libellé par défaut si vide.
+     */
+    public function updatedPileLabel(): void
+    {
+        $this->pileLabel = $this->sanitizeLabel($this->pileLabel, 'Pile');
+    }
+
+    public function updatedFaceLabel(): void
+    {
+        $this->faceLabel = $this->sanitizeLabel($this->faceLabel, 'Face');
+    }
+
+    /**
+     * Réinitialise les deux libellés à leurs valeurs par défaut.
+     */
+    public function resetLabels(): void
+    {
+        $this->pileLabel = 'Pile';
+        $this->faceLabel = 'Face';
+    }
+
+    private function sanitizeLabel(string $value, string $default): string
+    {
+        $value = trim($value);
+
+        if ($value === '') {
+            return $default;
+        }
+
+        return mb_substr($value, 0, self::MAX_LABEL_LENGTH);
+    }
+
     public function flip(FlipCoinAction $action): void
     {
         $this->error = null;
         $this->lastBetWon = null;
 
         $result = $this->performFlip($action);
-        $this->result = $result->side->label();
+        $this->result = $result->side->value;
 
         $this->evaluateBet($result);
 
@@ -81,7 +139,7 @@ class CoinFlipPage extends Component
 
         for ($i = 0; $i < $this->autoFlipCount; $i++) {
             $result = $this->performFlip($action);
-            $this->result = $result->side->label();
+            $this->result = $result->side->value;
         }
 
         $this->dispatch('coin-flip', face: $this->result);
@@ -108,7 +166,7 @@ class CoinFlipPage extends Component
     {
         return count(array_filter(
             $this->history,
-            fn(string $face) => $face === 'Pile'
+            fn(string $side) => $side === CoinSide::PILE->value
         ));
     }
 
@@ -116,7 +174,7 @@ class CoinFlipPage extends Component
     {
         return count(array_filter(
             $this->history,
-            fn(string $face) => $face === 'Face'
+            fn(string $side) => $side === CoinSide::FACE->value
         ));
     }
 
@@ -139,7 +197,7 @@ class CoinFlipPage extends Component
     {
         $result = $action->execute();
 
-        $this->history[] = $result->side->label();
+        $this->history[] = $result->side->value;
 
         if (count($this->history) > self::MAX_HISTORY) {
             $this->history = array_slice($this->history, -self::MAX_HISTORY);
