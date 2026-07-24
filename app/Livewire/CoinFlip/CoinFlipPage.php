@@ -7,6 +7,7 @@ use App\Application\Draw\Enums\DrawModeType;
 use App\Domain\CoinFlip\Enums\CoinSide;
 use App\Domain\CoinFlip\ValueObjects\CoinFlipBet;
 use App\Domain\CoinFlip\ValueObjects\CoinFlipResult;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 /**
@@ -27,6 +28,14 @@ class CoinFlipPage extends Component
     /** Si > 1, bascule automatiquement en tirage multiple */
     public int $autoFlipCount = 1;
 
+    /**
+     * #[Locked] : $bet ne doit jamais être modifiable directement depuis un payload
+     * Livewire côté client (contrairement à un wire:model classique). Seule la méthode
+     * serveur selectBet() — qui valide la valeur — peut la faire évoluer. Sans ce verrou,
+     * un payload AJAX forgé pourrait fixer $bet à une valeur arbitraire et faire échouer
+     * CoinSide::from() dans evaluateBet() avec une erreur serveur non gérée.
+     */
+    #[Locked]
     public ?string $bet = null;
     public ?bool $lastBetWon = null;
     public array $betHistory = [];
@@ -192,7 +201,18 @@ class CoinFlipPage extends Component
             return;
         }
 
-        $bet = new CoinFlipBet(CoinSide::from($this->bet), $result);
+        $chosenSide = CoinSide::tryFrom($this->bet);
+
+        // Défense en profondeur : si $bet ne correspond à aucune face valide
+        // (ne devrait jamais arriver grâce à #[Locked] + selectBet()), on ignore
+        // le pari plutôt que de laisser planter la requête avec un \ValueError.
+        if ($chosenSide === null) {
+            $this->bet = null;
+
+            return;
+        }
+
+        $bet = new CoinFlipBet($chosenSide, $result);
 
         $this->lastBetWon = $bet->won();
         $this->betHistory[] = $this->lastBetWon;
