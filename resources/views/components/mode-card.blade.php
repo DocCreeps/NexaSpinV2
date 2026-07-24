@@ -41,10 +41,8 @@ default => [
 } : ['title' => '', 'button' => ''];
 @endphp
 
-
 <{{ $mode->available ? 'a' : 'div' }} @if($mode->available)
     href="{{ $mode->route }}"
-    aria-label="{{ $mode->title }}"
     x-data="{
     maxTilt: 6,
     perspective: 1000,
@@ -54,7 +52,6 @@ default => [
     currentScale: 1,
     rect: null,
 
-    // On ne calcule le rect qu'une seule fois à l'entrée de la souris pour booster les performances
     getRect() {
     this.rect = this.$el.getBoundingClientRect();
     },
@@ -80,17 +77,18 @@ default => [
     @mouseenter="getRect"
     @mousemove="handleMouseMove"
     @mouseleave="resetTilt"
-    class="group relative block text-left no-underline"
+    class="group relative block text-left no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500 rounded-2xl"
     style="transform-style: preserve-3d"
     @else
-    aria-disabled="true"
+    role="region"
+    aria-label="{{ $mode->title }} (non disponible)"
     class="relative block cursor-not-allowed select-none opacity-60"
     @endif
     >
 
-    {{-- Halo lumineux en arrière-plan (desktop uniquement, hover désactivé sous md:) --}}
+    {{-- Halo lumineux en arrière-plan (desktop uniquement) --}}
     @if($mode->available)
-    <div class="absolute inset-0 rounded-2xl bg-gradient-to-r {{ $mode->color }} opacity-0 blur-xl transition-opacity duration-300 md:group-hover:opacity-10 pointer-events-none"></div>
+    <div class="absolute inset-0 rounded-2xl bg-gradient-to-r {{ $mode->color }} opacity-0 blur-xl transition-opacity duration-300 md:group-hover:opacity-10 pointer-events-none" aria-hidden="true"></div>
     @endif
 
     <div @if($mode->available)
@@ -102,17 +100,16 @@ default => [
         transition: ${rotateX == 0 ? 'transform .45s cubic-bezier(.16, 1, .3, 1)' : 'none'};
         `"
         @endif
-        
         class="relative flex h-full flex-row md:flex-col items-center md:items-stretch gap-3 md:gap-0 rounded-2xl border border-slate-200 bg-white p-3 md:p-6 shadow-sm transition-all duration-300 md:group-hover:border-slate-300 md:group-hover:shadow-xl"
         >
-        {{-- Icône : partagée entre les deux mises en page, seule sa taille change --}}
-        <span class="text-2xl md:text-4xl shrink-0 select-none" style="transform: translateZ(18px)">
+        {{-- Icône décorative (Ignorée par les lecteurs d'écran) --}}
+        <span class="text-2xl md:text-4xl shrink-0 select-none" aria-hidden="true" style="transform: translateZ(18px)">
             {{ $mode->icon }}
         </span>
 
         <div class="min-w-0 flex-1 md:flex-none" style="transform: translateZ(18px); backface-visibility: hidden;">
-            {{-- Badge "Disponible/Bientôt" : uniquement à partir de md, la rangée mobile n'a pas la place --}}
-            <div class="hidden md:flex mb-5 items-center justify-end">
+            {{-- Badge "Disponible/Bientôt" : Visuel Desktop uniquement --}}
+            <div class="hidden md:flex mb-5 items-center justify-end" aria-hidden="true">
                 <span @class([ 'inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold border' , 'bg-emerald-50 text-emerald-700 border-emerald-200'=> $mode->available,
                     'bg-slate-100 text-slate-500 border-slate-200' => !$mode->available,
                     ])>
@@ -120,16 +117,36 @@ default => [
                 </span>
             </div>
 
-            <h3 class="truncate md:whitespace-normal mb-0.5 md:mb-3 text-base md:text-xl font-bold text-slate-800 transition-colors duration-300 {{ $hoverClasses['title'] }}">
+            {{-- Titre principal --}}
+            <h3 class="truncate md:whitespace-normal text-base md:text-xl font-bold text-slate-800 transition-colors duration-300 {{ $hoverClasses['title'] }}">
                 {{ $mode->title }}
             </h3>
 
-            <p class="line-clamp-1 md:line-clamp-none text-xs md:text-sm leading-5 md:leading-6 text-slate-500">
+            {{-- Info Joueurs + Statut (Mobile) --}}
+            <div class="flex items-center gap-2 text-xs text-slate-500 mt-0.5 md:hidden">
+                @if($mode->minParticipants)
+                <span class="flex items-center gap-1 font-medium">
+                    <svg class="h-3.5 w-3.5 text-slate-400" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                    <span>{{ $mode->minParticipants }}+ joueurs</span>
+                </span>
+                @endif
+
+                @if(!$mode->available)
+                <span class="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500 border border-slate-200">
+                    Bientôt
+                </span>
+                @endif
+            </div>
+
+            {{-- Description : Visuellement masquée en mobile, mais LUE par les lecteurs d'écran (sr-only md:not-sr-only) --}}
+            <p class="sr-only md:not-sr-only md:block text-sm leading-6 text-slate-500 md:mt-3">
                 {{ $mode->description }}
             </p>
 
-            {{-- Footer (participants min. + bouton flèche) : uniquement à partir de md --}}
-            <div class="hidden md:flex mt-8 items-center justify-between border-t border-slate-100 pt-5">
+            {{-- Footer : Visuel Desktop uniquement --}}
+            <div class="hidden md:flex mt-8 items-center justify-between border-t border-slate-100 pt-5" aria-hidden="true">
                 <div>
                     @if($mode->minParticipants)
                     <div class="flex items-center gap-2 text-xs text-slate-500">
@@ -159,8 +176,8 @@ default => [
             </div>
         </div>
 
-        {{-- Chevron mobile uniquement : tient lieu de flèche/statut sur la rangée compacte --}}
-        <svg class="h-4 w-4 shrink-0 text-slate-300 md:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        {{-- Chevron mobile (Ignoré par le lecteur d'écran) --}}
+        <svg class="h-4 w-4 shrink-0 text-slate-300 md:hidden" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
         </svg>
     </div>

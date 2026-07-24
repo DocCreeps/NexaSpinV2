@@ -40,13 +40,14 @@
 | 🎡 Roue classique | Tirage aléatoire simple et rapide pour désigner un seul gagnant. | ✅ Fonctionnel |  |
 | ⚔️ Roue par élimination | Élimination progressive des participants jusqu'à ce qu'il n'en reste qu'un. | ✅ Fonctionnel |  |
 | 🎯 Roue pondérée | Tirage aléatoire où chaque participant a un poids personnalisé pour influencer les résultats. | ✅ Fonctionnel | |
-| 🪙 Pile ou face | Simule un lancer de pièce équitable entre deux options. | ⚠️ Fonctionnel mais non testé | Carte active sur l’accueil, route et composant Livewire opérationnels. Aucun test écrit (voir [Fonctionnel mais incomplet](#-fonctionnel-mais-incomplet)). |
+| 🪙 Pile ou face | Simule un lancer de pièce équitable entre deux options, avec système de paris (pile/face) et libellés personnalisables. | ⚠️ Fonctionnel mais non testé | Carte active sur l’accueil, route et composant Livewire opérationnels, y compris les paris. Aucun test écrit (voir [Fonctionnel mais incomplet](#-fonctionnel-mais-incomplet)). |
 | 👥 Tirage par équipes | Permet de former des équipes de manière aléatoire (non encore développé). | 🔒 Non implémenté | Carte visible mais grisée sur l’accueil. |
 
 
 
 > **Aucune persistance en base de données** : les participants et résultats vivent dans l’état des composants Livewire (session uniquement).
 > **Déploiement continu** : synchronisation automatique de `master` vers un VPS via GitHub Actions (sans porte de qualité, voir [Dette technique](#-dette-technique-et-limites-connues)).
+> **Accueil organisé par catégorie** : les modes de tirage sont regroupés en sections (`DrawModeCategory` : Roues / Autres tirages), générées dynamiquement — ajouter une nouvelle catégorie n’implique aucune modification de la vue.
 
 ---
 
@@ -67,7 +68,7 @@
 ## 🏗️ Architecture
 *Séparation Domain / Application / UI, inspirée de la Clean Architecture et du DDD léger.*
 
-### Découpage par domaine métier (`Draw`)
+### Découpage par domaine métier (`Draw` et `CoinFlip`)
 ```
 app/
 ├── Domain/Draw/               # Règles métier pures (0 dépendance à Laravel)
@@ -79,17 +80,30 @@ app/
 │   ├── Contracts/             # DrawStrategy (interface)
 │   └── Exceptions/
 │
-├── Application/Draw/         # Orchestration (pont Domain ↔ UI)
-│   ├── Actions/               # RunDrawAction (construit `Draw`, délègue à la stratégie)
-│   ├── DTOs/                  # DrawData, DrawMode
-│   ├── Resolvers/             # DrawStrategyResolver (point d'entrée unique)
-│   └── Support/               # WheelSegmentBuilder (calcul des segments SVG)
+├── Domain/CoinFlip/           # Même logique appliquée au pile ou face
+│   ├── Enums/                 # CoinSide
+│   ├── ValueObjects/          # CoinFlipResult, CoinFlipBet (règle gagné/perdu)
+│   ├── Strategies/            # RandomCoinFlipStrategy
+│   └── Contracts/             # CoinFlipStrategy
 │
-└── Livewire/Draw/             # Composants UI (état + délégation)
-    ├── WheelPage.php
-    ├── EliminationWheelPage.php
-    ├── WeightedWheelPage.php
-    └── Concerns/              # ManagesParticipants, HandlesDraw (traits partagés)
+├── Application/Draw/          # Orchestration (pont Domain ↔ UI)
+│   ├── Actions/                # RunDrawAction (construit `Draw`, délègue à la stratégie)
+│   ├── DTOs/                   # DrawData, DrawMode (read-model de la home)
+│   ├── Enums/                  # DrawModeType, DrawModeCategory (regroupement de la home)
+│   ├── Resolvers/               # DrawStrategyResolver (point d'entrée unique)
+│   └── Support/                 # WheelSegmentBuilder (segments SVG + rotation cumulée)
+│
+├── Application/CoinFlip/      # Orchestration du pile ou face
+│   └── Actions/                # FlipCoinAction
+│
+├── Http/Middleware/
+│   └── SecurityHeaders.php    # CSP (prod uniquement) + en-têtes de sécurité HTTP
+│
+└── Livewire/
+    ├── Draw/                   # WheelPage, EliminationWheelPage, WeightedWheelPage
+    │   └── Concerns/            # ManagesParticipants, HandlesDraw (traits partagés)
+    └── CoinFlip/
+        └── CoinFlipPage.php    # Tirage simple/multiple + paris + libellés personnalisables
 ```
 
 ### Principe directeur
@@ -146,12 +160,21 @@ app/
 ## ⚠️ Dette technique et limites connues
 
 ### 🟡 Fonctionnel mais incomplet
-- **Aucun test sur Pile ou face** : `FlipCoinAction`, `RandomCoinFlipStrategy`, et `CoinFlipPage` n’ont **aucune couverture de test**, malgré une fonctionnalité déjà active en production.
+- **Aucun test sur Pile ou face** : `FlipCoinAction`, `RandomCoinFlipStrategy`, `CoinFlipPage` (y compris le système de paris) n’ont **aucune couverture de test**, malgré une fonctionnalité déjà active en production.
 - **Déploiement sans porte de qualité** : Le workflow GitHub Actions déploie directement sur `master` sans exécuter `composer test` ou `composer run analyse`.
 - **Pas de persistance** : Les tirages ne sont pas sauvegardés en base de données (choix assumé pour l’instant).
 - **Tirage par équipes non implémenté** : Carte visible mais désactivée (`available: false`) sur l’accueil.
+- **Pas de rate limiting sur `CoinFlipPage`** : contrairement aux routes de tirage (`throttle:120,1`), rien n’empêche encore un enchaînement abusif de paris/tirages automatiques.
 
 ### ✅ Corrigé récemment
+- **Sécurité HTTP** : ajout de `SecurityHeaders` (CSP appliquée uniquement en production — Vite/HMR ont besoin d’une origine séparée en dev —, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`), et `throttle:120,1` sur les routes de tirage.
+- **Aléatoire non cryptographique corrigé** : `Participants::random()` utilise désormais `random_int()` (CSPRNG) au lieu d’`array_rand()`, cohérent avec `WeightedDrawStrategy`.
+- **Bug de rotation de roue à la relance** : `WheelPage` et `WeightedWheelPage` dispatchaient un angle **absolu** à un composant Alpine qui **accumule** les rotations (`rotation += ...`) — la roue s’arrêtait au mauvais endroit après un premier tirage. Corrigé via `WheelSegmentBuilder::cumulativeRotationFor()`, qui calcule un delta relatif à la rotation déjà appliquée (logique déjà en place sur `EliminationWheelPage`, désormais centralisée et partagée par les trois pages).
+- **Blocage possible sur la roue d’élimination** : ajout d’un détecteur d’état bloqué (`isStuck()`/`unstick()`) si `confirmElimination()` n’est jamais rappelée (ex. coupure réseau pendant l’animation).
+- **`CoinFlipPage::$bet` verrouillée** (`#[Locked]`) : empêche un payload Livewire forgé de fixer `$bet` à une valeur arbitraire côté client ; `evaluateBet()` utilise `CoinSide::tryFrom()` en défense en profondeur plutôt que `from()`.
+- **Accueil regroupé par catégorie** : nouvel enum `DrawModeCategory` (Roues / Autres tirages), `DrawModeType::grouped()` génère les sections dynamiquement — une catégorie sans mode actif n’apparaît pas, et en ajouter une nouvelle ne nécessite aucune modification de `home.blade.php`.
+- **Accueil responsive** : catégories en colonnes auto-adaptatives (`grid-cols-[repeat(auto-fit,minmax(280px,1fr))]`, pas de nombre codé en dur) à partir de `md:` ; sur mobile, chaque catégorie est un accordéon repliable (Alpine.js, première catégorie ouverte par défaut) pour éviter une page à rallonge. `<x-mode-card>` a deux mises en page distinctes : carte verticale complète dès `md:`, rangée horizontale compacte (icône + titre/description tronqués + chevron) en dessous. Les effets `hover` sont désormais gated par `md:group-hover:` pour ne jamais rester "collés" après un tap tactile.
+- **Ajout des paris sur pile ou face** : `CoinFlipBet` (Domain) porte la règle gagné/perdu, historique des paris et libellés de faces personnalisables (`pileLabel`/`faceLabel`).
 - **Bug du tirage pondéré résolu** : `HandlesDraw::executeDraw()` appelle désormais `$this->drawType()` au lieu d’un `DrawType::RANDOM` codé en dur ; `WeightedDrawStrategy` est bien invoquée.
 - **Segments SVG proportionnels aux poids** : `WheelSegmentBuilder` calcule désormais la taille des parts selon `Participant::$weight`.
 - **Implémentation du Pile ou face** : `FlipCoinAction`, `RandomCoinFlipStrategy`, `CoinFlipPage` et la route `/pile-ou-face` sont en place et actifs sur l’accueil.
@@ -180,6 +203,8 @@ app/
 | **Tests Livewire** | Couverture des composants (ajout/suppression/édition de participants, tirages). |
 | **Analyse statique** | Larastan/PHPStan niveau 5 + documentation des `ignoreErrors`. |
 | **CI/CD** | Déploiement automatique via GitHub Actions (à améliorer avec des portes de qualité). |
+| **En-têtes de sécurité HTTP** | Middleware `SecurityHeaders` (CSP conditionnelle à l’environnement, `X-Frame-Options`, etc.) + `throttle` sur les routes sensibles. |
+| **Read-model + regroupement par enum** | `DrawModeCategory` pilote les sections de la home ; `DrawModeType::grouped()` reste la seule source de vérité, la vue ne fait qu’itérer. |
 
 <details>
 <summary><strong>📜 Historique des commits clés</strong></summary>
@@ -200,6 +225,11 @@ app/
 | `test updateParticipant + Larastan + deploy.yml` | Couverture de l’édition inline, analyse statique, et pipeline de déploiement. |
 | `tirage ponderer segment = poids` | Correction du bug : les segments SVG suivent enfin les poids réels. |
 | `implémentation Coin Flip` | Ajout du mode Pile ou face (`FlipCoinAction`, `RandomCoinFlipStrategy`, `CoinFlipPage`), désormais actif sur l’accueil. |
+| `Label coin flip` + `paris` | Ajout des paris pile/face et des libellés de faces personnalisables. |
+| `Securité` | `SecurityHeaders` (CSP prod-only), `throttle` sur les routes de tirage, `random_int()` au lieu d’`array_rand()`, verrouillage de `CoinFlipPage::$bet`. |
+| `debug wheel a la relance de la roue` | Correction du bug de rotation absolue vs cumulative sur `WheelPage`/`WeightedWheelPage`, ajout du détecteur de blocage sur `EliminationWheelPage`. |
+| `accueil par catégories` | `DrawModeCategory` + `DrawModeType::grouped()` : sections de la home générées dynamiquement. |
+| `accueil responsive mobile` | Colonnes auto-adaptatives, accordéon Alpine.js par catégorie sur mobile, carte compacte dédiée, hover limité à `md:`. |
 
 </details>
 
@@ -270,16 +300,14 @@ composer run analyse
 - [ ] **Design** :
   - Responsive, accessibilité. 
 - [ ] **Ajouter des tests pour Pile ou face** :
-  - `FlipCoinAction`, `RandomCoinFlipStrategy`, `CoinFlipPage`.
+  - `FlipCoinAction`, `RandomCoinFlipStrategy`, `CoinFlipPage`, y compris le système de paris.
 - [ ] **Améliorer le pipeline de déploiement** :
   - Ajouter `composer test` et `composer run analyse` comme portes de qualité dans `deploy.yml`.
-- [ ] **Ajout des paris sur le résultats pile ou face** :
-  - Si un tirage a la fois score de paris sous le resulatta du nombre de pile/face.
-  - Ne pas mettre de paris pour tirage auto (inutile).
+- [ ] **Étendre le rate limiting à `CoinFlipPage`** :
+  - Actuellement seules les routes de tirage (`/roue`, `/roue-elimination`, `/roue-ponderee`) ont un `throttle`.
 - [ ] **Implémenter le mode manquant** :
   - Tirage par équipes (`DrawModeType::TEAMS`).
 - [ ] **Peaufiner Pile ou face** (voir `TODO`) :
-  - Texte du bouton dynamique selon le mode (simple/auto).
   - Affichage du gagnant après un tirage automatique selon le max de faces obtenues.
   - Amélioration du design.
 - [ ] **Persistance optionnelle** :
