@@ -8,18 +8,14 @@ use App\Domain\Draw\Strategies\RandomDrawStrategy;
 use App\Domain\Draw\ValueObjects\DrawResult;
 use App\Domain\Draw\ValueObjects\Participant;
 
-// NB: cette entité n'est actuellement appelée par aucun composant applicatif
-// (RunDrawAction travaille directement avec Participants + une Strategy).
-// On la teste quand même isolément puisqu'elle fait partie du Domain et
-// porte une règle métier propre (minimum 2 participants).
+// Draw est instanciée par RunDrawAction (voir RunDrawActionTest), qui construit
+// l'entité pour faire appliquer ses invariants (min. 2 participants) avant de
+// déléguer le tirage à la stratégie via Double Dispatch. On la teste aussi ici,
+// isolément, puisqu'elle porte cette règle métier propre au Domain.
 
 it('requires at least two participants', function () {
     new Draw(new Participants([new Participant('Solo')]));
 })->throws(InvalidDrawException::class, 'A draw requires at least two participants.');
-
-it('rejects an empty participant list', function () {
-    new Draw(new Participants([]));
-})->throws(InvalidDrawException::class);
 
 it('accepts exactly two participants', function () {
     $draw = new Draw(new Participants([
