@@ -1,46 +1,3 @@
-@props(['mode'])
-
-@php
-// 1. On nettoie la chaîne de caractères
-$colorString = trim($mode->color ?? '');
-
-// 2. On détecte la couleur dominante présente dans le gradient
-$detectedColor = 'default';
-if (str_contains($colorString, 'indigo')) {
-$detectedColor = 'indigo';
-} elseif (str_contains($colorString, 'rose') || str_contains($colorString, 'pink')) {
-$detectedColor = 'rose';
-} elseif (str_contains($colorString, 'emerald') || str_contains($colorString, 'green')) {
-$detectedColor = 'emerald';
-} elseif (str_contains($colorString, 'amber') || str_contains($colorString, 'yellow')) {
-$detectedColor = 'amber';
-}
-
-// 3. On applique les classes correspondantes
-$hoverClasses = $mode->available ? match ($detectedColor) {
-'indigo' => [
-'title' => 'md:group-hover:text-indigo-600',
-'button' => 'md:group-hover:bg-indigo-600 md:group-hover:text-white md:group-hover:border-transparent',
-],
-'rose' => [
-'title' => 'md:group-hover:text-rose-600',
-'button' => 'md:group-hover:bg-rose-600 md:group-hover:text-white md:group-hover:border-transparent',
-],
-'emerald' => [
-'title' => 'md:group-hover:text-emerald-600',
-'button' => 'md:group-hover:bg-emerald-600 md:group-hover:text-white md:group-hover:border-transparent',
-],
-'amber' => [
-'title' => 'md:group-hover:text-amber-600',
-'button' => 'md:group-hover:bg-amber-600 md:group-hover:text-white md:group-hover:border-transparent',
-],
-default => [
-'title' => 'md:group-hover:text-slate-600',
-'button' => 'md:group-hover:bg-slate-800 md:group-hover:text-white md:group-hover:border-transparent',
-],
-} : ['title' => '', 'button' => ''];
-@endphp
-
 <{{ $mode->available ? 'a' : 'div' }} @if($mode->available)
     href="{{ $mode->route }}"
     x-data="{
@@ -86,7 +43,7 @@ default => [
     @endif
     >
 
-    {{-- Halo lumineux en arrière-plan (desktop uniquement) --}}
+    {{-- Halo lumineux --}}
     @if($mode->available)
     <div class="absolute inset-0 rounded-2xl bg-gradient-to-r {{ $mode->color }} opacity-0 blur-xl transition-opacity duration-300 md:group-hover:opacity-10 pointer-events-none" aria-hidden="true"></div>
     @endif
@@ -102,13 +59,13 @@ default => [
         @endif
         class="relative flex h-full flex-row md:flex-col items-center md:items-stretch gap-3 md:gap-0 rounded-2xl border border-slate-200 bg-white p-3 md:p-6 shadow-sm transition-all duration-300 md:group-hover:border-slate-300 md:group-hover:shadow-xl"
         >
-        {{-- Icône décorative (Ignorée par les lecteurs d'écran) --}}
+        {{-- Icône --}}
         <span class="text-2xl md:text-4xl shrink-0 select-none" aria-hidden="true" style="transform: translateZ(18px)">
             {{ $mode->icon }}
         </span>
 
         <div class="min-w-0 flex-1 md:flex-none" style="transform: translateZ(18px); backface-visibility: hidden;">
-            {{-- Badge "Disponible/Bientôt" : Visuel Desktop uniquement --}}
+            {{-- Badge Statut (Desktop) --}}
             <div class="hidden md:flex mb-5 items-center justify-end" aria-hidden="true">
                 <span @class([ 'inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold border' , 'bg-emerald-50 text-emerald-700 border-emerald-200'=> $mode->available,
                     'bg-slate-100 text-slate-500 border-slate-200' => !$mode->available,
@@ -117,7 +74,7 @@ default => [
                 </span>
             </div>
 
-            {{-- Titre principal --}}
+            {{-- Titre --}}
             <h3 class="truncate md:whitespace-normal text-base md:text-xl font-bold text-slate-800 transition-colors duration-300 {{ $hoverClasses['title'] }}">
                 {{ $mode->title }}
             </h3>
@@ -140,12 +97,12 @@ default => [
                 @endif
             </div>
 
-            {{-- Description : Visuellement masquée en mobile, mais LUE par les lecteurs d'écran (sr-only md:not-sr-only) --}}
+            {{-- Description (Accessible) --}}
             <p class="sr-only md:not-sr-only md:block text-sm leading-6 text-slate-500 md:mt-3">
                 {{ $mode->description }}
             </p>
 
-            {{-- Footer : Visuel Desktop uniquement --}}
+            {{-- Footer (Desktop) --}}
             <div class="hidden md:flex mt-8 items-center justify-between border-t border-slate-100 pt-5" aria-hidden="true">
                 <div>
                     @if($mode->minParticipants)
@@ -153,9 +110,7 @@ default => [
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                         </svg>
-                        <span>
-                            {{ $mode->minParticipants }}+ joueurs
-                        </span>
+                        <span>{{ $mode->minParticipants }}+ joueurs</span>
                     </div>
                     @endif
                 </div>
@@ -176,7 +131,7 @@ default => [
             </div>
         </div>
 
-        {{-- Chevron mobile (Ignoré par le lecteur d'écran) --}}
+        {{-- Chevron Mobile --}}
         <svg class="h-4 w-4 shrink-0 text-slate-300 md:hidden" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
         </svg>

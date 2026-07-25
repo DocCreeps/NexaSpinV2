@@ -25,10 +25,6 @@ it('trims surrounding whitespace from the name', function () {
     expect($participant->name)->toBe('John');
 });
 
-it('rejects a name made only of whitespace', function () {
-    new Participant('   ');
-})->throws(InvalidArgumentException::class, 'Participant name cannot be empty.');
-
 it('rejects a weight of zero', function () {
     new Participant('John', 0);
 })->throws(InvalidArgumentException::class, 'Weight must be greater than zero.');

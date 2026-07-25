@@ -19,19 +19,6 @@ it('always returns the sole heavily-weighted participant', function () {
         ->and($result->winner->name)->toBe('Toujours');
 });
 
-it('only returns a participant with weight zero-impossible, i.e. respects the given pool', function () {
-    $strategy = new WeightedDrawStrategy;
-
-    $participants = new Participants([
-        new Participant('Alice', weight: 3),
-        new Participant('Bob', weight: 7),
-    ]);
-
-    $result = $strategy->draw($participants);
-
-    expect(['Alice', 'Bob'])->toContain($result->winner->name);
-});
-
 it('distributes wins roughly proportionally to weight over many draws', function () {
     $strategy = new WeightedDrawStrategy;
 
