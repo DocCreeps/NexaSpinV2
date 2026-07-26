@@ -3,7 +3,7 @@
 namespace App\Livewire\Draw;
 
 use App\Application\Draw\Actions\RunDrawAction;
-use App\Application\Draw\Enums\DrawModeType;
+use App\Application\Home\Enums\GameModeType;
 use App\Application\Draw\Support\WheelSegmentBuilder;
 use App\Domain\Draw\Enums\DrawType;
 use App\Livewire\Draw\Concerns\HandlesDraw;
@@ -97,7 +97,7 @@ class WeightedWheelPage extends Component
 
     public function render()
     {
-        $mode = DrawModeType::WEIGHTED->toDto();
+        $mode = GameModeType::WEIGHTED->toDto();
 
         return view('livewire.draw.weighted-wheel-page')
             ->layout('layouts.app', [

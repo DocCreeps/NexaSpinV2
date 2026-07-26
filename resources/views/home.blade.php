@@ -32,7 +32,7 @@
             {{--
                 Catégories en colonnes : auto-fit calcule seul le nombre de colonnes selon la
                 largeur disponible et le nombre de catégories (1 sur mobile, 2+ dès qu'elles
-                tiennent). Ajouter une catégorie dans DrawModeCategory n'impose aucun réglage ici.
+                tiennent). Ajouter une catégorie dans GameModeCategory n'impose aucun réglage ici.
 
                 Sur mobile, chaque catégorie est un accordéon (fermée sauf la première, on
                 touche l'en-tête pour l'ouvrir) pour éviter une page à rallonge sur petit écran.

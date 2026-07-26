@@ -3,7 +3,7 @@
 namespace App\Livewire\CoinFlip;
 
 use App\Application\CoinFlip\Actions\FlipCoinAction;
-use App\Application\Draw\Enums\DrawModeType;
+use App\Application\Home\Enums\GameModeType;
 use App\Domain\CoinFlip\Enums\CoinSide;
 use App\Domain\CoinFlip\ValueObjects\CoinFlipBet;
 use App\Domain\CoinFlip\ValueObjects\CoinFlipResult;
@@ -224,7 +224,7 @@ class CoinFlipPage extends Component
 
     public function render()
     {
-        $mode = DrawModeType::COIN_FLIP->toDto();
+        $mode = GameModeType::COIN_FLIP->toDto();
 
         return view('livewire.coin-flip.coin-flip-page')
             ->layout('layouts.app', [

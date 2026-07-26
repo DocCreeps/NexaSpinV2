@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Application\Draw\DTOs;
+namespace App\Application\Home\DTOs;
 
-use App\Application\Draw\Enums\DrawModeCategory;
+use App\Application\Home\Enums\GameModeCategory;
 
 /**
  * Petit Read-Model immuable dédié à la présentation sur la Home.
  */
-final readonly class DrawMode
+final readonly class GameMode
 {
     public function __construct(
         public string $icon,
@@ -17,7 +17,7 @@ final readonly class DrawMode
         public bool $available,
         public string $color,
         public string $shadow,
-        public DrawModeCategory $category,
+        public GameModeCategory $category,
         public ?int $minParticipants = null,
 
         public ?string $metaTitle = null,

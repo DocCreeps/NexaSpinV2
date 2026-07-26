@@ -3,7 +3,7 @@
 namespace App\Livewire\Draw;
 
 use App\Application\Draw\Actions\RunDrawAction;
-use App\Application\Draw\Enums\DrawModeType;
+use App\Application\Home\Enums\GameModeType;
 use App\Application\Draw\Support\WheelSegmentBuilder;
 use App\Livewire\Draw\Concerns\HandlesDraw;
 use App\Livewire\Draw\Concerns\ManagesParticipants;
@@ -241,7 +241,7 @@ class EliminationWheelPage extends Component
 
     public function render()
     {
-        $mode = DrawModeType::ELIMINATION->toDto();
+        $mode = GameModeType::ELIMINATION->toDto();
 
         return view('livewire.draw.elimination-wheel-page')
             ->layout('layouts.app', [
