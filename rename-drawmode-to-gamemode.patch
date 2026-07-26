@@ -1,0 +1,331 @@
+diff --git a/app/Application/Draw/DTOs/DrawMode.php b/app/Application/Home/DTOs/GameMode.php
+similarity index 75%
+rename from app/Application/Draw/DTOs/DrawMode.php
+rename to app/Application/Home/DTOs/GameMode.php
+index 274f2f9..396bb2f 100644
+--- a/app/Application/Draw/DTOs/DrawMode.php
++++ b/app/Application/Home/DTOs/GameMode.php
+@@ -1,13 +1,13 @@
+ <?php
+ 
+-namespace App\Application\Draw\DTOs;
++namespace App\Application\Home\DTOs;
+ 
+-use App\Application\Draw\Enums\DrawModeCategory;
++use App\Application\Home\Enums\GameModeCategory;
+ 
+ /**
+  * Petit Read-Model immuable dédié à la présentation sur la Home.
+  */
+-final readonly class DrawMode
++final readonly class GameMode
+ {
+     public function __construct(
+         public string $icon,
+@@ -17,7 +17,7 @@ public function __construct(
+         public bool $available,
+         public string $color,
+         public string $shadow,
+-        public DrawModeCategory $category,
++        public GameModeCategory $category,
+         public ?int $minParticipants = null,
+ 
+         public ?string $metaTitle = null,
+diff --git a/app/Application/Draw/Enums/DrawModeCategory.php b/app/Application/Home/Enums/GameModeCategory.php
+similarity index 52%
+rename from app/Application/Draw/Enums/DrawModeCategory.php
+rename to app/Application/Home/Enums/GameModeCategory.php
+index cf6d92d..264abbe 100644
+--- a/app/Application/Draw/Enums/DrawModeCategory.php
++++ b/app/Application/Home/Enums/GameModeCategory.php
+@@ -1,17 +1,18 @@
+ <?php
+ 
+-namespace App\Application\Draw\Enums;
++namespace App\Application\Home\Enums;
+ 
+ /**
+- * Catégorie de présentation d'un mode de tirage sur la page d'accueil.
++ * Catégorie de présentation d'un mode de jeu sur la page d'accueil.
+  *
+  * Distinct de Domain\Draw\Enums\DrawDisplay (qui pilote le rendu du tirage
+  * lui-même, roue vs affichage simple) : ceci ne sert qu'à regrouper les
+- * cartes de la home. L'ordre des cases définit l'ordre d'affichage des
+- * sections ; ajouter une nouvelle catégorie ici suffit à faire apparaître
+- * une nouvelle section sur la home, sans toucher au Controller ni à la vue.
++ * cartes de la home, tous modes confondus (roues, pièce, dés...). L'ordre
++ * des cases définit l'ordre d'affichage des sections ; ajouter une nouvelle
++ * catégorie ici suffit à faire apparaître une nouvelle section sur la home,
++ * sans toucher au Controller ni à la vue.
+  */
+-enum DrawModeCategory: string
++enum GameModeCategory: string
+ {
+     case WHEEL = 'wheel';
+     case OTHER = 'other';
+diff --git a/app/Application/Draw/Enums/DrawModeType.php b/app/Application/Home/Enums/GameModeType.php
+similarity index 80%
+rename from app/Application/Draw/Enums/DrawModeType.php
+rename to app/Application/Home/Enums/GameModeType.php
+index d3b8d51..a17712f 100644
+--- a/app/Application/Draw/Enums/DrawModeType.php
++++ b/app/Application/Home/Enums/GameModeType.php
+@@ -1,10 +1,10 @@
+ <?php
+ 
+-namespace App\Application\Draw\Enums;
++namespace App\Application\Home\Enums;
+ 
+-use App\Application\Draw\DTOs\DrawMode;
++use App\Application\Home\DTOs\GameMode;
+ 
+-enum DrawModeType: string
++enum GameModeType: string
+ {
+     case CLASSIC = 'classic';
+     case ELIMINATION = 'elimination';
+@@ -15,10 +15,10 @@ enum DrawModeType: string
+     /**
+      * Transforme l'enum en objet de présentation (DTO).
+      */
+-    public function toDto(): DrawMode
++    public function toDto(): GameMode
+     {
+         return match ($this) {
+-            self::CLASSIC => new DrawMode(
++            self::CLASSIC => new GameMode(
+                 icon: '🎡',
+                 title: 'Roue classique',
+                 description: 'Lancez la roue et désignez instantanément un gagnant parmi tous les participants.',
+@@ -26,12 +26,12 @@ public function toDto(): DrawMode
+                 available: true,
+                 color: 'from-indigo-500 to-violet-600',
+                 shadow: 'shadow-indigo-500/10 hover:shadow-indigo-500/20',
+-                category: DrawModeCategory::WHEEL,
++                category: GameModeCategory::WHEEL,
+                 minParticipants: 2,
+                 metaTitle: 'Roue Classique — Tirage au Sort Instantané | NexaSpin',
+                 metaDescription: 'Créez votre roue de la fortune en ligne : ajoutez vos participants, lancez le tirage et désignez un gagnant en un clic. 100% gratuit, sans inscription.',
+             ),
+-            self::ELIMINATION => new DrawMode(
++            self::ELIMINATION => new GameMode(
+                 icon: '⚔️',
+                 title: 'Roue par élimination',
+                 description: 'Les participants s’affrontent tour après tour jusqu’au dernier survivant.',
+@@ -39,12 +39,12 @@ public function toDto(): DrawMode
+                 available: true,
+                 color: 'from-rose-500 to-red-600',
+                 shadow: 'shadow-rose-500/10 hover:shadow-rose-500/20',
+-                category: DrawModeCategory::WHEEL,
++                category: GameModeCategory::WHEEL,
+                 minParticipants: 5,
+                 metaTitle: 'Roue par Élimination — Tirage au Sort Progressif | NexaSpin',
+                 metaDescription: 'Éliminez vos participants un par un jusqu’au dernier survivant. Idéal pour vos concours, jeux entre amis ou sélections progressives, gratuit et sans inscription.',
+             ),
+-            self::WEIGHTED => new DrawMode(
++            self::WEIGHTED => new GameMode(
+                 icon: '🎯',
+                 title: 'Tirage pondéré',
+                 description: 'Attribuez plus ou moins de chances à chaque participant grâce à un système de poids personnalisé.',
+@@ -52,12 +52,12 @@ public function toDto(): DrawMode
+                 available: true,
+                 color: 'from-emerald-500 to-teal-600',
+                 shadow: 'shadow-emerald-500/10 hover:shadow-emerald-500/20',
+-                category: DrawModeCategory::WHEEL,
++                category: GameModeCategory::WHEEL,
+                 minParticipants: 3,
+                 metaTitle: 'Tirage au Sort Pondéré — Chances Personnalisées | NexaSpin',
+                 metaDescription: 'Donnez plus ou moins de chances à chaque participant grâce à un système de poids personnalisable. Le tirage au sort équitable et flexible, gratuit en ligne.',
+             ),
+-            self::COIN_FLIP => new DrawMode(
++            self::COIN_FLIP => new GameMode(
+                 icon: '🪙',
+                 title: 'Pile ou face',
+                 description: 'Le grand classique : un tirage rapide à deux issues, sans liste de participants à gérer.',
+@@ -65,12 +65,12 @@ public function toDto(): DrawMode
+                 available: true,
+                 color: 'from-amber-400 to-yellow-500',
+                 shadow: 'shadow-amber-500/10 hover:shadow-amber-500/20',
+-                category: DrawModeCategory::OTHER,
++                category: GameModeCategory::OTHER,
+                 minParticipants: null,
+                 metaTitle: 'Pile ou Face — Tirage Aléatoire Rapide | NexaSpin',
+                 metaDescription: 'Lancez une pièce virtuelle et enchaînez les tirages "Pile ou Face" en un clic. Historique des résultats inclus, 100% gratuit et sans inscription.',
+             ),
+-            self::TEAMS => new DrawMode(
++            self::TEAMS => new GameMode(
+                 icon: '👥',
+                 title: 'Tirage par équipes',
+                 description: 'Créez instantanément des équipes aléatoires et de tailles égales, en un seul clic.',
+@@ -78,7 +78,7 @@ public function toDto(): DrawMode
+                 available: false,
+                 color: 'from-zinc-400 to-zinc-500',
+                 shadow: 'shadow-zinc-500/5',
+-                category: DrawModeCategory::DEV,
++                category: GameModeCategory::DEV,
+                 minParticipants: 4,
+             ),
+         };
+@@ -87,7 +87,7 @@ public function toDto(): DrawMode
+     /**
+      * Récupère la liste complète des DTOs pour la vue.
+      *
+-     * @return array<DrawMode>
++     * @return array<GameMode>
+      */
+     public static function all(): array
+     {
+@@ -98,22 +98,22 @@ public static function all(): array
+     }
+ 
+     /**
+-     * Regroupe les DTOs par catégorie, dans l'ordre de déclaration de DrawModeCategory
+-     * (et non l'ordre d'apparition dans DrawModeType), pour un affichage stable et
++     * Regroupe les DTOs par catégorie, dans l'ordre de déclaration de GameModeCategory
++     * (et non l'ordre d'apparition dans GameModeType), pour un affichage stable et
+      * indépendant de l'ordre des cases ci-dessus. Une catégorie sans mode n'est pas
+-     * retournée : ajouter une case à DrawModeCategory ne crée une section sur la home
+-     * que le jour où un DrawModeType lui est effectivement rattaché.
++     * retournée : ajouter une case à GameModeCategory ne crée une section sur la home
++     * que le jour où un GameModeType lui est effectivement rattaché.
+      *
+-     * @return array<int, array{category: DrawModeCategory, modes: array<DrawMode>}>
++     * @return array<int, array{category: GameModeCategory, modes: array<GameMode>}>
+      */
+     public static function grouped(): array
+     {
+         $modesByCategory = collect(self::all())->groupBy(
+-            fn(DrawMode $mode) => $mode->category->value
++            fn(GameMode $mode) => $mode->category->value
+         );
+ 
+-        return collect(DrawModeCategory::cases())
+-            ->map(fn(DrawModeCategory $category) => [
++        return collect(GameModeCategory::cases())
++            ->map(fn(GameModeCategory $category) => [
+                 'category' => $category,
+                 'modes' => $modesByCategory->get($category->value, collect())->all(),
+             ])
+diff --git a/app/Http/Controllers/HomeController.php b/app/Http/Controllers/HomeController.php
+index bc0de54..0b0d603 100644
+--- a/app/Http/Controllers/HomeController.php
++++ b/app/Http/Controllers/HomeController.php
+@@ -2,7 +2,7 @@
+ 
+ namespace App\Http\Controllers;
+ 
+-use App\Application\Draw\Enums\DrawModeType;
++use App\Application\Home\Enums\GameModeType;
+ use Illuminate\View\View;
+ 
+ class HomeController extends Controller
+@@ -10,7 +10,7 @@ class HomeController extends Controller
+     public function __invoke(): View
+     {
+         return view('home', [
+-            'modeGroups' => DrawModeType::grouped(),
++            'modeGroups' => GameModeType::grouped(),
+             'title' => 'NexaSpin — Tirages au Sort & Roues de la Décision Aléatoires',
+             'metaDescription' => 'Créez des tirages au sort gratuits et instantanés. Utilisez notre roue de la décision classique, par élimination ou tirage pondéré pour animer vos jeux et concours.',
+         ]);
+diff --git a/app/Livewire/CoinFlip/CoinFlipPage.php b/app/Livewire/CoinFlip/CoinFlipPage.php
+index 4bc2cf1..21afe1e 100644
+--- a/app/Livewire/CoinFlip/CoinFlipPage.php
++++ b/app/Livewire/CoinFlip/CoinFlipPage.php
+@@ -3,7 +3,7 @@
+ namespace App\Livewire\CoinFlip;
+ 
+ use App\Application\CoinFlip\Actions\FlipCoinAction;
+-use App\Application\Draw\Enums\DrawModeType;
++use App\Application\Home\Enums\GameModeType;
+ use App\Domain\CoinFlip\Enums\CoinSide;
+ use App\Domain\CoinFlip\ValueObjects\CoinFlipBet;
+ use App\Domain\CoinFlip\ValueObjects\CoinFlipResult;
+@@ -224,7 +224,7 @@ private function evaluateBet(CoinFlipResult $result): void
+ 
+     public function render()
+     {
+-        $mode = DrawModeType::COIN_FLIP->toDto();
++        $mode = GameModeType::COIN_FLIP->toDto();
+ 
+         return view('livewire.coin-flip.coin-flip-page')
+             ->layout('layouts.app', [
+diff --git a/app/Livewire/Draw/EliminationWheelPage.php b/app/Livewire/Draw/EliminationWheelPage.php
+index dc1f6f1..ec4f437 100644
+--- a/app/Livewire/Draw/EliminationWheelPage.php
++++ b/app/Livewire/Draw/EliminationWheelPage.php
+@@ -3,7 +3,7 @@
+ namespace App\Livewire\Draw;
+ 
+ use App\Application\Draw\Actions\RunDrawAction;
+-use App\Application\Draw\Enums\DrawModeType;
++use App\Application\Home\Enums\GameModeType;
+ use App\Application\Draw\Support\WheelSegmentBuilder;
+ use App\Livewire\Draw\Concerns\HandlesDraw;
+ use App\Livewire\Draw\Concerns\ManagesParticipants;
+@@ -241,7 +241,7 @@ public function showLabelsOnWheel(): bool
+ 
+     public function render()
+     {
+-        $mode = DrawModeType::ELIMINATION->toDto();
++        $mode = GameModeType::ELIMINATION->toDto();
+ 
+         return view('livewire.draw.elimination-wheel-page')
+             ->layout('layouts.app', [
+diff --git a/app/Livewire/Draw/WeightedWheelPage.php b/app/Livewire/Draw/WeightedWheelPage.php
+index 6e76e0d..ee831d3 100644
+--- a/app/Livewire/Draw/WeightedWheelPage.php
++++ b/app/Livewire/Draw/WeightedWheelPage.php
+@@ -3,7 +3,7 @@
+ namespace App\Livewire\Draw;
+ 
+ use App\Application\Draw\Actions\RunDrawAction;
+-use App\Application\Draw\Enums\DrawModeType;
++use App\Application\Home\Enums\GameModeType;
+ use App\Application\Draw\Support\WheelSegmentBuilder;
+ use App\Domain\Draw\Enums\DrawType;
+ use App\Livewire\Draw\Concerns\HandlesDraw;
+@@ -97,7 +97,7 @@ public function showLabelsOnWheel(): bool
+ 
+     public function render()
+     {
+-        $mode = DrawModeType::WEIGHTED->toDto();
++        $mode = GameModeType::WEIGHTED->toDto();
+ 
+         return view('livewire.draw.weighted-wheel-page')
+             ->layout('layouts.app', [
+diff --git a/app/Livewire/Draw/WheelPage.php b/app/Livewire/Draw/WheelPage.php
+index c659d65..f795eee 100644
+--- a/app/Livewire/Draw/WheelPage.php
++++ b/app/Livewire/Draw/WheelPage.php
+@@ -3,7 +3,7 @@
+ namespace App\Livewire\Draw;
+ 
+ use App\Application\Draw\Actions\RunDrawAction;
+-use App\Application\Draw\Enums\DrawModeType;
++use App\Application\Home\Enums\GameModeType;
+ use App\Application\Draw\Support\WheelSegmentBuilder;
+ use App\Livewire\Draw\Concerns\HandlesDraw;
+ use App\Livewire\Draw\Concerns\ManagesParticipants;
+@@ -87,7 +87,7 @@ public function showLabelsOnWheel(): bool
+ 
+     public function render()
+     {
+-        $mode = DrawModeType::CLASSIC->toDto();
++        $mode = GameModeType::CLASSIC->toDto();
+ 
+         return view('livewire.draw.wheel-page')
+             ->layout('layouts.app', [
+diff --git a/resources/views/home.blade.php b/resources/views/home.blade.php
+index 8e508ee..8bba477 100644
+--- a/resources/views/home.blade.php
++++ b/resources/views/home.blade.php
+@@ -32,7 +32,7 @@
+             {{--
+                 Catégories en colonnes : auto-fit calcule seul le nombre de colonnes selon la
+                 largeur disponible et le nombre de catégories (1 sur mobile, 2+ dès qu'elles
+-                tiennent). Ajouter une catégorie dans DrawModeCategory n'impose aucun réglage ici.
++                tiennent). Ajouter une catégorie dans GameModeCategory n'impose aucun réglage ici.
+ 
+                 Sur mobile, chaque catégorie est un accordéon (fermée sauf la première, on
+                 touche l'en-tête pour l'ouvrir) pour éviter une page à rallonge sur petit écran.
