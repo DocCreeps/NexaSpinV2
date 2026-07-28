@@ -16,6 +16,7 @@ class AppServiceProvider extends ServiceProvider
         // Lie le contrat du Domaine CoinFlip à son implémentation par défaut,
         // afin que FlipCoinAction reste découplée de toute stratégie concrète.
         $this->app->bind(CoinFlipStrategy::class, RandomCoinFlipStrategy::class);
+
     }
 
     /**

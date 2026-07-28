@@ -40,14 +40,15 @@
 | 🎡 Roue classique | Tirage aléatoire simple et rapide pour désigner un seul gagnant. | ✅ Fonctionnel |  |
 | ⚔️ Roue par élimination | Élimination progressive des participants jusqu'à ce qu'il n'en reste qu'un. | ✅ Fonctionnel |  |
 | 🎯 Roue pondérée | Tirage aléatoire où chaque participant a un poids personnalisé pour influencer les résultats. | ✅ Fonctionnel | |
-| 🪙 Pile ou face | Simule un lancer de pièce équitable entre deux options, avec système de paris (pile/face) et libellés personnalisables. | ⚠️ Fonctionnel mais non testé | Carte active sur l’accueil, route et composant Livewire opérationnels, y compris les paris. Aucun test écrit (voir [Fonctionnel mais incomplet](#-fonctionnel-mais-incomplet)). |
+| 🪙 Pile ou face | Simule un lancer de pièce équitable entre deux options, avec système de paris (pile/face) et libellés personnalisables. | ✅ Fonctionnel et testé | Carte active sur l’accueil, route et composant Livewire opérationnels, y compris les paris. Couvert par 6 fichiers de tests (Domain, Application, Livewire) et par le `throttle:120,1` partagé avec les routes de tirage. |
+| 🎲 421 (dés) | Jeu de dés classique : gardez les dés qui vous arrangent, relancez les autres, visez la combinaison 4-2-1 en 3 lancers maximum. | ✅ Fonctionnel et testé | Carte active sur l’accueil, route et composant Livewire opérationnels (`RollDiceAction`, `FourTwoOneStrategy`, `Dice421Page`). Couverture ajoutée dans cette révision (voir [Corrigé récemment](#-corrigé-récemment)). |
 | 👥 Tirage par équipes | Permet de former des équipes de manière aléatoire (non encore développé). | 🔒 Non implémenté | Carte visible mais grisée sur l’accueil. |
 
 
 
 > **Aucune persistance en base de données** : les participants et résultats vivent dans l’état des composants Livewire (session uniquement).
 > **Déploiement continu** : synchronisation automatique de `master` vers un VPS via GitHub Actions (sans porte de qualité, voir [Dette technique](#-dette-technique-et-limites-connues)).
-> **Accueil organisé par catégorie** : les modes de tirage sont regroupés en sections (`DrawModeCategory` : Roues / Autres tirages), générées dynamiquement — ajouter une nouvelle catégorie n’implique aucune modification de la vue.
+> **Accueil organisé par catégorie** : les modes sont regroupés en sections (`GameModeCategory` : Roues / Autres tirages / Jeux), générées dynamiquement — ajouter une nouvelle catégorie n’implique aucune modification de la vue.
 
 ---
 
@@ -56,7 +57,7 @@
 | Catégorie | Technologies |
 |----------|--------------|
 | **Backend** | PHP 8.4 · Laravel 13 |
-| **Interactivité** | Livewire 4 (sans JS dédié) |
+| **Interactivité** | Livewire 4 + Alpine.js (JS dédié pour l'animation des dés du 421, voir `resources/js/dice-game.js`) |
 | **Frontend** | Tailwind CSS 4 (via `@tailwindcss/vite`) |
 | **Tests** | Pest 4 (avec plugin Laravel) |
 | **Analyse statique** | Larastan / PHPStan (niveau 5) |
@@ -68,7 +69,7 @@
 ## 🏗️ Architecture
 *Séparation Domain / Application / UI, inspirée de la Clean Architecture et du DDD léger.*
 
-### Découpage par domaine métier (`Draw` et `CoinFlip`)
+### Découpage par domaine métier (`Draw`, `CoinFlip` et `Dice`)
 ```
 app/
 ├── Domain/Draw/               # Règles métier pures (0 dépendance à Laravel)
@@ -86,15 +87,28 @@ app/
 │   ├── Strategies/            # RandomCoinFlipStrategy
 │   └── Contracts/             # CoinFlipStrategy
 │
+├── Domain/Dice/                # Jeu de dés (421)
+│   ├── Enums/                  # DiceCombination (421, Brelan, Suite, Aucune)
+│   ├── ValueObjects/           # DiceRoll, DiceThrowResult (immuables)
+│   ├── Support/                 # DiceCombinationEvaluator (détection de combinaison)
+│   ├── Strategies/              # FourTwoOneStrategy (règles du 421 classique)
+│   └── Contracts/               # DiceGameStrategy
+│
 ├── Application/Draw/          # Orchestration (pont Domain ↔ UI)
 │   ├── Actions/                # RunDrawAction (construit `Draw`, délègue à la stratégie)
-│   ├── DTOs/                   # DrawData, DrawMode (read-model de la home)
-│   ├── Enums/                  # DrawModeType, DrawModeCategory (regroupement de la home)
+│   ├── DTOs/                   # DrawData (transmet les données de l’UI au Domain)
 │   ├── Resolvers/               # DrawStrategyResolver (point d'entrée unique)
 │   └── Support/                 # WheelSegmentBuilder (segments SVG + rotation cumulée)
 │
 ├── Application/CoinFlip/      # Orchestration du pile ou face
 │   └── Actions/                # FlipCoinAction
+│
+├── Application/Dice/           # Orchestration du 421
+│   └── Actions/                 # RollDiceAction (relance les dés non gardés, détecte fin de partie)
+│
+├── Application/Home/           # Read-model de la page d'accueil
+│   ├── DTOs/                    # GameMode (carte affichée sur la home)
+│   └── Enums/                   # GameModeType, GameModeCategory (regroupement de la home)
 │
 ├── Http/Middleware/
 │   └── SecurityHeaders.php    # CSP (prod uniquement) + en-têtes de sécurité HTTP
@@ -102,9 +116,13 @@ app/
 └── Livewire/
     ├── Draw/                   # WheelPage, EliminationWheelPage, WeightedWheelPage
     │   └── Concerns/            # ManagesParticipants, HandlesDraw (traits partagés)
-    └── CoinFlip/
-        └── CoinFlipPage.php    # Tirage simple/multiple + paris + libellés personnalisables
+    ├── CoinFlip/
+    │   └── CoinFlipPage.php    # Tirage simple/multiple + paris + libellés personnalisables
+    └── Dice/
+        └── Dice421Page.php     # Partie de 421 : lancers, dés gardés, historique local
 ```
+
+> **Nomenclature** : les DTO/enums de la home s'appellent désormais `GameModeType` / `GameModeCategory` (et non plus `DrawModeType` / `DrawModeCategory`), suite à l'ajout du 421 qui n'est pas un mode de *tirage* à proprement parler.
 
 ### Principe directeur
 - **Domain** : Ignore Laravel/Livewire. Testable en PHP pur.
@@ -160,19 +178,20 @@ app/
 ## ⚠️ Dette technique et limites connues
 
 ### 🟡 Fonctionnel mais incomplet
-- **Aucun test sur Pile ou face** : `FlipCoinAction`, `RandomCoinFlipStrategy`, `CoinFlipPage` (y compris le système de paris) n’ont **aucune couverture de test**, malgré une fonctionnalité déjà active en production.
 - **Déploiement sans porte de qualité** : Le workflow GitHub Actions déploie directement sur `master` sans exécuter `composer test` ou `composer run analyse`.
 - **Pas de persistance** : Les tirages ne sont pas sauvegardés en base de données (choix assumé pour l’instant).
 - **Tirage par équipes non implémenté** : Carte visible mais désactivée (`available: false`) sur l’accueil.
-- **Pas de rate limiting sur `CoinFlipPage`** : contrairement aux routes de tirage (`throttle:120,1`), rien n’empêche encore un enchaînement abusif de paris/tirages automatiques.
+- **Polices externes non conformes à la CSP sur `/421`** : `dice421-page.blade.php` charge Bebas Neue / IBM Plex Mono via une balise `<link>` pointant directement vers `fonts.googleapis.com`/`fonts.gstatic.com`, en dehors du pipeline Vite utilisé par le reste de l’app. La CSP de production (`style-src 'self'`, `font-src 'self' data:`) bloque ces requêtes : en production, la page retombe silencieusement sur la police système sans erreur visible pour l’utilisateur. À corriger en important ces polices via `resources/css/app.css` (ou en les auto-hébergeant), comme le reste du projet.
 
 ### ✅ Corrigé récemment
+- **Ajout des tests du jeu de dés 421** : `RollDiceAction`, `FourTwoOneStrategy`, `DiceCombinationEvaluator`, `DiceRoll`, `Dice421Page` sont désormais couverts par des tests (Domain, Application, Livewire) — l’implémentation existait déjà mais n’était pas testée et n’apparaissait pas dans ce README.
+- **Correction du statut « Pile ou face » dans ce README** : contrairement à ce qu’indiquait une précédente version, `FlipCoinAction`, `RandomCoinFlipStrategy`, `CoinFlipBet`, `CoinFlipResult` et `CoinFlipPage` (y compris les paris) sont bien couverts par 6 fichiers de tests, et la route `/pile-ou-face` a bien un `throttle:120,1`.
 - **Sécurité HTTP** : ajout de `SecurityHeaders` (CSP appliquée uniquement en production — Vite/HMR ont besoin d’une origine séparée en dev —, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`), et `throttle:120,1` sur les routes de tirage.
 - **Aléatoire non cryptographique corrigé** : `Participants::random()` utilise désormais `random_int()` (CSPRNG) au lieu d’`array_rand()`, cohérent avec `WeightedDrawStrategy`.
 - **Bug de rotation de roue à la relance** : `WheelPage` et `WeightedWheelPage` dispatchaient un angle **absolu** à un composant Alpine qui **accumule** les rotations (`rotation += ...`) — la roue s’arrêtait au mauvais endroit après un premier tirage. Corrigé via `WheelSegmentBuilder::cumulativeRotationFor()`, qui calcule un delta relatif à la rotation déjà appliquée (logique déjà en place sur `EliminationWheelPage`, désormais centralisée et partagée par les trois pages).
 - **Blocage possible sur la roue d’élimination** : ajout d’un détecteur d’état bloqué (`isStuck()`/`unstick()`) si `confirmElimination()` n’est jamais rappelée (ex. coupure réseau pendant l’animation).
 - **`CoinFlipPage::$bet` verrouillée** (`#[Locked]`) : empêche un payload Livewire forgé de fixer `$bet` à une valeur arbitraire côté client ; `evaluateBet()` utilise `CoinSide::tryFrom()` en défense en profondeur plutôt que `from()`.
-- **Accueil regroupé par catégorie** : nouvel enum `DrawModeCategory` (Roues / Autres tirages), `DrawModeType::grouped()` génère les sections dynamiquement — une catégorie sans mode actif n’apparaît pas, et en ajouter une nouvelle ne nécessite aucune modification de `home.blade.php`.
+- **Accueil regroupé par catégorie** : nouvel enum `GameModeCategory` (Roues / Autres tirages / Jeux), `GameModeType::grouped()` génère les sections dynamiquement — une catégorie sans mode actif n’apparaît pas, et en ajouter une nouvelle ne nécessite aucune modification de `home.blade.php`. *(Ces enums s'appelaient `DrawModeCategory`/`DrawModeType` au moment de ce commit, renommés depuis en `GameModeCategory`/`GameModeType` suite à l'ajout du 421.)*
 - **Accueil responsive** : catégories en colonnes auto-adaptatives (`grid-cols-[repeat(auto-fit,minmax(280px,1fr))]`, pas de nombre codé en dur) à partir de `md:` ; sur mobile, chaque catégorie est un accordéon repliable (Alpine.js, première catégorie ouverte par défaut) pour éviter une page à rallonge. `<x-mode-card>` a deux mises en page distinctes : carte verticale complète dès `md:`, rangée horizontale compacte (icône + titre/description tronqués + chevron) en dessous. Les effets `hover` sont désormais gated par `md:group-hover:` pour ne jamais rester "collés" après un tap tactile.
 - **Ajout des paris sur pile ou face** : `CoinFlipBet` (Domain) porte la règle gagné/perdu, historique des paris et libellés de faces personnalisables (`pileLabel`/`faceLabel`).
 - **Bug du tirage pondéré résolu** : `HandlesDraw::executeDraw()` appelle désormais `$this->drawType()` au lieu d’un `DrawType::RANDOM` codé en dur ; `WeightedDrawStrategy` est bien invoquée.
@@ -204,7 +223,7 @@ app/
 | **Analyse statique** | Larastan/PHPStan niveau 5 + documentation des `ignoreErrors`. |
 | **CI/CD** | Déploiement automatique via GitHub Actions (à améliorer avec des portes de qualité). |
 | **En-têtes de sécurité HTTP** | Middleware `SecurityHeaders` (CSP conditionnelle à l’environnement, `X-Frame-Options`, etc.) + `throttle` sur les routes sensibles. |
-| **Read-model + regroupement par enum** | `DrawModeCategory` pilote les sections de la home ; `DrawModeType::grouped()` reste la seule source de vérité, la vue ne fait qu’itérer. |
+| **Read-model + regroupement par enum** | `GameModeCategory` pilote les sections de la home ; `GameModeType::grouped()` reste la seule source de vérité, la vue ne fait qu’itérer. |
 
 <details>
 <summary><strong>📜 Historique des commits clés</strong></summary>
@@ -274,15 +293,15 @@ L’application sera accessible sur **[http://localhost:8000](http://localhost:8
 ```bash
 composer test
 ```
-- **85+ déclarations de test** (Pest) couvrant :
+- **120+ déclarations de test** (Pest) couvrant :
   - Gestion des participants (ajout/suppression/édition, y compris pondération).
   - Résolution de stratégie et exécution des tirages.
   - Tirage pondéré (résultat **et** segments SVG proportionnels).
   - Déroulé complet d’une élimination.
+  - Pile ou face : tirage simple/multiple, système de paris, libellés personnalisés, statistiques.
+  - 421 : lancer de dés (dés gardés vs relancés), détection de combinaison (421, brelan, suite), fin de partie, historique.
   - Chargement des routes.
   - Génération des segments SVG.
-
-> ⚠️ **Pile ou face n’a aucun test** malgré une implémentation active (`FlipCoinAction`, `RandomCoinFlipStrategy`, `CoinFlipPage`) — à corriger en priorité.
 
 ### Analyse statique
 ```bash
@@ -298,15 +317,13 @@ composer run analyse
 
 
 - [ ] **Design** :
-  - Responsive, accessibilité. 
-- [ ] **Ajouter des tests pour Pile ou face** :
-  - `FlipCoinAction`, `RandomCoinFlipStrategy`, `CoinFlipPage`, y compris le système de paris.
+  - Responsive, accessibilité.
+- [ ] **Corriger le chargement des polices sur `/421`** :
+  - Remplacer le `<link>` direct vers `fonts.googleapis.com` (bloqué par la CSP de prod) par un import via `resources/css/app.css` (Vite), comme le reste du projet.
 - [ ] **Améliorer le pipeline de déploiement** :
   - Ajouter `composer test` et `composer run analyse` comme portes de qualité dans `deploy.yml`.
-- [ ] **Étendre le rate limiting à `CoinFlipPage`** :
-  - Actuellement seules les routes de tirage (`/roue`, `/roue-elimination`, `/roue-ponderee`) ont un `throttle`.
 - [ ] **Implémenter le mode manquant** :
-  - Tirage par équipes (`DrawModeType::TEAMS`).
+  - Tirage par équipes (`GameModeType::TEAMS`).
 - [ ] **Peaufiner Pile ou face** (voir `TODO`) :
   - Affichage du gagnant après un tirage automatique selon le max de faces obtenues.
   - Amélioration du design.

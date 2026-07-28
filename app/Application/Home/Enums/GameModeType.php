@@ -12,6 +12,8 @@ enum GameModeType: string
     case COIN_FLIP = 'coin_flip';
     case TEAMS = 'teams';
 
+    case DICE_421 = 'dice_421';
+
     /**
      * Transforme l'enum en objet de présentation (DTO).
      */
@@ -61,7 +63,7 @@ enum GameModeType: string
                 icon: '🪙',
                 title: 'Pile ou face',
                 description: 'Le grand classique : un tirage rapide à deux issues, sans liste de participants à gérer.',
-                route: route('draw.coinflip'),
+                route: route('coinflip'),
                 available: true,
                 color: 'from-amber-400 to-yellow-500',
                 shadow: 'shadow-amber-500/10 hover:shadow-amber-500/20',
@@ -69,6 +71,19 @@ enum GameModeType: string
                 minParticipants: null,
                 metaTitle: 'Pile ou Face — Tirage Aléatoire Rapide | NexaSpin',
                 metaDescription: 'Lancez une pièce virtuelle et enchaînez les tirages "Pile ou Face" en un clic. Historique des résultats inclus, 100% gratuit et sans inscription.',
+            ),
+            self::DICE_421 => new GameMode(
+                icon: '🎲',
+                title: 'Jeu du 421',
+                description: 'Le grand classique du jeu de dés : lancez les 3 dés et tentez d’obtenir la combinaison 4-2-1.',
+                route: route('dice.dice-421'),
+                available: true,
+                color: 'from-blue-500 to-cyan-600',
+                shadow: 'shadow-blue-500/10 hover:shadow-blue-500/20',
+                category: GameModeCategory::GAME,
+                minParticipants: null,
+                metaTitle: 'Jeu du 421 en Ligne — Lancez les Dés | NexaSpin',
+                metaDescription: 'Jouez au mythique jeu de dés du 421 gratuitement en ligne. Lancez les dés, tentez de faire 4-2-1 et suivez vos meilleurs tirages sans inscription.',
             ),
             self::TEAMS => new GameMode(
                 icon: '👥',
