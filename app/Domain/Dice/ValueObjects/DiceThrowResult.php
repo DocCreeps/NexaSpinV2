@@ -5,9 +5,7 @@ namespace App\Domain\Dice\ValueObjects;
 use App\Domain\Dice\Enums\DiceCombination;
 
 /**
- * Résultat d'un lancer au sein d'une partie : le lancer lui-même, la
- * combinaison détectée, le nombre de lancers déjà effectués, et si la
- * partie est gagnée / terminée.
+ * Représente le résultat et l'état de la partie après un lancer de dés.
  */
 final readonly class DiceThrowResult
 {

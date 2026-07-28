@@ -3,21 +3,20 @@
 namespace App\Domain\Dice\ValueObjects;
 
 /**
- * Représente les valeurs d'un lancer de dés, quel que soit le nombre de dés
- * (3 pour le 421, potentiellement 5 pour un futur jeu type Yahtzee...).
- * Ne porte aucune notion de combinaison : c'est DiceCombinationEvaluator qui
- * s'en charge, séparément.
+ * Représente l'état des dés issus d'un lancer.
  */
 final readonly class DiceRoll
 {
     /**
-     * @param array<int> $values Valeurs des dés, dans l'ordre
+     * @param array<int> $values
      */
     public function __construct(
         public array $values,
     ) {}
 
     /**
+     * Retourne les valeurs des dés triées par ordre croissant.
+     *
      * @return array<int>
      */
     public function sorted(): array

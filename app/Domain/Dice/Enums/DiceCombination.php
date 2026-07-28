@@ -3,13 +3,7 @@
 namespace App\Domain\Dice\Enums;
 
 /**
- * Combinaisons détectables sur un lancer de 3 dés.
- *
- * Ce vocabulaire est commun à plusieurs jeux de dés français (421,
- * Zanzibar...), pas uniquement au 421 : c'est pour ça qu'il vit à côté du
- * contrat DiceGameStrategy plutôt que dans FourTwoOneStrategy. Chaque
- * stratégie reste libre de n'utiliser qu'une partie de ces cases comme
- * objectif de victoire.
+ * Combinaisons possibles pour un lancer de 3 dés.
  */
 enum DiceCombination: string
 {
@@ -18,6 +12,9 @@ enum DiceCombination: string
     case SUITE = 'suite';
     case NONE = 'none';
 
+    /**
+     * Libellé lisible de la combinaison.
+     */
     public function label(): string
     {
         return match ($this) {

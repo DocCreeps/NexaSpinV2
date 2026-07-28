@@ -6,12 +6,7 @@ use App\Domain\Dice\Enums\DiceCombination;
 use App\Domain\Dice\ValueObjects\DiceRoll;
 
 /**
- * Détecte la combinaison présente dans un lancer de 3 dés.
- *
- * Volontairement indépendant de toute DiceGameStrategy : que le 421 utilise
- * FOUR_TWO_ONE comme objectif ou qu'un futur jeu vise BRELAN, la détection
- * elle-même ne change pas. Même esprit que WheelSegmentBuilder pour les
- * roues : une logique centralisée, appelée par plusieurs consommateurs.
+ * Évalue la combinaison formée par un lancer de dés.
  */
 final class DiceCombinationEvaluator
 {
@@ -35,7 +30,7 @@ final class DiceCombinationEvaluator
     }
 
     /**
-     * @param array<int> $sorted Valeurs triées, ex : [2, 3, 4]
+     * @param array<int> $sorted
      */
     private static function isConsecutiveSuite(array $sorted): bool
     {

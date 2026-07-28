@@ -6,17 +6,6 @@ use App\Domain\Dice\ValueObjects\DiceRoll;
 
 /**
  * Contrat pour les règles d'un jeu de dés (Strategy Pattern).
- *
- * Volontairement neutre : aucune méthode ne fait référence au 421, à un
- * nombre de dés fixe ou à une combinaison précise. Chaque implémentation
- * concrète (FourTwoOneStrategy, et demain d'autres jeux de dés : Zanzibar,
- * un brelan simple, un Yahtzee-like...) définit elle-même :
- * - combien de dés elle utilise (diceCount),
- * - combien de lancers elle autorise (maxThrows),
- * - ce qui constitue une victoire (isWinningRoll).
- *
- * RollDiceAction ne dépend que de ce contrat : ajouter un nouveau jeu de dés
- * ne nécessite ni modification de l'Action, ni du contrat lui-même.
  */
 interface DiceGameStrategy
 {

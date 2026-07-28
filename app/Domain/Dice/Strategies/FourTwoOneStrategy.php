@@ -8,19 +8,12 @@ use App\Domain\Dice\Support\DiceCombinationEvaluator;
 use App\Domain\Dice\ValueObjects\DiceRoll;
 
 /**
- * Règles du 421 classique : 3 dés, 3 lancers maximum, objectif = combinaison
- * 4-2-1.
- *
- * C'est la SEULE classe du module Dice à connaître le nombre "3" ou la
- * combinaison FOUR_TWO_ONE. Un futur jeu de dés (Zanzibar, brelan simple,
- * un mode où l'objectif est une suite...) s'ajoute en implémentant
- * DiceGameStrategy dans une nouvelle classe, sans toucher à celle-ci ni au
- * contrat.
+ * Implémentation de la stratégie des règles classiques du 421.
  */
 final class FourTwoOneStrategy implements DiceGameStrategy
 {
     private const DICE_COUNT = 3;
-    private const MAX_THROWS = 5;
+    private const MAX_THROWS = 3;
 
     public function diceCount(): int
     {
