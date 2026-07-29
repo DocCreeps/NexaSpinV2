@@ -27,6 +27,7 @@ class ModeCard extends Component
         if (str_contains($color, 'rose') || str_contains($color, 'pink')) return 'rose';
         if (str_contains($color, 'emerald') || str_contains($color, 'green')) return 'emerald';
         if (str_contains($color, 'amber') || str_contains($color, 'yellow')) return 'amber';
+        if (str_contains($color, 'blue') || str_contains($color, 'cyan') || str_contains($color, 'sky')) return 'blue';
 
         return 'default';
     }
@@ -54,6 +55,10 @@ class ModeCard extends Component
                 'title' => 'md:group-hover:text-amber-600',
                 'button' => 'md:group-hover:bg-amber-600 md:group-hover:text-white md:group-hover:border-transparent',
             ],
+            'blue' => [
+                'title' => 'md:group-hover:text-blue-600',
+                'button' => 'md:group-hover:bg-blue-600 md:group-hover:text-white md:group-hover:border-transparent',
+            ],
             default => [
                 'title' => 'md:group-hover:text-slate-600',
                 'button' => 'md:group-hover:bg-slate-800 md:group-hover:text-white md:group-hover:border-transparent',
@@ -66,4 +71,3 @@ class ModeCard extends Component
         return view('components.mode-card');
     }
 }
-

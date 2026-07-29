@@ -1,139 +1,57 @@
+@props(['mode', 'category' => null, 'index' => null])
+
 <{{ $mode->available ? 'a' : 'div' }} @if($mode->available)
     href="{{ $mode->route }}"
-    x-data="{
-    maxTilt: 6,
-    perspective: 1000,
-    scale: 1.02,
-    rotateX: 0,
-    rotateY: 0,
-    currentScale: 1,
-    rect: null,
-
-    getRect() {
-    this.rect = this.$el.getBoundingClientRect();
-    },
-
-    handleMouseMove(event) {
-    if (!this.rect) this.getRect();
-
-    const x = (event.clientX - this.rect.left) / this.rect.width - 0.5;
-    const y = (event.clientY - this.rect.top) / this.rect.height - 0.5;
-
-    this.rotateX = -(y * this.maxTilt).toFixed(2);
-    this.rotateY = (x * this.maxTilt).toFixed(2);
-    this.currentScale = this.scale;
-    },
-
-    resetTilt() {
-    this.rotateX = 0;
-    this.rotateY = 0;
-    this.currentScale = 1;
-    this.rect = null;
-    }
-    }"
-    @mouseenter="getRect"
-    @mousemove="handleMouseMove"
-    @mouseleave="resetTilt"
-    class="group relative block text-left no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500 rounded-2xl"
-    style="transform-style: preserve-3d"
+    class="group relative flex h-full flex-col justify-between rounded-2xl border border-[#E8E1D3] bg-white p-5 transition-all duration-150 hover:-translate-y-0.5 hover:border-[#D9CFB8] hover:shadow-lg {{ $mode->shadow }} focus:outline-none !text-inherit !no-underline"
     @else
     role="region"
     aria-label="{{ $mode->title }} (non disponible)"
-    class="relative block cursor-not-allowed select-none opacity-60"
+    class="relative flex h-full flex-col justify-between rounded-2xl border border-dashed border-[#E8E1D3] bg-[#F5F0E6]/50 p-5 opacity-60 cursor-not-allowed select-none"
     @endif
     >
-
-    {{-- Halo lumineux --}}
-    @if($mode->available)
-    <div class="absolute inset-0 rounded-2xl bg-gradient-to-r {{ $mode->color }} opacity-0 blur-xl transition-opacity duration-300 md:group-hover:opacity-10 pointer-events-none" aria-hidden="true"></div>
-    @endif
-
-    <div @if($mode->available)
-        x-ref="card"
-        :style="`
-        perspective: ${perspective}px;
-        transform: rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(${currentScale});
-        transform-style: preserve-3d;
-        transition: ${rotateX == 0 ? 'transform .45s cubic-bezier(.16, 1, .3, 1)' : 'none'};
-        `"
-        @endif
-        class="relative flex h-full flex-row md:flex-col items-center md:items-stretch gap-3 md:gap-0 rounded-2xl border border-slate-200 bg-white p-3 md:p-6 shadow-sm transition-all duration-300 md:group-hover:border-slate-300 md:group-hover:shadow-xl"
-        >
-        {{-- Icône --}}
-        <span class="text-2xl md:text-4xl shrink-0 select-none" aria-hidden="true" style="transform: translateZ(18px)">
-            {{ $mode->icon }}
-        </span>
-
-        <div class="min-w-0 flex-1 md:flex-none" style="transform: translateZ(18px); backface-visibility: hidden;">
-            {{-- Badge Statut (Desktop) --}}
-            <div class="hidden md:flex mb-5 items-center justify-end" aria-hidden="true">
-                <span @class([ 'inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold border' , 'bg-emerald-50 text-emerald-700 border-emerald-200'=> $mode->available,
-                    'bg-slate-100 text-slate-500 border-slate-200' => !$mode->available,
-                    ])>
-                    {{ $mode->available ? 'Disponible' : 'Bientôt' }}
+    <div>
+        <div class="relative flex items-center justify-between pb-3">
+            <div class="flex items-center gap-3">
+                <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br {{ $mode->color }} text-base">
+                    {{ $mode->icon }}
                 </span>
-            </div>
-
-            {{-- Titre --}}
-            <h3 class="truncate md:whitespace-normal text-base md:text-xl font-bold text-slate-800 transition-colors duration-300 {{ $hoverClasses['title'] }}">
-                {{ $mode->title }}
-            </h3>
-
-            {{-- Info Joueurs + Statut (Mobile) --}}
-            <div class="flex items-center gap-2 text-xs text-slate-500 mt-0.5 md:hidden">
-                @if($mode->minParticipants)
-                <span class="flex items-center gap-1 font-medium">
-                    <svg class="h-3.5 w-3.5 text-slate-400" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                    </svg>
-                    <span>{{ $mode->minParticipants }}+ joueurs</span>
-                </span>
-                @endif
-
-                @if(!$mode->available)
-                <span class="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500 border border-slate-200">
-                    Bientôt
-                </span>
+                @if($index)
+                <span class="font-mono text-xs text-[#B0A996]">N-{{ str_pad($index, 3, '0', STR_PAD_LEFT) }}</span>
                 @endif
             </div>
 
-            {{-- Description (Accessible) --}}
-            <p class="sr-only md:not-sr-only md:block text-sm leading-6 text-slate-500 md:mt-3">
-                {{ $mode->description }}
-            </p>
+            @if($mode->available)
+            @if($category)
+            <span class="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-[#8A8375]">
+                <span class="h-1.5 w-1.5 rounded-full bg-gradient-to-br {{ $mode->color }}"></span>
+                {{ $category }}
+            </span>
+            @endif
+            @else
+            <span class="font-mono text-[10px] uppercase tracking-wider text-[#B0A996]">
+                Bientôt
+            </span>
+            @endif
 
-            {{-- Footer (Desktop) --}}
-            <div class="hidden md:flex mt-8 items-center justify-between border-t border-slate-100 pt-5" aria-hidden="true">
-                <div>
-                    @if($mode->minParticipants)
-                    <div class="flex items-center gap-2 text-xs text-slate-500">
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                        </svg>
-                        <span>{{ $mode->minParticipants }}+ joueurs</span>
-                    </div>
-                    @endif
-                </div>
-
-                @if($mode->available)
-                <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500 transition-all duration-300 {{ $hoverClasses['button'] }}">
-                    <svg class="h-4 w-4 transition-transform md:group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                    </svg>
-                </span>
-                @else
-                <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 text-slate-400">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8" />
-                    </svg>
-                </span>
-                @endif
-            </div>
+            <span class="absolute inset-x-0 bottom-0 border-b border-dashed border-[#EEE8DA]"></span>
         </div>
 
-        {{-- Chevron Mobile --}}
-        <svg class="h-4 w-4 shrink-0 text-slate-300 md:hidden" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-        </svg>
+        <h3 class="mt-5 font-display text-base font-bold text-[#2B2620]">
+            {{ $mode->title }}
+        </h3>
+
+        <p class="mt-1.5 text-xs leading-relaxed text-[#8A8375] line-clamp-2">
+            {{ $mode->description }}
+        </p>
+    </div>
+
+    <div class="mt-6 flex items-center justify-between pt-3 font-mono text-xs text-[#8A8375]">
+        <span>{{ $mode->minParticipants ? $mode->minParticipants.'+ personnes' : 'Solo' }}</span>
+
+        @if($mode->available)
+        <span class="font-semibold text-[#E8623D] group-hover:translate-x-0.5 transition-all duration-150">
+            LANCER &rarr;
+        </span>
+        @endif
     </div>
 </{{ $mode->available ? 'a' : 'div' }}>
