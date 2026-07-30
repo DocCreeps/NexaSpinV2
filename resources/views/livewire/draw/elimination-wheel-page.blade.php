@@ -1,208 +1,193 @@
-<div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-orange-50/60 relative overflow-hidden antialiased pb-24 selection:bg-orange-500 selection:text-white" x-data="{
+<div class="min-h-screen w-full bg-surface text-ink antialiased selection:bg-secondary selection:text-ink" x-data="{
         busy: false,
         autoMode: @entangle('autoMode').live
     }" x-on:wheel-spin.window="busy = true" x-on:wheel-spin-finished.window="busy = false; $wire.confirmElimination()" x-on:elimination-confirmed.window="
-        if(autoMode && !$wire.winner) {
+        if (autoMode && !$wire.winner) {
             setTimeout(() => {
-                if(autoMode && !busy && !$wire.winner) {
+                if (autoMode && !busy && !$wire.winner) {
                     $wire.eliminateNext()
                 }
             }, 2000)
         }
     ">
-    {{-- EFFETS DE LUMIÈRE D'ARRIÈRE-PLAN --}}
-    <div class="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-orange-200/20 rounded-full blur-[140px] pointer-events-none"></div>
-    <div class="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-rose-200/10 rounded-full blur-[120px] pointer-events-none"></div>
-
-    <div class="max-w-7xl mx-auto px-6 py-10 space-y-8 relative z-10">
+    <div class="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:space-y-8 sm:px-10 sm:py-10">
 
         {{-- HEADER --}}
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-5 bg-white/40 backdrop-blur-md border border-slate-200/50 rounded-3xl p-6 shadow-sm">
+        <header class="flex flex-col gap-4 border-b-4 border-ink pb-5 sm:flex-row sm:items-end sm:justify-between">
             <div>
-                <a href="{{ route('home') }}" class="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-orange-600 transition">
-                    ← Modes de tirage
+                <a href="{{ route('home') }}" class="inline-flex items-center gap-1.5 rounded text-sm font-semibold text-muted transition-colors hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-info focus-visible:ring-offset-2">
+                    ← Salle
                 </a>
-                <h1 class="mt-2 text-3xl font-black tracking-tight text-slate-900 flex items-center gap-3">
-                    ⚔️ Roue par élimination
+
+                <p class="mt-4 font-mono text-[10px] uppercase tracking-widest text-faint">
+                    ◆ Élimination progressive ◆
+                </p>
+
+                <h1 class="mt-1 font-display text-4xl leading-none text-ink sm:text-5xl">
+                    Roue par élimination
                 </h1>
-                <p class="text-sm font-medium text-slate-500 mt-1">
-                    Chaque tour élimine un joueur jusqu'au dernier survivant.
+
+                <p class="mt-3 max-w-md text-sm text-muted">
+                    Chaque tour élimine un joueur jusqu’au dernier survivant.
                 </p>
             </div>
 
-            {{-- MINI COMPTEURS --}}
-            <div class="flex gap-3">
-                {{-- SURVIVANTS --}}
-                <div class="bg-white border border-slate-200/50 rounded-2xl px-5 py-3 shadow-sm min-w-[110px] text-center">
-                    <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                        Survivants
-                    </div>
-                    <div class="text-2xl font-black text-emerald-600 mt-0.5">
+            <div class="flex gap-3 self-start">
+                <div class="card-hard min-w-[110px] rounded-xl border-2 border-ink bg-panel px-5 py-3 text-center">
+                    <p class="font-mono text-[9px] uppercase tracking-widest text-subtle">Survivants</p>
+                    <p class="mt-0.5 font-display text-2xl text-ink">
                         {{ count($participants) }}
-                    </div>
+                    </p>
                 </div>
 
-                {{-- ÉLIMINÉS --}}
-                <div class="bg-red-50/50 border border-red-100 rounded-2xl px-5 py-3 shadow-sm min-w-[110px] text-center">
-                    <div class="text-[10px] font-bold uppercase tracking-wider text-red-400">
-                        Sorties
-                    </div>
-                    <div class="text-2xl font-black text-red-600 mt-0.5">
+                <div class="card-hard min-w-[110px] rounded-xl border-2 border-ink bg-danger/10 px-5 py-3 text-center">
+                    <p class="font-mono text-[9px] uppercase tracking-widest text-danger/70">Sorties</p>
+                    <p class="mt-0.5 font-display text-2xl text-danger">
                         {{ count($eliminated) }}
-                    </div>
+                    </p>
                 </div>
             </div>
-        </div>
+        </header>
 
-        {{-- ALERTES ERREURS --}}
+        {{-- ERREUR --}}
         @if($error)
-        <div class="rounded-2xl bg-red-50 border border-red-200 p-4 text-red-600">
-            ⚠️ {{ $error }}
+        <div role="alert" class="rounded-xl border-2 border-ink bg-danger/10 px-4 py-3 text-sm font-semibold text-danger">
+            ⚠ {{ $error }}
         </div>
         @endif
 
-        {{-- RÉCUPÉRATION EN CAS DE BLOCAGE (ex : coupure réseau pendant l'animation) --}}
-        {{-- wire:poll ne tourne que pendant "processing" : coût nul le reste du temps --}}
+        {{-- POLL pendant processing --}}
         @if($processing)
         <div wire:poll.3s="$refresh" x-data></div>
         @endif
+
+        {{-- BLOCAGE --}}
         @if($this->isStuck())
-        <div class="rounded-2xl bg-amber-50 border border-amber-200 p-4 text-amber-700 flex items-center justify-between gap-4">
-            <span>⏳ La roue semble bloquée (connexion perdue pendant l'animation ?)</span>
-            <button wire:click="unstick" class="shrink-0 rounded-xl bg-amber-600 text-white font-bold text-sm px-4 py-2 hover:bg-amber-700 transition">
-                Débloquer
+        <div class="flex flex-col gap-3 rounded-xl border-2 border-ink bg-secondary/40 px-4 py-4 text-ink sm:flex-row sm:items-center sm:justify-between">
+            <span class="text-sm font-semibold">
+                ⏳ La roue semble bloquée (connexion perdue pendant l’animation ?)
+            </span>
+            <button type="button" wire:click="unstick" class="btn-press shrink-0 rounded-xl border-2 border-ink bg-primary px-4 py-2 font-display text-xs text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-info focus-visible:ring-offset-2">
+                DÉBLOQUER
             </button>
         </div>
         @endif
 
-        {{-- GRILLE PRINCIPALE --}}
-        <div class="grid lg:grid-cols-12 gap-8 items-start">
+        {{-- GRILLE --}}
+        <div class="grid items-start gap-6 lg:grid-cols-12 lg:gap-8">
 
-            {{-- COLONNE GAUCHE : LA ROUE --}}
+            {{-- ROUE --}}
             <div class="lg:col-span-7">
-                <div class="bg-white rounded-3xl shadow-sm border border-slate-200/50 p-8 flex flex-col items-center min-h-[520px] justify-center">
-
+                <section class="card-hard flex min-h-[520px] flex-col items-center justify-center rounded-2xl border-2 border-ink bg-panel p-6 sm:p-8">
                     <div class="relative" wire:key="wheel-wrapper">
-                        {{-- Halo lumineux derrière la roue --}}
-                        <div class="absolute inset-0 bg-orange-400/10 blur-3xl rounded-full"></div>
                         <x-draw.wheel :segments="$this->segments" :show-labels="$this->showLabelsOnWheel()" />
                     </div>
 
-                    {{-- ÉTAT DU JEU (CIBLE / GAGNANT) --}}
                     @if($pendingElimination)
-                    <div class="mt-8 px-6 py-3 rounded-full bg-red-50 border border-red-200 text-red-600 font-bold text-sm tracking-wide shadow-sm animate-pulse flex items-center gap-2">
+                    <div class="mt-8 flex items-center gap-2 rounded-xl border-2 border-ink bg-danger/10 px-5 py-3 font-display text-sm text-danger shadow-hard">
                         <span class="relative flex h-2 w-2">
-                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                            <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-danger opacity-75"></span>
+                            <span class="relative inline-flex h-2 w-2 rounded-full bg-danger"></span>
                         </span>
-                        🎯 Cible : {{ $pendingElimination }}
+                        Cible : {{ $pendingElimination }}
                     </div>
                     @elseif($winner)
-                    <div class="mt-8 px-8 py-3.5 rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-black text-lg shadow-md animate-bounce flex items-center gap-2">
+                    <div class="mt-8 flex items-center gap-2 rounded-xl border-2 border-ink bg-secondary px-6 py-3 font-display text-lg text-ink shadow-hard">
                         🏆 Gagnant : {{ $winner }}
                     </div>
                     @endif
-
-                </div>
+                </section>
             </div>
 
-            {{-- COLONNE DROITE : LE PANNEAU DE CONTRÔLE --}}
-            <div class="lg:col-span-5 space-y-6">
+            {{-- CONTRÔLES --}}
+            <div class="space-y-6 lg:col-span-5">
 
-                {{-- CARTE UNIQUE DE CONFIGURATION --}}
-                <div class="bg-white rounded-3xl shadow-sm border border-slate-200/50 p-5 overflow-hidden">
-                    <h2 class="font-black text-lg text-slate-800 mb-4 flex items-center gap-2">
-                        <span>👥</span> Configuration du salon
+                {{-- Config --}}
+                <section class="card-hard overflow-hidden rounded-2xl border-2 border-ink bg-panel p-5">
+                    <h2 class="mb-4 font-display text-lg text-ink">
+                        Configuration
                     </h2>
 
                     @php
                     $indexedColors = [];
-                    foreach($participants as $index => $name) {
+                    foreach ($participants as $index => $name) {
                     $indexedColors[$index] = $colors[$name] ?? '#ccc';
                     }
                     @endphp
 
                     <x-draw.participant-form :participants="$participants" :colors="$indexedColors" :locked="$this->started()" :error="$error" />
-                </div>
+                </section>
 
-                {{-- MODE AUTO --}}
-                @if(!$winner && ($this->started() || $this->canStart()))
-                <div class="bg-white rounded-3xl border border-slate-200/50 shadow-sm p-5 flex items-center justify-between">
-                    <div class="flex flex-col">
-                        <span class="font-bold text-sm text-slate-800">
-                            Mode automatique
-                        </span>
-                        <span class="text-xs text-slate-400">
-                            Enchaîne les éliminations automatiquement
-                        </span>
+                {{-- Mode auto --}}
+                @if(! $winner && ($this->started() || $this->canStart()))
+                <section class="card-hard flex items-center justify-between rounded-2xl border-2 border-ink bg-panel p-5">
+                    <div>
+                        <p class="font-display text-sm text-ink">Mode automatique</p>
+                        <p class="text-xs text-subtle">Enchaîne les éliminations automatiquement</p>
                     </div>
 
-                    <label class="relative inline-flex items-center cursor-pointer select-none">
-                        <input type="checkbox" x-model="autoMode" class="sr-only peer" :disabled="$wire.winner">
-                        <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:bg-orange-500 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
+                    <label class="relative inline-flex cursor-pointer select-none items-center">
+                        <input type="checkbox" x-model="autoMode" class="peer sr-only" :disabled="$wire.winner">
+                        <div class="h-6 w-11 rounded-full border-2 border-ink bg-wash after:absolute after:start-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border-2 after:border-ink after:bg-panel after:transition-all peer-checked:bg-primary peer-checked:after:translate-x-full"></div>
                     </label>
-                </div>
+                </section>
                 @endif
 
-                {{-- BOUTON D'ACTION PRINCIPAL --}}
-                @if(!$winner)
+                {{-- Action principale --}}
+                @if(! $winner)
                 @if($autoMode)
-                <button wire:click="$set('autoMode', false)" class="w-full rounded-2xl py-4 font-black text-white shadow-md bg-slate-800 hover:bg-slate-900 active:scale-[0.98] transition">
-                    ⏸️ Mettre en pause
+                <button type="button" wire:click="$set('autoMode', false)" class="card-hard w-full rounded-xl border-2 border-ink bg-ink py-4 font-display text-sm text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-info focus-visible:ring-offset-2">
+                    ⏸ METTRE EN PAUSE
                 </button>
                 @else
-                <button wire:click="handleAction" wire:loading.attr="disabled" wire:target="handleAction,eliminateNext" x-bind:disabled="busy || {{ (!$this->started() && !$this->canStart()) ? 'true' : 'false' }}" @disabled(!$this->started() && !$this->canStart()) class="w-full rounded-2xl py-4 font-black text-white shadow-md bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-700 hover:to-orange-600 disabled:from-slate-300 disabled:to-slate-400 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] transition disabled:pointer-events-none">
+                <button type="button" wire:click="handleAction" wire:loading.attr="disabled" wire:target="handleAction,eliminateNext" x-bind:disabled="busy || {{ (! $this->started() && ! $this->canStart()) ? 'true' : 'false' }}" @disabled(! $this->started() && ! $this->canStart())
+                    class="btn-press w-full rounded-xl border-2 border-ink bg-primary py-4 font-display text-sm text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-info focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+                    >
                     <span x-show="!busy">
-                        @if(!$this->started() && !$this->canStart())
-                        👥 Ajoutez au moins 5 participants
+                        @if(! $this->started() && ! $this->canStart())
+                        AJOUTER AU MOINS 5 PARTICIPANTS
                         @elseif($this->started())
-                        ❌ Éliminer le prochain
+                        ▶ ÉLIMINER LE PROCHAIN
                         @else
-                        🚀 Commencer la partie
+                        ▶ COMMENCER LA PARTIE
                         @endif
                     </span>
                     <span x-show="busy" x-cloak>
-                        🎡 La roue tourne...
+                        LA ROUE TOURNE...
                     </span>
                 </button>
                 @endif
                 @endif
 
-
-
-                {{-- HISTORIQUE DES ÉLIMINATIONS --}}
+                {{-- Historique éliminations --}}
                 @if(count($eliminated))
-                <div class="bg-white rounded-3xl border border-slate-200/50 shadow-sm p-5">
-                    <h3 class="font-black text-slate-800 mb-4 flex items-center gap-2">
-                        <span>💀</span> Ordre d'élimination
+                <section class="card-hard rounded-2xl border-2 border-ink bg-panel p-5">
+                    <h3 class="mb-4 font-display text-base text-ink">
+                        Ordre d’élimination
                     </h3>
 
-                    <div class="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                    <div class="max-h-[220px] space-y-2 overflow-y-auto pr-1">
                         @foreach(array_reverse($eliminated, true) as $index => $player)
-                        <div class="flex items-center justify-between bg-red-50/40 border border-red-100/50 rounded-xl px-4 py-3 text-sm hover:bg-red-50 transition">
-                            <span class="font-semibold line-through text-slate-500">
+                        <div class="flex items-center justify-between rounded-xl border-2 border-ink bg-danger/5 px-4 py-3 text-sm">
+                            <span class="font-semibold text-subtle line-through">
                                 {{ $player }}
                             </span>
-
-                            <span class="font-bold text-xs text-red-500 bg-red-100/50 px-2.5 py-1 rounded-lg">
-                                Mort #{{ $index + 1 }}
+                            <span class="rounded-md border-2 border-ink bg-panel px-2.5 py-1 font-mono text-[11px] font-bold text-danger">
+                                #{{ $index + 1 }}
                             </span>
                         </div>
                         @endforeach
                     </div>
-                </div>
+                </section>
                 @endif
 
-                {{-- RECOMMENCER UNE PARTIE --}}
+                {{-- Restart --}}
                 @if($winner)
-                <button wire:click="restart" class="w-full rounded-2xl border border-slate-200/50 bg-white py-4 font-bold shadow-sm text-slate-700 hover:bg-slate-50 active:scale-[0.98] transition">
-                    🔄 Recommencer une partie
+                <button type="button" wire:click="restart" class="card-hard w-full rounded-xl border-2 border-ink bg-panel py-4 font-display text-sm text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-info focus-visible:ring-offset-2">
+                    NOUVELLE PARTIE
                 </button>
                 @endif
-
             </div>
-
         </div>
-
     </div>
 </div>
