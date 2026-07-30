@@ -23,9 +23,6 @@ export default function diceGame(
         awaitingImmediateResolve: false,
         reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
 
-        /**
-         * Positions des points (0-8 dans une grille 3x3) selon la face du dé.
-         */
         pipPositions(value) {
             return {
                 1: [4],
@@ -37,9 +34,6 @@ export default function diceGame(
             }[value] || [];
         },
 
-        /**
-         * Message vocal restitué par la région aria-live pour l'accessibilité (a11y).
-         */
         announcement() {
             if (this.isRolling) {
                 return 'Lancement des dés en cours.';
@@ -58,9 +52,6 @@ export default function diceGame(
             this.keptState[index] = !this.keptState[index];
         },
 
-        /**
-         * Déclenche le lancer de dés et initie les animations visuelles.
-         */
         startSpin() {
             if (this.isRolling || this.isOver) return;
             this.isRolling = true;
@@ -86,9 +77,6 @@ export default function diceGame(
             }
         },
 
-        /**
-         * Anime le défilement aléatoire des faces avec un ralentissement progressif (ease-out).
-         */
         spinDie(index, startTime, duration) {
             if (!this.spinning[index]) return;
 
@@ -101,9 +89,6 @@ export default function diceGame(
             setTimeout(() => this.spinDie(index, startTime, duration), nextDelay);
         },
 
-        /**
-         * Traite le retour serveur et planifie l'arrêt des animations.
-         */
         onDiceRolled(detail) {
             this.pendingServerData = detail;
             const finalDice = this.pendingServerData.dice;
@@ -134,20 +119,22 @@ export default function diceGame(
             });
         },
 
-        /**
-         * Applique l'état final de la partie renvoyé par le serveur.
-         */
         finalizeRoll() {
+            if (!this.pendingServerData) {
+                this.isRolling = false;
+                return;
+            }
+
             this.throwCount = this.pendingServerData.throwCount;
             this.isOver = this.pendingServerData.isOver;
             this.isWon = this.pendingServerData.isWon;
             this.combinationLabel = this.pendingServerData.combinationLabel;
             this.isRolling = false;
+
+            // Historique + compteurs Livewire seulement maintenant
+            this.$wire.finalizeRoll();
         },
 
-        /**
-         * Réinitialise l'état visuel du composant lors du lancement d'une nouvelle partie.
-         */
         onDiceReset() {
             this.isRolling = false;
             this.isOver = false;
@@ -158,6 +145,8 @@ export default function diceGame(
             this.displayDice = this.displayDice.map(() => 1);
             this.spinning = this.spinning.map(() => false);
             this.pendingCount = 0;
+            this.pendingServerData = null;
+            this.awaitingImmediateResolve = false;
         },
     };
 }
