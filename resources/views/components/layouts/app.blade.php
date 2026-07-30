@@ -29,7 +29,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 </head>
-<body class="min-h-full bg-[#FBF7F0] font-sans text-[#2B2620] antialiased">
+<body class="min-h-full bg-[#FAFAF8] font-sans text-[#17171B] antialiased">
     <main>
         {{ $slot }}
     </main>

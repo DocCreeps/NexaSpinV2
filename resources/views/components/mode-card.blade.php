@@ -1,56 +1,44 @@
-@props(['mode', 'category' => null, 'index' => null])
+@props(['mode', 'category' => null])
 
 <{{ $mode->available ? 'a' : 'div' }} @if($mode->available)
     href="{{ $mode->route }}"
-    class="group relative flex h-full flex-col justify-between rounded-2xl border border-[#E8E1D3] bg-white p-5 transition-all duration-150 hover:-translate-y-0.5 hover:border-[#D9CFB8] hover:shadow-lg {{ $mode->shadow }} focus:outline-none !text-inherit !no-underline"
+    class="card-cart group relative flex h-full flex-col justify-between rounded-xl border-2 border-[#17171B] bg-white p-5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E8291C] !text-inherit !no-underline"
     @else
     role="region"
     aria-label="{{ $mode->title }} (non disponible)"
-    class="relative flex h-full flex-col justify-between rounded-2xl border border-dashed border-[#E8E1D3] bg-[#F5F0E6]/50 p-5 opacity-60 cursor-not-allowed select-none"
+    class="relative flex h-full flex-col justify-between rounded-xl border-2 border-[#17171B]/30 bg-[repeating-linear-gradient(45deg,#F0EEE5,#F0EEE5_6px,#FAFAF8_6px,#FAFAF8_12px)] p-5 opacity-70 cursor-not-allowed select-none"
     @endif
     >
     <div>
-        <div class="relative flex items-center justify-between pb-3">
-            <div class="flex items-center gap-3">
-                <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br {{ $mode->color }} text-base">
-                    {{ $mode->icon }}
-                </span>
-                @if($index)
-                <span class="font-mono text-xs text-[#B0A996]">N-{{ str_pad($index, 3, '0', STR_PAD_LEFT) }}</span>
-                @endif
-            </div>
+        <div class="flex items-center justify-between">
+            <span class="flex h-10 w-10 items-center justify-center rounded-lg border-2 border-[#17171B] bg-gradient-to-br {{ $mode->color }} text-base">
+                {{ $mode->icon }}
+            </span>
 
             @if($mode->available)
             @if($category)
-            <span class="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-[#8A8375]">
-                <span class="h-1.5 w-1.5 rounded-full bg-gradient-to-br {{ $mode->color }}"></span>
-                {{ $category }}
-            </span>
+            <span class="font-mono text-[8px] tracking-widest text-[#A39D8D]">{{ Str::upper($category) }}</span>
             @endif
             @else
-            <span class="font-mono text-[10px] uppercase tracking-wider text-[#B0A996]">
-                Bientôt
-            </span>
+            <span class="font-mono text-[8px] tracking-widest text-[#A39D8D]">SOON</span>
             @endif
-
-            <span class="absolute inset-x-0 bottom-0 border-b border-dashed border-[#EEE8DA]"></span>
         </div>
 
-        <h3 class="mt-5 font-display text-base font-bold text-[#2B2620]">
+        <h3 class="mt-4 font-display text-base leading-snug text-[#17171B]">
             {{ $mode->title }}
         </h3>
 
-        <p class="mt-1.5 text-xs leading-relaxed text-[#8A8375] line-clamp-2">
+        <p class="mt-2 text-sm leading-relaxed text-[#5A564D] line-clamp-2">
             {{ $mode->description }}
         </p>
     </div>
 
-    <div class="mt-6 flex items-center justify-between pt-3 font-mono text-xs text-[#8A8375]">
+    <div class="mt-6 flex items-center justify-between border-t-2 border-dashed border-[#E5E1D4] pt-3 text-xs text-[#7A756B]">
         <span>{{ $mode->minParticipants ? $mode->minParticipants.'+ personnes' : 'Solo' }}</span>
 
         @if($mode->available)
-        <span class="font-semibold text-[#E8623D] group-hover:translate-x-0.5 transition-all duration-150">
-            LANCER &rarr;
+        <span class="font-display text-[10px] text-[#E8291C]">
+            PLAY ▸
         </span>
         @endif
     </div>
