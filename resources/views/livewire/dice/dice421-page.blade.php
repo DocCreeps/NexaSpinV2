@@ -1,147 +1,143 @@
-<div class="min-h-screen bg-[#14201C] text-[#F1ECE1] relative overflow-hidden antialiased pb-24 selection:bg-[#C79A56] selection:text-[#14201C]" style="font-family: 'Inter', sans-serif;">
+<div class="min-h-screen w-full bg-surface text-ink antialiased selection:bg-secondary selection:text-ink">
+    <div class="mx-auto max-w-3xl space-y-6 px-4 py-6 sm:space-y-8 sm:px-10 sm:py-10">
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-    {{-- Vignette décorative --}}
-    <div class="absolute inset-0 pointer-events-none" aria-hidden="true" style="background: radial-gradient(ellipse at 50% -10%, rgba(199,154,86,0.08), transparent 60%);"></div>
-
-    <div class="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-5 sm:space-y-6 relative z-10">
-
-        <div class="h-[3px] rounded-full" aria-hidden="true" style="background: linear-gradient(90deg, transparent, #C79A56, transparent);"></div>
-
-        {{-- En-tête --}}
-        <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 sm:gap-6 pt-2">
+        {{-- Header --}}
+        <header class="flex flex-col gap-4 border-b-4 border-ink pb-5 sm:flex-row sm:items-end sm:justify-between">
             <div>
-                <a href="{{ route('home') }}" class="zinc-focusable inline-flex items-center gap-2 text-xs font-semibold tracking-widest uppercase text-[#8C9A94] hover:text-[#C79A56] transition">
-                    ← Retour aux modes
+                <a href="{{ route('home') }}" class="inline-flex items-center gap-1.5 rounded text-sm font-semibold text-muted transition-colors hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-info focus-visible:ring-offset-2">
+                    ← Salle
                 </a>
-                <p class="text-[11px] font-semibold tracking-[0.25em] uppercase text-[#C79A56] mt-4">
-                    Le classique du comptoir
+
+                <p class="mt-4 font-mono text-[10px] uppercase tracking-widest text-faint">
+                    ◆ Le classique du comptoir ◆
                 </p>
-                <h1 class="text-5xl sm:text-6xl md:text-7xl leading-none tracking-wide text-[#F1ECE1] mt-1" style="font-family: 'Bebas Neue', sans-serif;">
+
+                <h1 class="mt-1 font-display text-4xl leading-none text-ink sm:text-5xl">
                     4 · 2 · 1
                 </h1>
-                <p class="text-sm text-[#8C9A94] mt-3 max-w-sm">
-                    Gardez les dés qui vous arrangent, relancez les autres, et visez la combinaison en {{ $this->maxThrows() }} lancer{{ $this->maxThrows() > 1 ? 's' : '' }} maximum.
+
+                <p class="mt-3 max-w-md text-sm text-muted">
+                    Gardez les dés qui vous arrangent, relancez les autres, visez la combinaison en
+                    {{ $this->maxThrows() }} lancer{{ $this->maxThrows() > 1 ? 's' : '' }} max.
                 </p>
             </div>
 
-            {{-- Statistiques locales --}}
-            <div class="self-start md:self-auto flex gap-3">
-                <div class="border border-[#F1ECE1]/15 rounded-sm px-6 py-4 text-center" style="background: repeating-linear-gradient(45deg, #1A2723, #1A2723 10px, #182420 10px, #182420 20px);">
-                    <div class="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#8C9A94]" id="games-count-label">Parties</div>
-                    <div class="text-4xl text-[#D8DEDB] mt-1" style="font-family: 'IBM Plex Mono', monospace;" aria-labelledby="games-count-label">
+            <div class="flex gap-3 self-start">
+                <div class="card-hard min-w-[72px] rounded-xl border-2 border-ink bg-panel px-4 py-3 text-center">
+                    <p class="font-mono text-[9px] uppercase tracking-widest text-subtle">Parties</p>
+                    <p class="mt-0.5 font-display text-2xl text-ink">
                         {{ str_pad(count($history), 2, '0', STR_PAD_LEFT) }}
-                    </div>
+                    </p>
                 </div>
 
-                <div class="border border-[#C79A56]/30 rounded-sm px-6 py-4 text-center" style="background: repeating-linear-gradient(45deg, #1A2723, #1A2723 10px, #182420 10px, #182420 20px);">
-                    <div class="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#8C9A94]" id="win-count-label">Victoires</div>
-                    <div class="text-4xl text-[#C79A56] mt-1" style="font-family: 'IBM Plex Mono', monospace;" aria-labelledby="win-count-label">
+                <div class="card-hard min-w-[72px] rounded-xl border-2 border-ink bg-secondary px-4 py-3 text-center">
+                    <p class="font-mono text-[9px] uppercase tracking-widest text-ink/70">Victoires</p>
+                    <p class="mt-0.5 font-display text-2xl text-ink">
                         {{ str_pad($this->winCount(), 2, '0', STR_PAD_LEFT) }}
-                    </div>
+                    </p>
                 </div>
-
             </div>
-        </div>
+        </header>
 
-        {{-- Erreurs système --}}
+        {{-- Erreur --}}
         @if($error)
-        <div role="alert" class="rounded-sm bg-[#8B3A3A]/15 border border-[#8B3A3A]/40 px-4 py-3 text-[#E4B4B4] text-sm">
-            <span aria-hidden="true">⚠</span> {{ $error }}
+        <div role="alert" class="rounded-xl border-2 border-ink bg-danger/10 px-4 py-3 text-sm font-semibold text-danger">
+            ⚠ {{ $error }}
         </div>
         @endif
 
-        {{-- Plateau de jeu --}}
-        <div class="relative rounded-sm border border-[#C79A56]/20 p-6 sm:p-8 md:p-10 flex flex-col items-center overflow-hidden" style="background: linear-gradient(160deg, #46555A 0%, #3B484D 55%, #33403F 100%); box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 20px 40px -20px rgba(0,0,0,0.6);" wire:ignore x-data="diceGame(@js($dice), @js($kept), {{ $throwCount }}, {{ $isOver ? 'true' : 'false' }}, {{ $isWon ? 'true' : 'false' }}, @js($combinationLabel), {{ $this->maxThrows() }})" @dice-rolled.window="onDiceRolled($event.detail)" @dice-reset.window="onDiceReset()">
-
-            <div class="absolute inset-x-0 top-0 h-16 pointer-events-none" aria-hidden="true" style="background: linear-gradient(180deg, rgba(255,255,255,0.08), transparent);"></div>
-
-            {{-- Annonce d'accessibilité (A11y) --}}
+        {{-- Plateau --}}
+        <section class="card-hard relative flex flex-col items-center overflow-hidden rounded-2xl border-2 border-ink bg-panel p-6 sm:p-8 md:p-10" wire:ignore x-data="diceGame(@js($dice), @js($kept), {{ $throwCount }}, {{ $isOver ? 'true' : 'false' }}, {{ $isWon ? 'true' : 'false' }}, @js($combinationLabel), {{ $this->maxThrows() }})" @dice-rolled.window="onDiceRolled($event.detail)" @dice-reset.window="onDiceReset()">
             <div class="sr-only" role="status" aria-live="polite" x-text="announcement()"></div>
 
-            {{-- Zone d'affichage des dés --}}
-            <div class="flex gap-3 sm:gap-6 mb-2 relative" role="group" aria-label="Les trois dés">
+            {{-- Dés --}}
+            <div class="mb-2 flex gap-3 sm:gap-5" role="group" aria-label="Les trois dés">
                 <template x-for="(value, index) in displayDice" :key="index">
                     <div class="flex flex-col items-center gap-2">
-                        <button type="button" @click="toggleKeep(index)" :disabled="isRolling || isOver" :aria-pressed="keptState[index]" :aria-label="'Dé ' + (index + 1) + ', valeur ' + value + (keptState[index] ? ', gardé, appuyer pour relancer' : ', appuyer pour garder')" class="zinc-focusable zinc-motion relative w-14 h-14 sm:w-20 sm:h-20 rounded-[6px] transition-all duration-150 transform select-none" :class="{
-                                    'ring-2 ring-[#C79A56] -translate-y-1': keptState[index],
-                                    'cursor-not-allowed opacity-60': isOver,
-                                    'cursor-pointer': !isOver && !isRolling,
-                                    'rotate-6 scale-105': popped[index],
-                                    'scale-95': spinning[index] && !popped[index]
-                                }" style="background: linear-gradient(160deg, #F7F2E7, #E8DFC9); box-shadow: 0 6px 14px -4px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.6);">
-                            <div class="absolute inset-1.5 sm:inset-2 grid grid-cols-3 grid-rows-3 place-items-center" aria-hidden="true">
+                        <button type="button" @click="toggleKeep(index)" :disabled="isRolling || isOver" :aria-pressed="keptState[index]" :aria-label="'Dé ' + (index + 1) + ', valeur ' + value + (keptState[index] ? ', gardé, appuyer pour relancer' : ', appuyer pour garder')" class="relative h-16 w-16 select-none rounded-xl border-2 border-ink bg-panel shadow-hard transition focus:outline-none focus-visible:ring-2 focus-visible:ring-info focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 sm:h-20 sm:w-20" :class="{
+                                'tile-selected': keptState[index],
+                                'cursor-pointer': !isOver && !isRolling,
+                                'rotate-6 scale-105': popped[index],
+                                'scale-95': spinning[index] && !popped[index]
+                            }">
+                            <div class="absolute inset-2 grid grid-cols-3 grid-rows-3 place-items-center" aria-hidden="true">
                                 <template x-for="n in 9" :key="n">
-                                    <span class="w-1.5 h-1.5 sm:w-2.5 sm:h-2.5 rounded-full bg-[#1F2624] zinc-motion transition-opacity duration-100" :style="{ opacity: pipPositions(value).includes(n - 1) ? 1 : 0 }"></span>
+                                    <span class="h-2 w-2 rounded-full bg-ink transition-opacity duration-100 sm:h-2.5 sm:w-2.5" :style="{ opacity: pipPositions(value).includes(n - 1) ? 1 : 0 }"></span>
                                 </template>
                             </div>
                         </button>
-                        <span class="text-[10px] font-semibold uppercase tracking-widest h-4" :class="keptState[index] ? 'text-[#C79A56]' : 'text-transparent'" aria-hidden="true">
-                            gardé
+
+                        <span class="h-4 font-mono text-[9px] uppercase tracking-widest" :class="keptState[index] ? 'text-primary' : 'text-transparent'" aria-hidden="true">
+                            KEEP
                         </span>
                     </div>
                 </template>
             </div>
 
-            <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#D8DEDB]/60 mb-7">
+            <p class="mb-6 font-mono text-[10px] uppercase tracking-widest text-faint">
                 Touchez un dé pour le garder
             </p>
 
-            {{-- État du lancer --}}
-            <div class="text-center mb-7 min-h-[36px]">
+            {{-- État --}}
+            <div class="mb-7 min-h-[44px] text-center">
                 <div x-show="!isRolling">
                     <template x-if="isOver">
                         <div>
                             <template x-if="isWon">
-                                <p class="text-2xl text-[#C79A56]" style="font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.05em;">
+                                <p class="font-display text-2xl text-primary sm:text-3xl">
                                     421 EN <span x-text="throwCount"></span> LANCER<span x-show="throwCount > 1">S</span> !
                                 </p>
                             </template>
                             <template x-if="!isWon">
-                                <p class="text-lg font-semibold text-[#E4B4B4]">
-                                    Perdu — <span x-text="combinationLabel" class="lowercase"></span>
-                                    <span class="block text-xs font-normal text-[#8C9A94] mt-1 normal-case" style="font-family: 'IBM Plex Mono', monospace;">
+                                <div>
+                                    <p class="font-display text-xl text-ink">
+                                        Perdu — <span x-text="combinationLabel"></span>
+                                    </p>
+                                    <p class="mt-1 font-mono text-xs text-subtle">
                                         en <span x-text="throwCount"></span> lancer<span x-show="throwCount > 1">s</span>
-                                    </span>
-                                </p>
+                                    </p>
+                                </div>
                             </template>
                         </div>
                     </template>
+
                     <template x-if="!isOver">
-                        <p class="text-sm text-[#D8DEDB]/80" style="font-family: 'IBM Plex Mono', monospace;">
+                        <p class="font-mono text-sm tracking-wider text-muted">
                             LANCER <span x-text="throwCount"></span> / {{ $this->maxThrows() }}
                         </p>
                     </template>
                 </div>
+
                 <div x-show="isRolling" style="display: none;">
-                    <p class="text-sm font-semibold text-[#C79A56] animate-pulse zinc-motion" style="font-family: 'IBM Plex Mono', monospace;">
-                        lancement...
+                    <p class="animate-pulse font-mono text-sm tracking-wider text-primary">
+                        LANCEMENT...
                     </p>
                 </div>
             </div>
 
             {{-- Actions --}}
-            <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                <button type="button" @click="startSpin()" x-show="!isOver || isRolling" :disabled="isRolling" class="zinc-focusable w-full sm:w-auto px-8 py-3 rounded-sm font-semibold text-sm uppercase tracking-wider transition disabled:opacity-50 disabled:cursor-wait text-[#14201C]" style="background: linear-gradient(160deg, #D9AF6E, #C79A56); box-shadow: 0 4px 12px -2px rgba(199,154,86,0.4);">
-                    <span x-show="!isRolling">Lancer les dés</span>
-                    <span x-show="isRolling" style="display: none;">Lancer...</span>
+            <div class="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+                <button type="button" @click="startSpin()" x-show="!isOver || isRolling" :disabled="isRolling" class="btn-press inline-flex w-full items-center justify-center gap-2 rounded-xl border-2 border-ink bg-primary px-8 py-3.5 font-display text-xs text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-info focus-visible:ring-offset-2 sm:w-auto sm:text-sm">
+                    <span x-show="!isRolling">▶ LANCER LES DÉS</span>
+                    <span x-show="isRolling" style="display: none;">LANCEMENT...</span>
                 </button>
 
-                <button type="button" wire:click="resetGame" x-show="isOver && !isRolling" style="display: none;" class="zinc-focusable w-full sm:w-auto px-8 py-3 rounded-sm font-semibold text-sm uppercase tracking-wider text-[#F1ECE1] border border-[#F1ECE1]/25 hover:border-[#C79A56]/60 hover:text-[#C79A56] transition">
-                    Nouvelle partie
+                <button type="button" wire:click="resetGame" x-show="isOver && !isRolling" style="display: none;" class="card-hard inline-flex w-full items-center justify-center rounded-xl border-2 border-ink bg-panel px-8 py-3.5 font-display text-xs text-ink transition hover:-translate-x-px hover:-translate-y-px hover:shadow-hard-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-info focus-visible:ring-offset-2 sm:w-auto sm:text-sm">
+                    NOUVELLE PARTIE
                 </button>
             </div>
-        </div>
+        </section>
 
-        {{-- Historique des parties --}}
+        {{-- Historique --}}
         @if(count($history) > 0)
-        <div class="rounded-sm border border-[#C79A56]/15 p-4 sm:p-5" style="background: #1A2723;">
-            <h2 class="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#C79A56] mb-3" id="history-heading">Ardoise des parties</h2>
+        <section class="card-hard rounded-2xl border-2 border-ink bg-panel p-4 sm:p-5">
+            <h2 id="history-heading" class="mb-3 font-mono text-[10px] uppercase tracking-widest text-faint">
+                Ardoise des parties
+            </h2>
+
             <div class="max-h-64 overflow-y-auto">
-                <table class="w-full text-xs sm:text-sm" aria-labelledby="history-heading" style="font-family: 'IBM Plex Mono', monospace;">
-                    <caption class="sr-only">Historique des parties de 421 jouées</caption>
+                <table class="w-full text-sm" aria-labelledby="history-heading">
+                    <caption class="sr-only">Historique des parties de 421</caption>
                     <thead>
                         <tr class="sr-only">
                             <th scope="col">Dés</th>
@@ -150,23 +146,29 @@
                             <th scope="col">Résultat</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-[#F1ECE1]/[0.06]">
+                    <tbody class="divide-y-2 divide-dashed divide-line">
                         @foreach(array_reverse($history) as $entry)
                         <tr>
-                            <td class="font-semibold text-[#F1ECE1] tracking-widest py-2.5">{{ implode(' – ', $entry['dice']) }}</td>
-                            <td class="text-[#8C9A94] text-xs py-2.5">{{ $entry['combination'] ?? '—' }}</td>
-                            <td class="text-[#8C9A94] text-xs py-2.5">{{ $entry['throws'] }} lancer{{ $entry['throws'] > 1 ? 's' : '' }}</td>
-                            <td class="{{ $entry['won'] ? 'text-[#C79A56]' : 'text-[#8C9A94]' }} font-semibold text-xs py-2.5 text-right">
-                                <span aria-hidden="true">{{ $entry['won'] ? '✓' : '✗' }}</span> {{ $entry['won'] ? 'gagné' : 'perdu' }}
+                            <td class="py-2.5 font-display tracking-wider text-ink">
+                                {{ implode(' · ', $entry['dice']) }}
+                            </td>
+                            <td class="py-2.5 text-xs text-subtle">
+                                {{ $entry['combination'] ?? '—' }}
+                            </td>
+                            <td class="py-2.5 text-xs text-subtle">
+                                {{ $entry['throws'] }} lancer{{ $entry['throws'] > 1 ? 's' : '' }}
+                            </td>
+                            <td @class([ 'py-2.5 text-right text-xs font-semibold' , 'text-primary'=> $entry['won'],
+                                'text-subtle' => ! $entry['won'],
+                                ])>
+                                {{ $entry['won'] ? '✓ gagné' : '✗ perdu' }}
                             </td>
                         </tr>
                         @endforeach
                     </tbody>
                 </table>
             </div>
-        </div>
+        </section>
         @endif
-
-        <div class="h-[3px] rounded-full" aria-hidden="true" style="background: linear-gradient(90deg, transparent, #C79A56, transparent);"></div>
     </div>
 </div>

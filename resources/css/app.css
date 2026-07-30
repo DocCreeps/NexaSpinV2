@@ -6,10 +6,101 @@
 @source '../**/*.js';
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    /* Fonts */
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+        'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-display: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace;
+
+    /* Base */
+    --color-surface: #fafaf8;
+    --color-panel: #ffffff;
+    --color-ink: #17171b;
+    --color-muted: #5a564d;
+    --color-subtle: #7a756b;
+    --color-faint: #a39d8d;
+    --color-line: #e5e1d4;
+    --color-wash: #f0eee5;
+
+    /* Accents */
+    --color-primary: #e8291c;
+    --color-primary-shadow: #a8210f;
+    --color-secondary: #ffc531;
+    --color-info: #2f6fed;
+    --color-success: #16a34a;
+    --color-danger: #e8291c;
+
+    /* Shadows (utilisables aussi en shadow-hard / shadow-hard-lg) */
+    --shadow-hard: 4px 4px 0 0 #17171b;
+    --shadow-hard-lg: 7px 7px 0 0 #17171b;
+    --shadow-press: 0 6px 0 #a8210f;
+    --shadow-pressed: 0 0 0 #a8210f;
 }
 
+/* =========================
+   Utilities globales
+   ========================= */
+
+@utility btn-press {
+    box-shadow: var(--shadow-press);
+    transition: transform .08s ease, box-shadow .08s ease;
+
+    &:active:not(:disabled) {
+        transform: translateY(6px);
+        box-shadow: var(--shadow-pressed);
+    }
+
+    &:disabled {
+        opacity: .55;
+        cursor: wait;
+    }
+}
+
+@utility card-hard {
+    box-shadow: var(--shadow-hard);
+    transition: transform .12s ease, box-shadow .12s ease;
+}
+
+/* Hover uniquement souris / trackpad — évite l’effet collé au tap mobile */
+@utility card-hard-hover {
+    @media (hover: hover) and (pointer: fine) {
+        &:hover,
+        &:focus-visible {
+            transform: translate(-3px, -3px);
+            box-shadow: var(--shadow-hard-lg);
+        }
+    }
+}
+
+@utility tile-selected {
+    background-color: #fff6d6;
+    box-shadow: 5px 5px 0 0 var(--color-ink);
+    transform: translate(-2px, -2px);
+}
+
+@utility text-outline {
+    -webkit-text-stroke: 2px var(--color-ink);
+    paint-order: stroke fill;
+}
+
+/* Accessibilité / Livewire */
 [x-cloak] {
     display: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .btn-press,
+    .card-hard {
+        transition: none;
+    }
+
+    .btn-press:active:not(:disabled) {
+        transform: none;
+    }
+
+    .card-hard-hover:hover,
+    .card-hard-hover:focus-visible {
+        transform: none;
+        box-shadow: var(--shadow-hard);
+    }
 }

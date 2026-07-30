@@ -54,6 +54,14 @@ class Dice421Page extends Component
     /** @var array<int, array{dice: array<int>, throws: int, won: bool, combination: ?string}> */
     public array $history = [];
 
+    /**
+     * Entrée d'historique en attente (appliquée seulement après l'animation Alpine).
+     *
+     * @var array{dice: array<int>, throws: int, won: bool, combination: ?string}|null
+     */
+    #[Locked]
+    public ?array $pendingHistoryEntry = null;
+
     public function mount(): void
     {
         $this->resetGame();
@@ -61,6 +69,7 @@ class Dice421Page extends Component
 
     /**
      * Exécute un lancer de dés si la partie est active et notifie le front.
+     * Ne re-render pas le HTML : l'historique est confirmé après l'animation.
      */
     public function roll(): void
     {
@@ -68,9 +77,9 @@ class Dice421Page extends Component
 
         if ($this->isOver) {
             $this->error = 'La partie est déjà terminée.';
-
-            // Notifie Alpine.js pour débloquer l'UI même en cas de tentative invalide
             $this->dispatchRollEvent();
+            $this->skipRender();
+
             return;
         }
 
@@ -83,11 +92,33 @@ class Dice421Page extends Component
         $this->isOver = $result->isOver;
         $this->combinationLabel = $result->combination->label();
 
-        if ($this->isOver) {
-            $this->recordHistory();
-        }
+        // Historique différé → évite l'apparition pendant l'animation
+        $this->pendingHistoryEntry = $this->isOver
+            ? [
+                'dice' => $this->dice,
+                'throws' => $this->throwCount,
+                'won' => $this->isWon,
+                'combination' => $this->combinationLabel,
+            ]
+            : null;
 
         $this->dispatchRollEvent();
+        $this->skipRender();
+    }
+
+    /**
+     * Appelé par Alpine à la fin de l'animation : pousse l'historique et re-render.
+     */
+    public function finalizeRoll(): void
+    {
+        if ($this->pendingHistoryEntry !== null) {
+            $this->history[] = $this->pendingHistoryEntry;
+            $this->pendingHistoryEntry = null;
+
+            if (count($this->history) > self::MAX_HISTORY) {
+                $this->history = array_slice($this->history, -self::MAX_HISTORY);
+            }
+        }
     }
 
     /**
@@ -114,25 +145,9 @@ class Dice421Page extends Component
         $this->isWon = false;
         $this->combinationLabel = null;
         $this->error = null;
+        $this->pendingHistoryEntry = null;
 
         $this->dispatch('dice-reset');
-    }
-
-    /**
-     * Enregistre le résultat de la partie dans l'historique local.
-     */
-    private function recordHistory(): void
-    {
-        $this->history[] = [
-            'dice' => $this->dice,
-            'throws' => $this->throwCount,
-            'won' => $this->isWon,
-            'combination' => $this->combinationLabel,
-        ];
-
-        if (count($this->history) > self::MAX_HISTORY) {
-            $this->history = array_slice($this->history, -self::MAX_HISTORY);
-        }
     }
 
     /**
