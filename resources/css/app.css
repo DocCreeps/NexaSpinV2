@@ -9,6 +9,8 @@
     /* Fonts */
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
         'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-display: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace;
 
     /* Base */
     --color-surface: #fafaf8;
@@ -28,7 +30,7 @@
     --color-success: #16a34a;
     --color-danger: #e8291c;
 
-    /* Shadows */
+    /* Shadows (utilisables aussi en shadow-hard / shadow-hard-lg) */
     --shadow-hard: 4px 4px 0 0 #17171b;
     --shadow-hard-lg: 7px 7px 0 0 #17171b;
     --shadow-press: 0 6px 0 #a8210f;
@@ -59,11 +61,14 @@
     transition: transform .12s ease, box-shadow .12s ease;
 }
 
+/* Hover uniquement souris / trackpad — évite l’effet collé au tap mobile */
 @utility card-hard-hover {
-    &:hover,
-    &:focus-visible {
-        transform: translate(-3px, -3px);
-        box-shadow: var(--shadow-hard-lg);
+    @media (hover: hover) and (pointer: fine) {
+        &:hover,
+        &:focus-visible {
+            transform: translate(-3px, -3px);
+            box-shadow: var(--shadow-hard-lg);
+        }
     }
 }
 
@@ -71,6 +76,11 @@
     background-color: #fff6d6;
     box-shadow: 5px 5px 0 0 var(--color-ink);
     transform: translate(-2px, -2px);
+}
+
+@utility text-outline {
+    -webkit-text-stroke: 2px var(--color-ink);
+    paint-order: stroke fill;
 }
 
 /* Accessibilité / Livewire */
@@ -91,5 +101,6 @@
     .card-hard-hover:hover,
     .card-hard-hover:focus-visible {
         transform: none;
+        box-shadow: var(--shadow-hard);
     }
 }
