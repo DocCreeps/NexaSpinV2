@@ -14,6 +14,7 @@
 
 ## 📖 Sommaire
 - [📌 Statut du projet](#-statut-du-projet)
+- [📸 Aperçu](#-aperçu)
 - [🧱 Stack technique](#-stack-technique)
 - [🏗️ Architecture](#️-architecture)
   - [Découpage par domaine métier](#découpage-par-domaine-métier)
@@ -40,15 +41,40 @@
 | 🎡 Roue classique | Tirage aléatoire simple et rapide pour désigner un seul gagnant. | ✅ Fonctionnel |  |
 | ⚔️ Roue par élimination | Élimination progressive des participants jusqu'à ce qu'il n'en reste qu'un. | ✅ Fonctionnel |  |
 | 🎯 Roue pondérée | Tirage aléatoire où chaque participant a un poids personnalisé pour influencer les résultats. | ✅ Fonctionnel | |
-| 🪙 Pile ou face | Simule un lancer de pièce équitable entre deux options, avec système de paris (pile/face) et libellés personnalisables. | ✅ Fonctionnel et testé | Carte active sur l’accueil, route et composant Livewire opérationnels, y compris les paris. Couvert par 6 fichiers de tests (Domain, Application, Livewire) et par le `throttle:120,1` partagé avec les routes de tirage. |
-| 🎲 421 (dés) | Jeu de dés classique : gardez les dés qui vous arrangent, relancez les autres, visez la combinaison 4-2-1 en 3 lancers maximum. | ✅ Fonctionnel et testé | Carte active sur l’accueil, route et composant Livewire opérationnels (`RollDiceAction`, `FourTwoOneStrategy`, `Dice421Page`). Couverture ajoutée dans cette révision (voir [Corrigé récemment](#-corrigé-récemment)). |
+| 🪙 Pile ou face | Simule un lancer de pièce équitable entre deux options, avec système de paris (pile/face) et libellés personnalisables. | ✅ Fonctionnel | Carte active sur l’accueil, route et composant Livewire opérationnels, y compris les paris. Couvert par 6 fichiers de tests (Domain, Application, Livewire) et par le `throttle:120,1` partagé avec les routes de tirage. |
+| 🎲 421 (dés) | Jeu de dés classique : gardez les dés qui vous arrangent, relancez les autres, visez la combinaison 4-2-1 en 3 lancers maximum. | ✅ Fonctionnel | Carte active sur l’accueil, route et composant Livewire opérationnels (`RollDiceAction`, `FourTwoOneStrategy`, `Dice421Page`). Couverture ajoutée dans cette révision (voir [Corrigé récemment](#-corrigé-récemment)). |
 | 👥 Tirage par équipes | Permet de former des équipes de manière aléatoire (non encore développé). | 🔒 Non implémenté | Carte visible mais grisée sur l’accueil. |
 
 
 
 > **Aucune persistance en base de données** : les participants et résultats vivent dans l’état des composants Livewire (session uniquement).
 > **Déploiement continu** : synchronisation automatique de `master` vers un VPS via GitHub Actions (sans porte de qualité, voir [Dette technique](#-dette-technique-et-limites-connues)).
-> **Accueil organisé par catégorie** : les modes sont regroupés en sections (`GameModeCategory` : Roues / Autres tirages / Jeux), générées dynamiquement — ajouter une nouvelle catégorie n’implique aucune modification de la vue.
+> **Accueil organisé par catégorie** : les modes sont regroupés en sections (`GameModeCategory` : Roues / Autres tirages / Jeux / En Développement), générées dynamiquement — ajouter une nouvelle catégorie n’implique aucune modification de la vue.
+
+---
+
+## 📸 Aperçu
+
+<!--
+  Images à ajouter dans `docs/screenshots/` puis committer.
+  Remplacer les liens ci-dessous une fois les fichiers présents (garder les mêmes noms
+  ou mettre à jour les chemins). Format conseillé : PNG, 1280px de large max, thème clair
+  (celui de l'app par défaut).
+-->
+
+| Accueil | Roue classique |
+|---|---|
+| ![Accueil de NexaSpin](docs/screenshots/home.png) | ![Roue classique](docs/screenshots/wheel-classic.png) |
+
+| Roue pondérée | Roue par élimination |
+|---|---|
+| ![Roue pondérée](docs/screenshots/wheel-weighted.png) | ![Roue par élimination](docs/screenshots/wheel-elimination.png) |
+
+| Pile ou face | 421 |
+|---|---|
+| ![Pile ou face](docs/screenshots/coinflip.png) | ![Jeu du 421](docs/screenshots/dice-421.png) |
+
+---
 
 ---
 
@@ -63,6 +89,8 @@
 | **Analyse statique** | Larastan / PHPStan (niveau 5) |
 | **Style de code** | Laravel Pint |
 | **CI/CD** | GitHub Actions → déploiement `rsync` sur VPS |
+| **Polices** | Work Sans, Bungee, Press Start 2P — auto-hébergées via `laravel-vite-plugin` (Bunny Fonts), sans appel externe |
+| **SEO** | Meta title/description, Open Graph et Twitter Card par page, sitemap.xml généré automatiquement à partir des routes via `spatie/laravel-sitemap` (`php artisan sitemap:generate`), `robots.txt` |
 
 ---
 
@@ -112,6 +140,9 @@ app/
 │
 ├── Http/Middleware/
 │   └── SecurityHeaders.php    # CSP (prod uniquement) + en-têtes de sécurité HTTP
+│
+├── Console/Commands/
+│   └── GenerateSitemap.php    # Commande `sitemap:generate` — découvre les routes GET publiques automatiquement
 │
 └── Livewire/
     ├── Draw/                   # WheelPage, EliminationWheelPage, WeightedWheelPage
@@ -181,11 +212,14 @@ app/
 - **Déploiement sans porte de qualité** : Le workflow GitHub Actions déploie directement sur `master` sans exécuter `composer test` ou `composer run analyse`.
 - **Pas de persistance** : Les tirages ne sont pas sauvegardés en base de données (choix assumé pour l’instant).
 - **Tirage par équipes non implémenté** : Carte visible mais désactivée (`available: false`) sur l’accueil.
-- **Polices externes non conformes à la CSP sur `/421`** : `dice421-page.blade.php` charge Bebas Neue / IBM Plex Mono via une balise `<link>` pointant directement vers `fonts.googleapis.com`/`fonts.gstatic.com`, en dehors du pipeline Vite utilisé par le reste de l’app. La CSP de production (`style-src 'self'`, `font-src 'self' data:`) bloque ces requêtes : en production, la page retombe silencieusement sur la police système sans erreur visible pour l’utilisateur. À corriger en important ces polices via `resources/css/app.css` (ou en les auto-hébergeant), comme le reste du projet.
 
 ### ✅ Corrigé récemment
+- **Refonte visuelle complète, direction « borne d’arcade »** : nouvelle palette néo-brutaliste à ombres dures (`--shadow-hard`, `--shadow-press`), nouvelles polices auto-hébergées (Work Sans, Bungee, Press Start 2P via Bunny Fonts/Vite), nouveaux utilitaires CSS (`btn-press`, `card-hard`, `card-hard-hover`, `tile-selected`, `text-outline`) et prise en charge de `prefers-reduced-motion`. Appliquée à l’accueil, aux cartes de mode, à la roue, au pile ou face et au 421. Ajout d’un logo.
+- **Résolution du bug de polices bloquées par la CSP sur `/421`** : le `<link>` direct vers `fonts.googleapis.com`/`fonts.gstatic.com` a été supprimé ; les polices passent désormais par le même pipeline Vite que le reste du site (plus de retombée silencieuse sur la police système en production).
+- **Historique et compteur du 421 différés jusqu’à la fin de l’animation** : `roll()` ne pousse plus l’entrée d’historique immédiatement mais la stocke dans `pendingHistoryEntry` (`#[Locked]`) et appelle `skipRender()` ; c’est `finalizeRoll()`, déclenché par Alpine à la fin de l’animation des dés, qui l’applique. Évite que le résultat ou l’historique n’apparaissent avant que l’animation soit terminée.
 - **Ajout des tests du jeu de dés 421** : `RollDiceAction`, `FourTwoOneStrategy`, `DiceCombinationEvaluator`, `DiceRoll`, `Dice421Page` sont désormais couverts par des tests (Domain, Application, Livewire) — l’implémentation existait déjà mais n’était pas testée et n’apparaissait pas dans ce README.
 - **Correction du statut « Pile ou face » dans ce README** : contrairement à ce qu’indiquait une précédente version, `FlipCoinAction`, `RandomCoinFlipStrategy`, `CoinFlipBet`, `CoinFlipResult` et `CoinFlipPage` (y compris les paris) sont bien couverts par 6 fichiers de tests, et la route `/pile-ou-face` a bien un `throttle:120,1`.
+- **Sitemap généré automatiquement à partir des routes** : `GenerateSitemap` n’énumère plus les routes à la main ; il parcourt `Route::getRoutes()` et ne garde que les routes GET, nommées, sans paramètre et hors routes internes Livewire (`livewire.*`). Toute nouvelle route publique apparaît donc dans le sitemap sans y toucher, avec une priorité par défaut (`0.5`) surchargeable via la constante `PRIORITIES`.
 - **Sécurité HTTP** : ajout de `SecurityHeaders` (CSP appliquée uniquement en production — Vite/HMR ont besoin d’une origine séparée en dev —, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`), et `throttle:120,1` sur les routes de tirage.
 - **Aléatoire non cryptographique corrigé** : `Participants::random()` utilise désormais `random_int()` (CSPRNG) au lieu d’`array_rand()`, cohérent avec `WeightedDrawStrategy`.
 - **Bug de rotation de roue à la relance** : `WheelPage` et `WeightedWheelPage` dispatchaient un angle **absolu** à un composant Alpine qui **accumule** les rotations (`rotation += ...`) — la roue s’arrêtait au mauvais endroit après un premier tirage. Corrigé via `WheelSegmentBuilder::cumulativeRotationFor()`, qui calcule un delta relatif à la rotation déjà appliquée (logique déjà en place sur `EliminationWheelPage`, désormais centralisée et partagée par les trois pages).
@@ -249,6 +283,9 @@ app/
 | `debug wheel a la relance de la roue` | Correction du bug de rotation absolue vs cumulative sur `WheelPage`/`WeightedWheelPage`, ajout du détecteur de blocage sur `EliminationWheelPage`. |
 | `accueil par catégories` | `DrawModeCategory` + `DrawModeType::grouped()` : sections de la home générées dynamiquement. |
 | `accueil responsive mobile` | Colonnes auto-adaptatives, accordéon Alpine.js par catégorie sur mobile, carte compacte dédiée, hover limité à `md:`. |
+| `implémentation 421` + `Debug 421` + `test 421` | Ajout du jeu de dés 421 et de sa suite de tests. |
+| `design type borne arcade` + `redisign` | Refonte visuelle néo-brutaliste « borne d’arcade » : nouvelle palette à ombres dures, nouvelles polices auto-hébergées (Work Sans, Bungee, Press Start 2P), nouveaux utilitaires CSS, ajout du logo. |
+| `attendre fin annimation pour compteur et historique` | Historique et compteur du 421 appliqués seulement après la fin de l’animation Alpine (`pendingHistoryEntry` + `finalizeRoll()`). |
 
 </details>
 
@@ -293,7 +330,7 @@ L’application sera accessible sur **[http://localhost:8000](http://localhost:8
 ```bash
 composer test
 ```
-- **120+ déclarations de test** (Pest) couvrant :
+- **160+ déclarations de test** (Pest) couvrant :
   - Gestion des participants (ajout/suppression/édition, y compris pondération).
   - Résolution de stratégie et exécution des tirages.
   - Tirage pondéré (résultat **et** segments SVG proportionnels).
@@ -318,8 +355,6 @@ composer run analyse
 
 - [ ] **Design** :
   - Responsive, accessibilité.
-- [ ] **Corriger le chargement des polices sur `/421`** :
-  - Remplacer le `<link>` direct vers `fonts.googleapis.com` (bloqué par la CSP de prod) par un import via `resources/css/app.css` (Vite), comme le reste du projet.
 - [ ] **Améliorer le pipeline de déploiement** :
   - Ajouter `composer test` et `composer run analyse` comme portes de qualité dans `deploy.yml`.
 - [ ] **Implémenter le mode manquant** :
