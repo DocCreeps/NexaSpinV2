@@ -16,8 +16,8 @@
                     Historique
                 </h1>
 
-                <br class="mt-3 max-w-md text-sm text-muted">
-                    Retrouvez tous vos tirages, tous modes confondus, ou filtrez par mode de jeu.</br> 1 mois d'historique.
+                <p class="mt-3 max-w-md text-sm text-muted">
+                    Retrouvez tous vos tirages, tous modes confondus, ou filtrez par mode de jeu.<br> 1 mois d'historique.
                 </p>
             </div>
 
@@ -31,18 +31,14 @@
 
         {{-- FILTRES --}}
         <div class="flex flex-wrap items-center gap-2">
-            <button type="button" wire:click="setFilter('all')" @class([
-                'rounded-xl border-2 border-ink px-3.5 py-2 font-mono text-[11px] uppercase tracking-widest transition',
-                'bg-ink text-white shadow-hard' => $filter === 'all',
+            <button type="button" wire:click="setFilter('all')" @class([ 'rounded-xl border-2 border-ink px-3.5 py-2 font-mono text-[11px] uppercase tracking-widest transition' , 'bg-ink text-white shadow-hard'=> $filter === 'all',
                 'bg-panel text-muted' => $filter !== 'all',
                 ])>
                 Tout
             </button>
 
             @foreach($this->availableFilters as $option)
-            <button type="button" wire:click="setFilter('{{ $option['value'] }}')" @class([
-                'rounded-xl border-2 border-ink px-3.5 py-2 font-mono text-[11px] uppercase tracking-widest transition',
-                'bg-ink text-white shadow-hard' => $filter === $option['value'],
+            <button type="button" wire:click="setFilter('{{ $option['value'] }}')" @class([ 'rounded-xl border-2 border-ink px-3.5 py-2 font-mono text-[11px] uppercase tracking-widest transition' , 'bg-ink text-white shadow-hard'=> $filter === $option['value'],
                 'bg-panel text-muted' => $filter !== $option['value'],
                 ])>
                 {{ $option['label'] }}
@@ -73,11 +69,45 @@
                 <div class="mt-2.5 text-sm text-ink">
                     @switch($entry['mode'])
                     @case('coin_flip')
-                    <span class="font-display tracking-wide">{{ $entry['side'] === 'pile' ? 'Pile' : 'Face' }}</span>
-                    @if($entry['bet'] !== null)
-                    <span class="ml-2 text-xs {{ $entry['bet_won'] ? 'text-primary' : 'text-danger' }}">
-                        · pari « {{ $entry['bet'] === 'pile' ? 'Pile' : 'Face' }} » {{ $entry['bet_won'] ? 'gagné' : 'perdu' }}
-                    </span>
+                    @php $type = $entry['type'] ?? 'single'; @endphp
+
+                    @if($type === 'single')
+                    {{-- TIRAGE UNIQUE --}}
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="font-display tracking-wide font-semibold">
+                            {{ $entry['side_label'] ?? ($entry['side'] === 'pile' ? 'Pile' : 'Face') }}
+                        </span>
+
+                        @if(isset($entry['bet']) && $entry['bet'] !== null)
+                        <span class="text-xs text-muted">
+                            · pari « <strong class="text-ink">{{ $entry['bet_label'] ?? ($entry['bet'] === 'pile' ? 'Pile' : 'Face') }}</strong> »
+                        </span>
+                        <span @class([ 'rounded-md border px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase' , 'border-ink bg-secondary text-ink'=> $entry['bet_won'],
+                            'border-danger/30 bg-danger/10 text-danger' => ! $entry['bet_won'],
+                            ])>
+                            {{ $entry['bet_won'] ? '✓ Gagné' : '✗ Perdu' }}
+                        </span>
+                        @endif
+                    </div>
+
+                    @else
+                    {{-- TIRAGE MULTIPLE (SÉRIE AUTO) --}}
+                    <div class="space-y-1.5">
+                        <div class="flex items-center gap-2">
+                            <span class="rounded-md border border-ink bg-wash px-2 py-0.5 font-mono text-[10px] uppercase font-bold text-ink">
+                                Série de {{ $entry['count'] }} tirages
+                            </span>
+                            <span class="text-xs text-subtle">
+                                Gagnant: <strong class="text-ink font-semibold">{{ $entry['winner_label'] }}</strong>
+                            </span>
+                        </div>
+
+                        <div class="flex items-center gap-3 text-xs text-muted font-mono">
+                            <span>{{ $entry['pile_label'] }}: <strong class="text-ink">{{ $entry['pile_count'] }}</strong></span>
+                            <span>·</span>
+                            <span>{{ $entry['face_label'] }}: <strong class="text-ink">{{ $entry['face_count'] }}</strong></span>
+                        </div>
+                    </div>
                     @endif
                     @break
 
