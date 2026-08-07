@@ -10,7 +10,7 @@ use Illuminate\Support\Carbon;
  * Stocke et relit l'historique des tirages d'un visiteur, en cache, par mode de jeu.
  *
  * Rattachement : l'ID de session Laravel (voir config/session.php, durée de vie
- * étendue à 3 mois) sert d'identifiant. Pas de compte, pas de BDD : le cache est
+ * étendue à 1 mois) sert d'identifiant. Pas de compte, pas de BDD : le cache est
  * la seule source de vérité, avec un TTL propre qui rejoint la durée de session.
  *
  * Chaque entrée est un tableau libre (forme différente par mode), auquel on ajoute
@@ -19,10 +19,10 @@ use Illuminate\Support\Carbon;
 class HistoryStore
 {
     /** Nombre maximum d'entrées conservées par mode et par visiteur. */
-    private const MAX_ENTRIES = 200;
+    private const MAX_ENTRIES = 1000;
 
-    /** Durée de rétention du cache, alignée sur la durée de vie de la session (3 mois). */
-    private const TTL_DAYS = 90;
+    /** Durée de rétention du cache, alignée sur la durée de vie de la session (1 mois). */
+    private const TTL_DAYS = 30;
 
     /**
      * Enregistre une nouvelle entrée d'historique pour un mode donné (la plus
