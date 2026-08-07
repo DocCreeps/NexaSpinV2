@@ -3,6 +3,7 @@
 namespace App\Livewire\Dice;
 
 use App\Application\Dice\Actions\RollDiceAction;
+use App\Application\History\HistoryStore;
 use App\Application\Home\Enums\GameModeType;
 use App\Domain\Dice\Contracts\DiceGameStrategy;
 use App\Domain\Dice\Strategies\FourTwoOneStrategy;
@@ -62,9 +63,30 @@ class Dice421Page extends Component
     #[Locked]
     public ?array $pendingHistoryEntry = null;
 
-    public function mount(): void
+    public function mount(HistoryStore $historyStore): void
     {
         $this->resetGame();
+
+        $this->history = array_map(
+            static fn(array $entry) => [
+                'dice' => $entry['dice'],
+                'throws' => $entry['throws'],
+                'won' => $entry['won'],
+                'combination' => $entry['combination'],
+            ],
+            $historyStore->all(GameModeType::DICE_421)
+        );
+    }
+
+    /**
+     * Vide l'historique des parties (le cache et le résumé rapide), sans
+     * interrompre la partie en cours.
+     */
+    public function clearHistory(): void
+    {
+        $this->history = [];
+
+        app(HistoryStore::class)->clear(GameModeType::DICE_421);
     }
 
     /**
@@ -113,6 +135,9 @@ class Dice421Page extends Component
     {
         if ($this->pendingHistoryEntry !== null) {
             $this->history[] = $this->pendingHistoryEntry;
+
+            app(HistoryStore::class)->push(GameModeType::DICE_421, $this->pendingHistoryEntry);
+
             $this->pendingHistoryEntry = null;
 
             if (count($this->history) > self::MAX_HISTORY) {

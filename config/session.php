@@ -32,7 +32,10 @@ return [
     |
     */
 
-    'lifetime' => (int) env('SESSION_LIFETIME', 120),
+    // 3 mois (en minutes) : la session sert aussi d'identifiant persistant pour
+    // l'historique des tirages (voir App\Application\History\HistoryStore).
+    // On ne veut donc plus d'une session "courte" de 2h par défaut.
+    'lifetime' => (int) env('SESSION_LIFETIME', 129_600),
 
     'expire_on_close' => env('SESSION_EXPIRE_ON_CLOSE', false),
 

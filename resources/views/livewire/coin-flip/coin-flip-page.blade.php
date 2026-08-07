@@ -1,7 +1,7 @@
 <div class="min-h-screen w-full bg-surface text-ink antialiased selection:bg-secondary selection:text-ink" x-data="{
         flipping: false,
         finished: false
-    }" x-on:coin-flip.window="flipping = true; finished = false" x-on:coin-flip-finished.window="flipping = false; finished = true" x-on:coin-flip-reset.window="finished = false">
+    }" x-on:coin-flip.window="flipping = true; finished = false" x-on:coin-flip-finished.window="flipping = false; finished = true; setTimeout(() => $wire.confirmFlip(), 500)" x-on:coin-flip-reset.window="finished = false">
     <div class="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:space-y-8 sm:px-10 sm:py-10">
 
         {{-- HEADER --}}
@@ -187,11 +187,17 @@
                         <div class="mb-4 flex items-center justify-between">
                             <h3 class="font-display text-base text-ink">Historique</h3>
 
-                            @if(count($history))
-                            <span class="rounded-md border-2 border-ink bg-wash px-2.5 py-0.5 font-mono text-[11px] text-subtle">
-                                {{ count($history) }} / {{ \App\Livewire\CoinFlip\CoinFlipPage::MAX_HISTORY ?? 1000 }}
-                            </span>
-                            @endif
+                            <div class="flex items-center gap-3">
+                                <a href="{{ route('history') }}?filter=coin_flip" class="font-mono text-[10px] uppercase tracking-widest text-info hover:underline">
+                                    Historique complet →
+                                </a>
+
+                                @if(count($history))
+                                <span class="rounded-md border-2 border-ink bg-wash px-2.5 py-0.5 font-mono text-[11px] text-subtle">
+                                    {{ count($history) }} / {{ \App\Livewire\CoinFlip\CoinFlipPage::MAX_HISTORY ?? 1000 }}
+                                </span>
+                                @endif
+                            </div>
                         </div>
 
                         @if(count($history))

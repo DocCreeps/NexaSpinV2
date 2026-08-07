@@ -1,7 +1,7 @@
 <div class="min-h-screen w-full bg-surface text-ink antialiased selection:bg-secondary selection:text-ink" x-data="{
         spinning: false,
         finished: false
-    }" x-on:wheel-spin.window="spinning = true; finished = false" x-on:wheel-spin-finished.window="spinning = false; finished = true">
+    }" x-on:wheel-spin.window="spinning = true; finished = false" x-on:wheel-spin-finished.window="spinning = false; finished = true; setTimeout(() => $wire.confirmDraw(), 500)">
     <div class="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:space-y-8 sm:px-10 sm:py-10">
 
         {{-- HEADER --}}
@@ -82,6 +82,40 @@
                         LA ROUE TOURNE...
                     </span>
                 </button>
+
+                {{-- Résumé rapide de l'historique --}}
+                <section class="card-hard rounded-2xl border-2 border-ink bg-panel p-5">
+                    <div class="mb-4 flex items-center justify-between gap-3">
+                        <h3 class="font-display text-base text-ink">Derniers tirages</h3>
+                        <div class="flex items-center gap-3">
+                            <a href="{{ route('history') }}?filter=classic" class="font-mono text-[10px] uppercase tracking-widest text-info hover:underline">
+                                Historique complet →
+                            </a>
+                            @if(count($history))
+                            <button type="button" wire:click="clearHistory" wire:confirm="Vider l'historique de ce mode ?" class="font-mono text-[10px] uppercase tracking-widest text-subtle transition hover:text-danger">
+                                Vider
+                            </button>
+                            @endif
+                        </div>
+                    </div>
+
+                    @if(count($history))
+                    <div class="space-y-2">
+                        @foreach(array_slice(array_reverse($history), 0, 5) as $entry)
+                        <div class="flex items-center justify-between rounded-xl border-2 border-ink bg-wash px-4 py-2.5 text-sm font-semibold text-ink">
+                            <span class="truncate">🏆 {{ $entry['winner'] }}</span>
+                            <span class="shrink-0 rounded-md border border-ink/20 bg-panel px-2 py-0.5 font-mono text-[11px] text-subtle">
+                                {{ count($entry['participants']) }} participants
+                            </span>
+                        </div>
+                        @endforeach
+                    </div>
+                    @else
+                    <div class="rounded-xl border-2 border-dashed border-line py-6 text-center">
+                        <p class="text-sm font-medium text-muted">Aucun tirage pour l’instant</p>
+                    </div>
+                    @endif
+                </section>
             </div>
         </div>
     </div>

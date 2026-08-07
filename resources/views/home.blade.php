@@ -44,9 +44,15 @@
                     <span class="font-display text-lg tracking-tight sm:text-xl">NexaSpin</span>
                 </div>
 
-                <span class="inline-flex items-center rounded-md border-2 border-ink bg-secondary px-2.5 py-1 sm:px-3 sm:py-1.5">
-                    <span class="font-mono text-[9px] leading-none sm:text-[10px]">FREE PLAY</span>
-                </span>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <a href="{{ route('history') }}" class="inline-flex items-center rounded-md border-2 border-ink bg-panel px-2.5 py-1 font-mono text-[9px] uppercase tracking-widest text-muted transition hover:text-ink sm:px-3 sm:py-1.5 sm:text-[10px]">
+                        🗂️ Historique
+                    </a>
+
+                    <span class="inline-flex items-center rounded-md border-2 border-ink bg-secondary px-2.5 py-1 sm:px-3 sm:py-1.5">
+                        <span class="font-mono text-[9px] leading-none sm:text-[10px]">FREE PLAY</span>
+                    </span>
+                </div>
             </div>
 
             {{-- Contenu central --}}

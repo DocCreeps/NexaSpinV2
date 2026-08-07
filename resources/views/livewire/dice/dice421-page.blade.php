@@ -131,9 +131,19 @@
         {{-- Historique --}}
         @if(count($history) > 0)
         <section class="card-hard rounded-2xl border-2 border-ink bg-panel p-4 sm:p-5">
-            <h2 id="history-heading" class="mb-3 font-mono text-[10px] uppercase tracking-widest text-faint">
-                Ardoise des parties
-            </h2>
+            <div class="mb-3 flex items-center justify-between gap-3">
+                <h2 id="history-heading" class="font-mono text-[10px] uppercase tracking-widest text-faint">
+                    Ardoise des parties
+                </h2>
+                <div class="flex items-center gap-3">
+                    <a href="{{ route('history') }}?filter=dice_421" class="font-mono text-[10px] uppercase tracking-widest text-info hover:underline">
+                        Historique complet →
+                    </a>
+                    <button type="button" wire:click="clearHistory" wire:confirm="Vider l'historique de ce mode ?" class="font-mono text-[10px] uppercase tracking-widest text-subtle transition hover:text-danger">
+                        Vider
+                    </button>
+                </div>
+            </div>
 
             <div class="max-h-64 overflow-y-auto">
                 <table class="w-full text-sm" aria-labelledby="history-heading">

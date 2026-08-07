@@ -1,7 +1,7 @@
 <div class="min-h-screen w-full bg-surface text-ink antialiased selection:bg-secondary selection:text-ink" x-data="{
         busy: false,
         autoMode: @entangle('autoMode').live
-    }" x-on:wheel-spin.window="busy = true" x-on:wheel-spin-finished.window="busy = false; $wire.confirmElimination()" x-on:elimination-confirmed.window="
+    }" x-on:wheel-spin.window="busy = true" x-on:wheel-spin-finished.window="busy = false; $wire.confirmElimination()" x-on:tournament-finished.window="setTimeout(() => $wire.confirmTournamentHistory(), 500)" x-on:elimination-confirmed.window="
         if (autoMode && !$wire.winner) {
             setTimeout(() => {
                 if (autoMode && !busy && !$wire.winner) {
@@ -187,6 +187,40 @@
                     NOUVELLE PARTIE
                 </button>
                 @endif
+
+                {{-- Résumé rapide des tournois précédents --}}
+                <section class="card-hard rounded-2xl border-2 border-ink bg-panel p-5">
+                    <div class="mb-4 flex items-center justify-between gap-3">
+                        <h3 class="font-display text-base text-ink">Tournois précédents</h3>
+                        <div class="flex items-center gap-3">
+                            <a href="{{ route('history') }}?filter=elimination" class="font-mono text-[10px] uppercase tracking-widest text-info hover:underline">
+                                Historique complet →
+                            </a>
+                            @if(count($history))
+                            <button type="button" wire:click="clearHistory" wire:confirm="Vider l'historique de ce mode ?" class="font-mono text-[10px] uppercase tracking-widest text-subtle transition hover:text-danger">
+                                Vider
+                            </button>
+                            @endif
+                        </div>
+                    </div>
+
+                    @if(count($history))
+                    <div class="space-y-2">
+                        @foreach(array_slice(array_reverse($history), 0, 5) as $entry)
+                        <div class="flex items-center justify-between rounded-xl border-2 border-ink bg-wash px-4 py-2.5 text-sm font-semibold text-ink">
+                            <span class="truncate">🏆 {{ $entry['winner'] }}</span>
+                            <span class="shrink-0 rounded-md border border-ink/20 bg-panel px-2 py-0.5 font-mono text-[11px] text-subtle">
+                                {{ count($entry['participants']) }} participants
+                            </span>
+                        </div>
+                        @endforeach
+                    </div>
+                    @else
+                    <div class="rounded-xl border-2 border-dashed border-line py-6 text-center">
+                        <p class="text-sm font-medium text-muted">Aucun tournoi terminé pour l’instant</p>
+                    </div>
+                    @endif
+                </section>
             </div>
         </div>
     </div>

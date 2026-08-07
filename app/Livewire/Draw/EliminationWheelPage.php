@@ -3,11 +3,13 @@
 namespace App\Livewire\Draw;
 
 use App\Application\Draw\Actions\RunDrawAction;
+use App\Application\History\HistoryStore;
 use App\Application\Home\Enums\GameModeType;
 use App\Application\Draw\Support\WheelSegmentBuilder;
 use App\Livewire\Draw\Concerns\HandlesDraw;
 use App\Livewire\Draw\Concerns\ManagesParticipants;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 /**
@@ -20,11 +22,20 @@ class EliminationWheelPage extends Component
 
     private const MAX_LABELS_ON_WHEEL = 10;
     private const MIN_PARTICIPANTS = 5;
+    private const MAX_HISTORY = 50;
 
     /** Seuil d'abandon en secondes (animation frontend = 4.5s). */
     private const STUCK_THRESHOLD_SECONDS = 8.0;
 
     public ?string $error = null;
+
+    /**
+     * Tournois précédents (l'historique porte sur des parties entières, pas sur
+     * les éliminations intermédiaires d'une partie en cours).
+     *
+     * @var array<int, array{winner: string, participants: array<int, string>, eliminations: array<int, string>}>
+     */
+    public array $history = [];
 
     /** @var array<int, string> */
     public array $initialParticipants = [];
@@ -47,6 +58,61 @@ class EliminationWheelPage extends Component
     protected function participantsAreLocked(): bool
     {
         return $this->started();
+    }
+
+    public function mount(HistoryStore $historyStore): void
+    {
+        $this->history = array_map(
+            static fn(array $entry) => [
+                'winner' => $entry['winner'],
+                'participants' => $entry['participants'],
+                'eliminations' => $entry['eliminations'],
+            ],
+            $historyStore->all(GameModeType::ELIMINATION)
+        );
+    }
+
+    /**
+     * Vide l'historique des tournois précédents (le cache et le résumé rapide),
+     * sans interrompre un tournoi en cours.
+     */
+    public function clearHistory(): void
+    {
+        $this->history = [];
+
+        app(HistoryStore::class)->clear(GameModeType::ELIMINATION);
+    }
+
+    /**
+     * Tournoi en attente de confirmation (voir confirmTournamentHistory()) : le
+     * gagnant est déterminé immédiatement à la fin de la dernière élimination,
+     * mais n'atterrit dans $history/le cache qu'après un court délai côté
+     * client, pour ne pas spoiler le résultat avant la révélation du gagnant.
+     *
+     * @var array{winner: string, participants: array<int, string>, eliminations: array<int, string>}|null
+     */
+    #[Locked]
+    public ?array $pendingTournamentEntry = null;
+
+    /**
+     * Confirme le tournoi en attente : appelé côté client un court délai après
+     * la révélation du gagnant, pour que l'historique n'apparaisse pas avant.
+     */
+    public function confirmTournamentHistory(): void
+    {
+        if ($this->pendingTournamentEntry === null) {
+            return;
+        }
+
+        $this->history[] = $this->pendingTournamentEntry;
+
+        if (count($this->history) > self::MAX_HISTORY) {
+            $this->history = array_slice($this->history, -self::MAX_HISTORY);
+        }
+
+        app(HistoryStore::class)->push(GameModeType::ELIMINATION, $this->pendingTournamentEntry);
+
+        $this->pendingTournamentEntry = null;
     }
 
     public function updatedAutoMode(bool $value): void
@@ -162,6 +228,14 @@ class EliminationWheelPage extends Component
         if (count($this->participants) === 1) {
             $this->winner = $this->participants[0];
             $this->autoMode = false;
+
+            $this->pendingTournamentEntry = [
+                'winner' => $this->winner,
+                'participants' => $this->initialParticipants,
+                'eliminations' => $this->eliminated,
+            ];
+
+            $this->dispatch('tournament-finished');
         }
 
         $this->processing = false;
@@ -179,6 +253,7 @@ class EliminationWheelPage extends Component
         $this->pendingElimination = null;
         $this->lastEliminated = null;
         $this->winner = null;
+        $this->pendingTournamentEntry = null;
         $this->processing = false;
         $this->processingStartedAt = null;
         $this->error = null;

@@ -3,6 +3,7 @@
 namespace App\Livewire\CoinFlip;
 
 use App\Application\CoinFlip\Actions\FlipCoinAction;
+use App\Application\History\HistoryStore;
 use App\Application\Home\Enums\GameModeType;
 use App\Domain\CoinFlip\Enums\CoinSide;
 use App\Domain\CoinFlip\ValueObjects\CoinFlipBet;
@@ -43,6 +44,32 @@ class CoinFlipPage extends Component
     /** Libellés personnalisables des faces (la logique utilise CoinSide::value) */
     public string $pileLabel = 'Pile';
     public string $faceLabel = 'Face';
+
+    /**
+     * Résultat(s) en attente de confirmation (voir confirmFlip()) : le tirage est
+     * calculé immédiatement (nécessaire pour l'animation de la pièce), mais
+     * n'atterrit dans $history/$betHistory/le cache qu'une fois l'animation
+     * terminée côté client, pour ne pas spoiler le résultat avant la fin du flip.
+     *
+     * @var array<int, array{side: string, bet: ?string, bet_won: ?bool}>
+     */
+    #[Locked]
+    public array $pendingHistoryEntries = [];
+
+    /**
+     * Réhydrate le résumé rapide depuis l'historique en cache (voir HistoryStore),
+     * pour qu'il survive à un rechargement de page.
+     */
+    public function mount(HistoryStore $historyStore): void
+    {
+        foreach ($historyStore->all(GameModeType::COIN_FLIP) as $entry) {
+            $this->history[] = $entry['side'];
+
+            if ($entry['bet_won'] !== null) {
+                $this->betHistory[] = $entry['bet_won'];
+            }
+        }
+    }
 
     public function launch(FlipCoinAction $action): void
     {
@@ -101,11 +128,18 @@ class CoinFlipPage extends Component
     {
         $this->error = null;
         $this->lastBetWon = null;
+        $this->pendingHistoryEntries = [];
 
-        $result = $this->performFlip($action);
+        $result = $action->execute();
         $this->result = $result->side->value;
 
         $this->evaluateBet($result);
+
+        $this->pendingHistoryEntries[] = [
+            'side' => $result->side->value,
+            'bet' => $this->bet,
+            'bet_won' => $this->lastBetWon,
+        ];
 
         $this->dispatch('coin-flip', face: $this->result);
     }
@@ -115,6 +149,7 @@ class CoinFlipPage extends Component
         $this->error = null;
         $this->bet = null;
         $this->lastBetWon = null;
+        $this->pendingHistoryEntries = [];
 
         if ($this->autoFlipCount < self::MIN_AUTO_FLIPS || $this->autoFlipCount > self::MAX_AUTO_FLIPS) {
             $this->error = sprintf(
@@ -127,11 +162,51 @@ class CoinFlipPage extends Component
         }
 
         for ($i = 0; $i < $this->autoFlipCount; $i++) {
-            $result = $this->performFlip($action);
+            $result = $action->execute();
             $this->result = $result->side->value;
+
+            $this->pendingHistoryEntries[] = [
+                'side' => $result->side->value,
+                'bet' => null,
+                'bet_won' => null,
+            ];
         }
 
         $this->dispatch('coin-flip', face: $this->result);
+    }
+
+    /**
+     * Confirme le(s) tirage(s) en attente : appelé côté client une fois l'animation
+     * de la pièce terminée (+ un court délai), pour que l'historique n'apparaisse
+     * pas avant que le résultat ne soit visuellement révélé.
+     */
+    public function confirmFlip(): void
+    {
+        if ($this->pendingHistoryEntries === []) {
+            return;
+        }
+
+        $store = app(HistoryStore::class);
+
+        foreach ($this->pendingHistoryEntries as $entry) {
+            $this->history[] = $entry['side'];
+
+            if ($entry['bet_won'] !== null) {
+                $this->betHistory[] = $entry['bet_won'];
+            }
+
+            $store->push(GameModeType::COIN_FLIP, $entry);
+        }
+
+        if (count($this->history) > self::MAX_HISTORY) {
+            $this->history = array_slice($this->history, -self::MAX_HISTORY);
+        }
+
+        if (count($this->betHistory) > self::MAX_HISTORY) {
+            $this->betHistory = array_slice($this->betHistory, -self::MAX_HISTORY);
+        }
+
+        $this->pendingHistoryEntries = [];
     }
 
     public function resetHistory(): void
@@ -142,6 +217,9 @@ class CoinFlipPage extends Component
         $this->bet = null;
         $this->lastBetWon = null;
         $this->betHistory = [];
+        $this->pendingHistoryEntries = [];
+
+        app(HistoryStore::class)->clear(GameModeType::COIN_FLIP);
 
         $this->dispatch('coin-flip-reset');
     }
@@ -182,19 +260,6 @@ class CoinFlipPage extends Component
         return count($this->betHistory);
     }
 
-    private function performFlip(FlipCoinAction $action): CoinFlipResult
-    {
-        $result = $action->execute();
-
-        $this->history[] = $result->side->value;
-
-        if (count($this->history) > self::MAX_HISTORY) {
-            $this->history = array_slice($this->history, -self::MAX_HISTORY);
-        }
-
-        return $result;
-    }
-
     private function evaluateBet(CoinFlipResult $result): void
     {
         if ($this->bet === null) {
@@ -215,11 +280,6 @@ class CoinFlipPage extends Component
         $bet = new CoinFlipBet($chosenSide, $result);
 
         $this->lastBetWon = $bet->won();
-        $this->betHistory[] = $this->lastBetWon;
-
-        if (count($this->betHistory) > self::MAX_HISTORY) {
-            $this->betHistory = array_slice($this->betHistory, -self::MAX_HISTORY);
-        }
     }
 
     public function render()
