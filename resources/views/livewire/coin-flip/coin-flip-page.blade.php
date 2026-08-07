@@ -201,24 +201,78 @@
                         </div>
 
                         @if(count($history))
-                        <div class="custom-scrollbar max-h-[300px] space-y-2 overflow-y-auto pr-1">
-                            @foreach(array_reverse($history, true) as $index => $side)
-                            <div @class([ 'flex items-center justify-between rounded-xl border-2 border-ink px-4 py-2.5 text-sm font-semibold' , 'bg-secondary/30 text-ink'=> $side === 'face',
-                                'bg-wash text-ink' => $side === 'pile',
+                        <div class="custom-scrollbar max-h-[350px] space-y-2 overflow-y-auto pr-1">
+                            @foreach(array_reverse($history, true) as $index => $entry)
+                            @php $type = $entry['type'] ?? 'single'; @endphp
+
+                            @if($type === 'single')
+                            {{-- TIRAGE UNIQUE --}}
+                            <div @class([ 'flex items-center justify-between rounded-xl border-2 border-ink px-4 py-2.5 text-sm font-semibold' , 'bg-secondary/30 text-ink'=> ($entry['side'] ?? '') === 'face',
+                                'bg-wash text-ink' => ($entry['side'] ?? '') === 'pile',
                                 ])>
                                 <div class="flex items-center gap-2.5">
-                                    <span @class([ 'h-2 w-2 rounded-full' , 'bg-secondary'=> $side === 'face',
-                                        'bg-ink/40' => $side === 'pile',
+                                    <span @class([ 'h-2 w-2 rounded-full' , 'bg-secondary'=> ($entry['side'] ?? '') === 'face',
+                                        'bg-ink/40' => ($entry['side'] ?? '') === 'pile',
                                         ])></span>
-                                    <span class="font-display tracking-wide">
-                                        {{ $this->label($side) }}
+
+                                    <div class="flex flex-col">
+                                        <span class="font-display tracking-wide">
+                                            {{ $entry['side_label'] ?? $this->label($entry['side'] ?? 'pile') }}
+                                        </span>
+
+                                        @if(isset($entry['bet']) && $entry['bet'] !== null)
+                                        <span class="font-mono text-[10px] font-normal text-muted">
+                                            Pari: <span class="font-semibold">{{ $entry['bet_label'] ?? $this->label($entry['bet']) }}</span>
+                                        </span>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center gap-2">
+                                    @if(isset($entry['bet_won']) && $entry['bet_won'] !== null)
+                                    <span @class([ 'rounded-md border px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase' , 'border-ink bg-secondary text-ink'=> $entry['bet_won'],
+                                        'border-danger/30 bg-danger/10 text-danger' => ! $entry['bet_won'],
+                                        ])>
+                                        {{ $entry['bet_won'] ? 'Gagné' : 'Perdu' }}
+                                    </span>
+                                    @endif
+
+                                    <span class="rounded-md border border-ink/20 bg-panel px-2 py-0.5 font-mono text-[11px] text-subtle">
+                                        #{{ $index + 1 }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            @else
+                            {{-- TIRAGE MULTIPLE (AUTOMATIQUE) --}}
+                            <div class="rounded-xl border-2 border-ink bg-panel p-3 text-sm font-semibold">
+                                <div class="flex items-center justify-between border-b border-line pb-2">
+                                    <div class="flex items-center gap-2">
+                                        <span class="rounded-md border border-ink bg-wash px-2 py-0.5 font-mono text-[10px] uppercase text-ink">
+                                            Serie {{ $entry['count'] }}x
+                                        </span>
+                                        <span class="font-mono text-[11px] text-muted">
+                                            Gagnant: <strong class="text-ink">{{ $entry['winner_label'] }}</strong>
+                                        </span>
+                                    </div>
+
+                                    <span class="rounded-md border border-ink/20 bg-wash px-2 py-0.5 font-mono text-[11px] text-subtle">
+                                        #{{ $index + 1 }}
                                     </span>
                                 </div>
 
-                                <span class="rounded-md border border-ink/20 bg-panel px-2 py-0.5 font-mono text-[11px] text-subtle">
-                                    #{{ $index + 1 }}
-                                </span>
+                                <div class="mt-2 grid grid-cols-2 gap-2 text-xs font-normal">
+                                    <div class="flex items-center justify-between rounded-lg bg-wash px-2.5 py-1.5">
+                                        <span class="text-subtle">{{ $entry['pile_label'] }}</span>
+                                        <span class="font-mono font-bold text-ink">{{ $entry['pile_count'] }}</span>
+                                    </div>
+                                    <div class="flex items-center justify-between rounded-lg bg-secondary/20 px-2.5 py-1.5">
+                                        <span class="text-subtle">{{ $entry['face_label'] }}</span>
+                                        <span class="font-mono font-bold text-ink">{{ $entry['face_count'] }}</span>
+                                    </div>
+                                </div>
                             </div>
+                            @endif
                             @endforeach
                         </div>
                         @else
@@ -229,6 +283,7 @@
                         </div>
                         @endif
                     </section>
+
 
                     @if(count($history))
                     <button type="button" wire:click="resetHistory" class="card-hard w-full rounded-xl border-2 border-ink bg-panel py-4 font-display text-sm text-ink transition focus:outline-none focus-visible:ring-2 focus-visible:ring-info focus-visible:ring-offset-2">

@@ -16,8 +16,8 @@
                     Historique
                 </h1>
 
-                <p class="mt-3 max-w-md text-sm text-muted">
-                    Retrouvez tous vos tirages, tous modes confondus, ou filtrez par mode de jeu.
+                <br class="mt-3 max-w-md text-sm text-muted">
+                    Retrouvez tous vos tirages, tous modes confondus, ou filtrez par mode de jeu.</br> 1 mois d'historique.
                 </p>
             </div>
 
