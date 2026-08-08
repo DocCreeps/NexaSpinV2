@@ -3,6 +3,7 @@
 namespace App\Livewire\CoinFlip;
 
 use App\Application\CoinFlip\Actions\FlipCoinAction;
+use App\Application\History\HistoryStore;
 use App\Application\Home\Enums\GameModeType;
 use App\Domain\CoinFlip\Enums\CoinSide;
 use App\Domain\CoinFlip\ValueObjects\CoinFlipBet;
@@ -28,21 +29,32 @@ class CoinFlipPage extends Component
     /** Si > 1, bascule automatiquement en tirage multiple */
     public int $autoFlipCount = 1;
 
-    /**
-     * #[Locked] : $bet ne doit jamais être modifiable directement depuis un payload
-     * Livewire côté client (contrairement à un wire:model classique). Seule la méthode
-     * serveur selectBet() — qui valide la valeur — peut la faire évoluer. Sans ce verrou,
-     * un payload AJAX forgé pourrait fixer $bet à une valeur arbitraire et faire échouer
-     * CoinSide::from() dans evaluateBet() avec une erreur serveur non gérée.
-     */
     #[Locked]
     public ?string $bet = null;
     public ?bool $lastBetWon = null;
     public array $betHistory = [];
 
-    /** Libellés personnalisables des faces (la logique utilise CoinSide::value) */
+    /** Libellés personnalisables des faces */
     public string $pileLabel = 'Pile';
     public string $faceLabel = 'Face';
+
+    /**
+     * Entrées en attente de confirmation.
+     * Contient un tableau associatif avec le type ('single' ou 'multiple')
+     */
+    #[Locked]
+    public array $pendingHistoryEntries = [];
+
+    public function mount(HistoryStore $historyStore): void
+    {
+        foreach ($historyStore->all(GameModeType::COIN_FLIP) as $entry) {
+            $this->history[] = $entry;
+
+            if (($entry['type'] ?? 'single') === 'single' && isset($entry['bet_won']) && $entry['bet_won'] !== null) {
+                $this->betHistory[] = $entry['bet_won'];
+            }
+        }
+    }
 
     public function launch(FlipCoinAction $action): void
     {
@@ -62,9 +74,6 @@ class CoinFlipPage extends Component
         $this->bet = $this->bet === $side ? null : $side;
     }
 
-    /**
-     * Retourne le libellé personnalisé d'une face pour l'affichage dans la vue.
-     */
     public function label(string $side): string
     {
         return $side === CoinSide::PILE->value ? $this->pileLabel : $this->faceLabel;
@@ -101,11 +110,21 @@ class CoinFlipPage extends Component
     {
         $this->error = null;
         $this->lastBetWon = null;
+        $this->pendingHistoryEntries = [];
 
-        $result = $this->performFlip($action);
+        $result = $action->execute();
         $this->result = $result->side->value;
 
         $this->evaluateBet($result);
+
+        $this->pendingHistoryEntries[] = [
+            'type' => 'single',
+            'side' => $result->side->value,
+            'side_label' => $this->label($result->side->value),
+            'bet' => $this->bet,
+            'bet_label' => $this->bet ? $this->label($this->bet) : null,
+            'bet_won' => $this->lastBetWon,
+        ];
 
         $this->dispatch('coin-flip', face: $this->result);
     }
@@ -115,6 +134,7 @@ class CoinFlipPage extends Component
         $this->error = null;
         $this->bet = null;
         $this->lastBetWon = null;
+        $this->pendingHistoryEntries = [];
 
         if ($this->autoFlipCount < self::MIN_AUTO_FLIPS || $this->autoFlipCount > self::MAX_AUTO_FLIPS) {
             $this->error = sprintf(
@@ -126,12 +146,64 @@ class CoinFlipPage extends Component
             return;
         }
 
+        $pileCount = 0;
+        $faceCount = 0;
+
         for ($i = 0; $i < $this->autoFlipCount; $i++) {
-            $result = $this->performFlip($action);
+            $result = $action->execute();
             $this->result = $result->side->value;
+
+            if ($result->side->value === CoinSide::PILE->value) {
+                $pileCount++;
+            } else {
+                $faceCount++;
+            }
         }
 
+        $winner = null;
+        if ($pileCount > $faceCount) {
+            $winner = CoinSide::PILE->value;
+        } elseif ($faceCount > $pileCount) {
+            $winner = CoinSide::FACE->value;
+        } // Si égalité, $winner reste null
+
+        $this->pendingHistoryEntries[] = [
+            'type' => 'multiple',
+            'count' => $this->autoFlipCount,
+            'pile_count' => $pileCount,
+            'face_count' => $faceCount,
+            'pile_label' => $this->pileLabel,
+            'face_label' => $this->faceLabel,
+            'winner' => $winner,
+            'winner_label' => $winner ? $this->label($winner) : 'Égalité',
+        ];
+
         $this->dispatch('coin-flip', face: $this->result);
+    }
+
+    public function confirmFlip(): void
+    {
+        if ($this->pendingHistoryEntries === []) {
+            return;
+        }
+
+        $store = app(HistoryStore::class);
+
+        foreach ($this->pendingHistoryEntries as $entry) {
+            $this->history[] = $entry;
+
+            if (($entry['type'] ?? 'single') === 'single' && isset($entry['bet_won']) && $entry['bet_won'] !== null) {
+                $this->betHistory[] = $entry['bet_won'];
+            }
+
+            $store->push(GameModeType::COIN_FLIP, $entry);
+        }
+
+        if (count($this->history) > self::MAX_HISTORY) {
+            $this->history = array_slice($this->history, -self::MAX_HISTORY);
+        }
+
+        $this->pendingHistoryEntries = [];
     }
 
     public function resetHistory(): void
@@ -142,29 +214,49 @@ class CoinFlipPage extends Component
         $this->bet = null;
         $this->lastBetWon = null;
         $this->betHistory = [];
+        $this->pendingHistoryEntries = [];
+
+        app(HistoryStore::class)->clear(GameModeType::COIN_FLIP);
 
         $this->dispatch('coin-flip-reset');
     }
 
     public function totalFlips(): int
     {
-        return count($this->history);
+        $total = 0;
+        foreach ($this->history as $entry) {
+            $total += ($entry['type'] ?? 'single') === 'multiple' ? $entry['count'] : 1;
+        }
+
+        return $total;
     }
 
     public function pileCount(): int
     {
-        return count(array_filter(
-            $this->history,
-            fn(string $side) => $side === CoinSide::PILE->value
-        ));
+        $total = 0;
+        foreach ($this->history as $entry) {
+            if (($entry['type'] ?? 'single') === 'multiple') {
+                $total += $entry['pile_count'];
+            } elseif (($entry['side'] ?? null) === CoinSide::PILE->value) {
+                $total++;
+            }
+        }
+
+        return $total;
     }
 
     public function faceCount(): int
     {
-        return count(array_filter(
-            $this->history,
-            fn(string $side) => $side === CoinSide::FACE->value
-        ));
+        $total = 0;
+        foreach ($this->history as $entry) {
+            if (($entry['type'] ?? 'single') === 'multiple') {
+                $total += $entry['face_count'];
+            } elseif (($entry['side'] ?? null) === CoinSide::FACE->value) {
+                $total++;
+            }
+        }
+
+        return $total;
     }
 
     public function betWinCount(): int
@@ -182,19 +274,6 @@ class CoinFlipPage extends Component
         return count($this->betHistory);
     }
 
-    private function performFlip(FlipCoinAction $action): CoinFlipResult
-    {
-        $result = $action->execute();
-
-        $this->history[] = $result->side->value;
-
-        if (count($this->history) > self::MAX_HISTORY) {
-            $this->history = array_slice($this->history, -self::MAX_HISTORY);
-        }
-
-        return $result;
-    }
-
     private function evaluateBet(CoinFlipResult $result): void
     {
         if ($this->bet === null) {
@@ -203,9 +282,6 @@ class CoinFlipPage extends Component
 
         $chosenSide = CoinSide::tryFrom($this->bet);
 
-        // Défense en profondeur : si $bet ne correspond à aucune face valide
-        // (ne devrait jamais arriver grâce à #[Locked] + selectBet()), on ignore
-        // le pari plutôt que de laisser planter la requête avec un \ValueError.
         if ($chosenSide === null) {
             $this->bet = null;
 
@@ -215,11 +291,6 @@ class CoinFlipPage extends Component
         $bet = new CoinFlipBet($chosenSide, $result);
 
         $this->lastBetWon = $bet->won();
-        $this->betHistory[] = $this->lastBetWon;
-
-        if (count($this->betHistory) > self::MAX_HISTORY) {
-            $this->betHistory = array_slice($this->betHistory, -self::MAX_HISTORY);
-        }
     }
 
     public function render()

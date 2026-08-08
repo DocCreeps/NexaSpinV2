@@ -11,6 +11,11 @@ enum GameModeType: string
     case WEIGHTED = 'weighted';
     case COIN_FLIP = 'coin_flip';
     case TEAMS = 'teams';
+    case TOMBOLA = 'tombola';
+    case BRACKET = 'bracket';
+    case NUMBER_ROULETTE = 'number_roulette';
+    case RANDOM_TIMER = 'random_timer';
+    case CUSTOM_DICE = 'custom_dice';
 
     case DICE_421 = 'dice_421';
 
@@ -95,6 +100,61 @@ enum GameModeType: string
                 shadow: 'shadow-zinc-500/5',
                 category: GameModeCategory::DEV,
                 minParticipants: 4,
+            ),
+            self::TOMBOLA => new GameMode(
+                icon: '🎟️',
+                title: 'Tombola',
+                description: 'Tirez plusieurs gagnants d’un coup (1er, 2e, 3e lot...) parmi une liste de participants pondérés.',
+                route: null,
+                available: false,
+                color: 'from-zinc-400 to-zinc-500',
+                shadow: 'shadow-zinc-500/5',
+                category: GameModeCategory::DEV,
+                minParticipants: 3,
+            ),
+            self::BRACKET => new GameMode(
+                icon: '🥊',
+                title: 'Tournoi à élimination directe',
+                description: 'Générez un bracket 1 contre 1 et suivez le tournoi jusqu’à la finale.',
+                route: null,
+                available: false,
+                color: 'from-zinc-400 to-zinc-500',
+                shadow: 'shadow-zinc-500/5',
+                category: GameModeCategory::DEV,
+                minParticipants: 4,
+            ),
+            self::NUMBER_ROULETTE => new GameMode(
+                icon: '🔢',
+                title: 'Roulette numérique',
+                description: 'Tirez un nombre aléatoire dans une plage définie, façon loterie à chiffres.',
+                route: null,
+                available: false,
+                color: 'from-zinc-400 to-zinc-500',
+                shadow: 'shadow-zinc-500/5',
+                category: GameModeCategory::DEV,
+                minParticipants: null,
+            ),
+            self::RANDOM_TIMER => new GameMode(
+                icon: '⏱️',
+                title: 'Minuteur aléatoire',
+                description: 'Tirez une durée aléatoire dans une plage donnée (ex. une pause entre 5 et 15 minutes).',
+                route: null,
+                available: false,
+                color: 'from-zinc-400 to-zinc-500',
+                shadow: 'shadow-zinc-500/5',
+                category: GameModeCategory::DEV,
+                minParticipants: null,
+            ),
+            self::CUSTOM_DICE => new GameMode(
+                icon: '⚅',
+                title: 'Dés personnalisés',
+                description: 'Choisissez librement le nombre de dés et de faces pour vos propres parties.',
+                route: null,
+                available: false,
+                color: 'from-zinc-400 to-zinc-500',
+                shadow: 'shadow-zinc-500/5',
+                category: GameModeCategory::DEV,
+                minParticipants: null,
             ),
         };
     }

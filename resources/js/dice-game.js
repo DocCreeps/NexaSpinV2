@@ -131,8 +131,10 @@ export default function diceGame(
             this.combinationLabel = this.pendingServerData.combinationLabel;
             this.isRolling = false;
 
-            // Historique + compteurs Livewire seulement maintenant
-            this.$wire.finalizeRoll();
+            // Historique + compteurs Livewire seulement maintenant, avec un délai
+            // supplémentaire pour ne pas faire apparaître le résultat dans
+            // l'historique avant que l'animation ne soit visuellement terminée.
+            setTimeout(() => this.$wire.finalizeRoll(), 500);
         },
 
         onDiceReset() {
