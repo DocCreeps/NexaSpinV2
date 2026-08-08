@@ -47,7 +47,8 @@
 
 
 
-> **Aucune persistance en base de données** : les participants et résultats vivent dans l’état des composants Livewire (session uniquement).
+> **Historique des tirages en cache** : chaque tirage (tous modes) est conservé côté serveur dans le cache (`App\Application\History\HistoryStore`), rattaché à la session du visiteur (1 mois de rétention). Page `/historique` : liste unifiée filtrable par mode, popup de détails (participants, poids, ordre des éliminations) pour les roues. Un résumé rapide des derniers tirages est aussi affiché directement sur chaque page de mode.
+> **Aucune persistance en base de données** : les participants et résultats vivent dans l’état des composants Livewire (session uniquement) ; seul l’historique des tirages passe par le cache, pas de table dédiée.
 > **Déploiement continu** : synchronisation automatique de `master` vers un VPS via GitHub Actions (sans porte de qualité, voir [Dette technique](#-dette-technique-et-limites-connues)).
 > **Accueil organisé par catégorie** : les modes sont regroupés en sections (`GameModeCategory` : Roues / Autres tirages / Jeux / En Développement), générées dynamiquement — ajouter une nouvelle catégorie n’implique aucune modification de la vue.
 
@@ -138,6 +139,9 @@ app/
 │   ├── DTOs/                    # GameMode (carte affichée sur la home)
 │   └── Enums/                   # GameModeType, GameModeCategory (regroupement de la home)
 │
+├── Application/History/        # Historique des tirages (transverse à tous les modes)
+│   └── HistoryStore.php         # Lecture/écriture en cache, rattaché à la session (push/all/allModes/clear)
+│
 ├── Http/Middleware/
 │   └── SecurityHeaders.php    # CSP (prod uniquement) + en-têtes de sécurité HTTP
 │
@@ -149,8 +153,10 @@ app/
     │   └── Concerns/            # ManagesParticipants, HandlesDraw (traits partagés)
     ├── CoinFlip/
     │   └── CoinFlipPage.php    # Tirage simple/multiple + paris + libellés personnalisables
-    └── Dice/
-        └── Dice421Page.php     # Partie de 421 : lancers, dés gardés, historique local
+    ├── Dice/
+    │   └── Dice421Page.php     # Partie de 421 : lancers, dés gardés, historique local
+    └── History/
+        └── HistoryPage.php     # Page /historique : liste unifiée tous modes, filtrable
 ```
 
 > **Nomenclature** : les DTO/enums de la home s'appellent désormais `GameModeType` / `GameModeCategory` (et non plus `DrawModeType` / `DrawModeCategory`), suite à l'ajout du 421 qui n'est pas un mode de *tirage* à proprement parler.
@@ -214,6 +220,8 @@ app/
 - **Tirage par équipes non implémenté** : Carte visible mais désactivée (`available: false`) sur l’accueil.
 
 ### ✅ Corrigé récemment
+- **Historique des tirages en cache** : `App\Application\History\HistoryStore` enregistre chaque tirage (tous modes) en cache, rattaché à la session du visiteur (session étendue à 3 mois dans `config/session.php` pour ne pas perdre l'historique après 2h d'inactivité ; rétention du cache 1 mois). Nouvelle page `/historique` (composant `HistoryPage`) : liste unifiée de tous les tirages, filtrable par mode, avec popup de détails (participants, poids, ordre des éliminations) pour les roues. Chaque page de mode affiche aussi un résumé rapide de ses derniers tirages, avec lien vers l'historique complet. Sur `CoinFlipPage`, les tirages multiples (série auto) sont désormais des entrées distinctes des tirages simples (`type: 'single'|'multiple'`), avec gagnant de la série calculé au max de faces.
+- **Résultat affiché seulement après la fin de l'animation** : sur les 5 modes, le résultat n'atterrit dans l'historique/le résumé rapide qu'après la fin de l'animation côté client (+ court délai réglable, actuellement 500ms) plutôt qu'instantanément à la requête Livewire — évite de spoiler le résultat avant que l'animation ne soit terminée visuellement (`pendingHistoryEntries`/`confirmFlip()` pour le pile ou face, `pendingHistoryEntry`/`confirmDraw()` pour les roues classique et pondérée, `pendingTournamentEntry`/`confirmTournamentHistory()` pour la roue d'élimination — cette dernière ne différant que la mise en historique du tournoi, pas la logique de jeu elle-même qui doit rester synchrone).
 - **Refonte visuelle complète, direction « borne d’arcade »** : nouvelle palette néo-brutaliste à ombres dures (`--shadow-hard`, `--shadow-press`), nouvelles polices auto-hébergées (Work Sans, Bungee, Press Start 2P via Bunny Fonts/Vite), nouveaux utilitaires CSS (`btn-press`, `card-hard`, `card-hard-hover`, `tile-selected`, `text-outline`) et prise en charge de `prefers-reduced-motion`. Appliquée à l’accueil, aux cartes de mode, à la roue, au pile ou face et au 421. Ajout d’un logo.
 - **Résolution du bug de polices bloquées par la CSP sur `/421`** : le `<link>` direct vers `fonts.googleapis.com`/`fonts.gstatic.com` a été supprimé ; les polices passent désormais par le même pipeline Vite que le reste du site (plus de retombée silencieuse sur la police système en production).
 - **Historique et compteur du 421 différés jusqu’à la fin de l’animation** : `roll()` ne pousse plus l’entrée d’historique immédiatement mais la stocke dans `pendingHistoryEntry` (`#[Locked]`) et appelle `skipRender()` ; c’est `finalizeRoll()`, déclenché par Alpine à la fin de l’animation des dés, qui l’applique. Évite que le résultat ou l’historique n’apparaissent avant que l’animation soit terminée.
@@ -286,6 +294,7 @@ app/
 | `implémentation 421` + `Debug 421` + `test 421` | Ajout du jeu de dés 421 et de sa suite de tests. |
 | `design type borne arcade` + `redisign` | Refonte visuelle néo-brutaliste « borne d’arcade » : nouvelle palette à ombres dures, nouvelles polices auto-hébergées (Work Sans, Bungee, Press Start 2P), nouveaux utilitaires CSS, ajout du logo. |
 | `attendre fin annimation pour compteur et historique` | Historique et compteur du 421 appliqués seulement après la fin de l’animation Alpine (`pendingHistoryEntry` + `finalizeRoll()`). |
+| `historique en cache` + `popup details roues` | `HistoryStore`, page `/historique` unifiée et filtrable, résumés rapides par mode, résultat différé après animation sur les 5 modes, popup de détails (participants/poids/éliminations) pour les roues. |
 
 </details>
 
@@ -360,10 +369,9 @@ composer run analyse
 - [ ] **Implémenter le mode manquant** :
   - Tirage par équipes (`GameModeType::TEAMS`).
 - [ ] **Peaufiner Pile ou face** (voir `TODO`) :
-  - Affichage du gagnant après un tirage automatique selon le max de faces obtenues.
   - Amélioration du design.
-- [ ] **Persistance optionnelle** :
-  - Sauvegarder l’historique des tirages en base de données (si un besoin réel émerge).
+- [ ] **Persistance en base de données** :
+  - L'historique des tirages passe aujourd'hui par le cache (rattaché à la session, 1 mois) plutôt qu'une vraie table — suffisant pour l'usage actuel, mais une migration vers une table dédiée permettrait un historique multi-appareils/compte et sans limite de rétention, si un besoin réel émerge.
 
 ---
 

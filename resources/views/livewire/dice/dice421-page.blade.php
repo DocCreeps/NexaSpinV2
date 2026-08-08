@@ -145,38 +145,34 @@
                 </div>
             </div>
 
-            <div class="max-h-64 overflow-y-auto">
-                <table class="w-full text-sm" aria-labelledby="history-heading">
-                    <caption class="sr-only">Historique des parties de 421</caption>
-                    <thead>
-                        <tr class="sr-only">
-                            <th scope="col">Dés</th>
-                            <th scope="col">Combinaison</th>
-                            <th scope="col">Lancers</th>
-                            <th scope="col">Résultat</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y-2 divide-dashed divide-line">
-                        @foreach(array_reverse($history) as $entry)
-                        <tr>
-                            <td class="py-2.5 font-display tracking-wider text-ink">
-                                {{ implode(' · ', $entry['dice']) }}
-                            </td>
-                            <td class="py-2.5 text-xs text-subtle">
-                                {{ $entry['combination'] ?? '—' }}
-                            </td>
-                            <td class="py-2.5 text-xs text-subtle">
-                                {{ $entry['throws'] }} lancer{{ $entry['throws'] > 1 ? 's' : '' }}
-                            </td>
-                            <td @class([ 'py-2.5 text-right text-xs font-semibold' , 'text-primary'=> $entry['won'],
-                                'text-subtle' => ! $entry['won'],
-                                ])>
-                                {{ $entry['won'] ? '✓ gagné' : '✗ perdu' }}
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+            <div class="max-h-64 space-y-1.5 overflow-y-auto pr-1">
+                @foreach(array_reverse($history) as $entry)
+                <div @class([
+                    'flex items-center gap-3 rounded-xl border-2 px-3 py-2.5',
+                    'border-ink bg-secondary/20' => $entry['won'],
+                    'border-line bg-wash' => ! $entry['won'],
+                    ])>
+                    <span @class([
+                        'shrink-0 rounded-md border px-2 py-1 font-mono text-[10px] font-bold uppercase',
+                        'border-ink bg-secondary text-ink' => $entry['won'],
+                        'border-line bg-panel text-subtle' => ! $entry['won'],
+                        ])>
+                        {{ $entry['won'] ? '✓' : '✗' }}
+                    </span>
+
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-baseline gap-2">
+                            <span class="font-display text-sm tracking-wide text-ink">
+                                {{ $entry['combination'] ?? 'Aucune combinaison' }}
+                            </span>
+                        </div>
+                        <p class="mt-0.5 font-mono text-[11px] text-subtle">
+                            {{ implode(' · ', $entry['dice']) }}
+                            <span class="text-faint">— {{ $entry['throws'] }} lancer{{ $entry['throws'] > 1 ? 's' : '' }}</span>
+                        </p>
+                    </div>
+                </div>
+                @endforeach
             </div>
         </section>
         @endif

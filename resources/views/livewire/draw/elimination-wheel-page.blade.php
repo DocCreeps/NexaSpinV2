@@ -1,7 +1,8 @@
 <div class="min-h-screen w-full bg-surface text-ink antialiased selection:bg-secondary selection:text-ink" x-data="{
         busy: false,
-        autoMode: @entangle('autoMode').live
-    }" x-on:wheel-spin.window="busy = true" x-on:wheel-spin-finished.window="busy = false; $wire.confirmElimination()" x-on:tournament-finished.window="setTimeout(() => $wire.confirmTournamentHistory(), 500)" x-on:elimination-confirmed.window="
+        autoMode: @entangle('autoMode').live,
+        openEntry: null
+    }" x-on:wheel-spin.window="busy = true" x-on:wheel-spin-finished.window="busy = false; $wire.confirmElimination()" x-on:tournament-finished.window="setTimeout(() => $wire.confirmTournamentHistory(), 500)" x-on:keydown.escape.window="openEntry = null" x-on:elimination-confirmed.window="
         if (autoMode && !$wire.winner) {
             setTimeout(() => {
                 if (autoMode && !busy && !$wire.winner) {
@@ -207,12 +208,12 @@
                     @if(count($history))
                     <div class="space-y-2">
                         @foreach(array_slice(array_reverse($history), 0, 5) as $entry)
-                        <div class="flex items-center justify-between rounded-xl border-2 border-ink bg-wash px-4 py-2.5 text-sm font-semibold text-ink">
+                        <button type="button" x-on:click="openEntry = Object.assign({}, @js($entry), { modeLabel: 'Roue d’élimination' })" class="flex w-full items-center justify-between rounded-xl border-2 border-ink bg-wash px-4 py-2.5 text-left text-sm font-semibold text-ink transition hover:-translate-x-px hover:-translate-y-px hover:shadow-hard focus:outline-none focus-visible:ring-2 focus-visible:ring-info focus-visible:ring-offset-2">
                             <span class="truncate">🏆 {{ $entry['winner'] }}</span>
                             <span class="shrink-0 rounded-md border border-ink/20 bg-panel px-2 py-0.5 font-mono text-[11px] text-subtle">
                                 {{ count($entry['participants']) }} participants
                             </span>
-                        </div>
+                        </button>
                         @endforeach
                     </div>
                     @else
@@ -224,4 +225,6 @@
             </div>
         </div>
     </div>
+
+    <x-history.details-modal />
 </div>

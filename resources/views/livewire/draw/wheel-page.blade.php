@@ -1,7 +1,8 @@
 <div class="min-h-screen w-full bg-surface text-ink antialiased selection:bg-secondary selection:text-ink" x-data="{
         spinning: false,
-        finished: false
-    }" x-on:wheel-spin.window="spinning = true; finished = false" x-on:wheel-spin-finished.window="spinning = false; finished = true; setTimeout(() => $wire.confirmDraw(), 500)">
+        finished: false,
+        openEntry: null
+    }" x-on:wheel-spin.window="spinning = true; finished = false" x-on:wheel-spin-finished.window="spinning = false; finished = true; setTimeout(() => $wire.confirmDraw(), 500)" x-on:keydown.escape.window="openEntry = null">
     <div class="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:space-y-8 sm:px-10 sm:py-10">
 
         {{-- HEADER --}}
@@ -102,12 +103,12 @@
                     @if(count($history))
                     <div class="space-y-2">
                         @foreach(array_slice(array_reverse($history), 0, 5) as $entry)
-                        <div class="flex items-center justify-between rounded-xl border-2 border-ink bg-wash px-4 py-2.5 text-sm font-semibold text-ink">
+                        <button type="button" x-on:click="openEntry = Object.assign({}, @js($entry), { modeLabel: 'Roue classique' })" class="flex w-full items-center justify-between rounded-xl border-2 border-ink bg-wash px-4 py-2.5 text-left text-sm font-semibold text-ink transition hover:-translate-x-px hover:-translate-y-px hover:shadow-hard focus:outline-none focus-visible:ring-2 focus-visible:ring-info focus-visible:ring-offset-2">
                             <span class="truncate">🏆 {{ $entry['winner'] }}</span>
                             <span class="shrink-0 rounded-md border border-ink/20 bg-panel px-2 py-0.5 font-mono text-[11px] text-subtle">
                                 {{ count($entry['participants']) }} participants
                             </span>
-                        </div>
+                        </button>
                         @endforeach
                     </div>
                     @else
@@ -119,4 +120,6 @@
             </div>
         </div>
     </div>
+
+    <x-history.details-modal />
 </div>
