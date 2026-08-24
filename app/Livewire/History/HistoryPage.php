@@ -107,7 +107,7 @@ class HistoryPage extends Component
     }
 
     /**
-     * Liste des modes filtrables (Teams exclu : non disponible / sans historique).
+     * Liste des modes filtrables (modes non disponibles exclus : jamais d'historique possible).
      *
      * @return array<int, array{value: string, label: string}>
      */
@@ -115,10 +115,11 @@ class HistoryPage extends Component
     public function availableFilters(): array
     {
         return collect(GameModeType::cases())
-            ->reject(fn(GameModeType $mode) => $mode === GameModeType::TEAMS)
-            ->map(fn(GameModeType $mode) => [
-                'value' => $mode->value,
-                'label' => $mode->toDto()->title,
+            ->map(fn(GameModeType $mode) => [$mode, $mode->toDto()])
+            ->reject(fn(array $pair) => ! $pair[1]->available)
+            ->map(fn(array $pair) => [
+                'value' => $pair[0]->value,
+                'label' => $pair[1]->title,
             ])
             ->values()
             ->all();

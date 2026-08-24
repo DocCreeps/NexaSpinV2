@@ -9,9 +9,10 @@ namespace App\Application\Home\Enums;
 enum GameModeCategory: string
 {
     case WHEEL = 'wheel';
+    case OTHER = 'other';
     case GAME = 'games';
     case TOOLS = 'tools';
-    case OTHER = 'other';
+
     case DEV = 'dev';
 
 

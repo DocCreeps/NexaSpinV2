@@ -34,7 +34,7 @@ enum GameModeType: string
                 color: 'from-indigo-500 to-violet-600',
                 shadow: 'shadow-indigo-500/10 hover:shadow-indigo-500/20',
                 category: GameModeCategory::WHEEL,
-                minParticipants: 3,
+                minParticipants: 2,
                 metaTitle: 'Roue Classique — Tirage au Sort Instantané | NexaSpin',
                 metaDescription: 'Créez votre roue de la fortune en ligne : ajoutez vos participants, lancez le tirage et désignez un gagnant en un clic. 100% gratuit, sans inscription.',
             ),
@@ -94,23 +94,27 @@ enum GameModeType: string
                 icon: '👥',
                 title: 'Tirage par équipes',
                 description: 'Créez instantanément des équipes aléatoires et de tailles égales, en un seul clic.',
-                route: null,
-                available: false,
-                color: 'from-zinc-400 to-zinc-500',
-                shadow: 'shadow-zinc-500/5',
-                category: GameModeCategory::DEV,
+                route: route('teams'),
+                available: true,
+                color: 'from-cyan-500 to-sky-600',
+                shadow: 'shadow-cyan-500/10 hover:shadow-cyan-500/20',
+                category: GameModeCategory::OTHER,
                 minParticipants: 4,
+                metaTitle: 'Tirage par Équipes — Répartition Aléatoire | NexaSpin',
+                metaDescription: 'Répartissez vos participants en équipes aléatoires et équilibrées en un clic. Choisissez le nombre d’équipes, gratuit et sans inscription.',
             ),
             self::TOMBOLA => new GameMode(
                 icon: '🎟️',
                 title: 'Tombola',
                 description: 'Tirez plusieurs gagnants d’un coup (1er, 2e, 3e lot...) parmi une liste de participants pondérés.',
-                route: null,
-                available: false,
-                color: 'from-zinc-400 to-zinc-500',
-                shadow: 'shadow-zinc-500/5',
-                category: GameModeCategory::DEV,
+                route: route('tombola'),
+                available: true,
+                color: 'from-fuchsia-500 to-purple-600',
+                shadow: 'shadow-fuchsia-500/10 hover:shadow-fuchsia-500/20',
+                category: GameModeCategory::OTHER,
                 minParticipants: 3,
+                metaTitle: 'Tombola en Ligne — Tirage de Plusieurs Gagnants | NexaSpin',
+                metaDescription: 'Tirez me plusieurs gagnants d’un coup parmi une liste de participants pondérés : 1er lot, 2e lot, 3e lot... Gratuit et sans inscription.',
             ),
             self::BRACKET => new GameMode(
                 icon: '🥊',
@@ -129,7 +133,7 @@ enum GameModeType: string
                 icon: '🛡️',
                 title: 'Tournoi à double élimination (Upper / Lower)',
                 description: 'Donnez deux chances à chaque joueur avec un tableau principal et un tableau de repêchage.',
-                route: route('draw.bracket'), // Modifie la route si tu as créé une route dédiée (ex: route('draw.bracket-double'))
+                route: route('draw.bracket'),
                 available: true,
                 color: 'from-fuchsia-500 to-pink-600',
                 shadow: 'shadow-fuchsia-500/10 hover:shadow-fuchsia-500/20',
@@ -141,13 +145,15 @@ enum GameModeType: string
             self::NUMBER_ROULETTE => new GameMode(
                 icon: '🔢',
                 title: 'Roulette numérique',
-                description: 'Tirez un nombre aléatoire dans une plage définie, façon loterie à chiffres.',
-                route: null,
-                available: false,
-                color: 'from-zinc-400 to-zinc-500',
-                shadow: 'shadow-zinc-500/5',
-                category: GameModeCategory::DEV,
+                description: 'Une roulette américaine avec cagnotte : misez sur un numéro, une couleur, une douzaine...',
+                route: route('roulette.number'),
+                available: true,
+                color: 'from-red-600 to-rose-700',
+                shadow: 'shadow-red-500/10 hover:shadow-red-500/20',
+                category: GameModeCategory::GAME,
                 minParticipants: null,
+                metaTitle: 'Roulette Numérique Américaine — Jouez avec une Cagnotte | NexaSpin',
+                metaDescription: 'Jouez à la roulette américaine en ligne : misez sur un numéro, une couleur, une douzaine ou une colonne et suivez votre cagnotte. Gratuit et sans inscription.',
             ),
             self::RANDOM_TIMER => new GameMode(
                 icon: '⏱️',
@@ -188,7 +194,11 @@ enum GameModeType: string
     }
 
     /**
-     * Regroupe les DTOs par catégorie, dans l'ordre de déclaration de GameModeCategory.
+     * Regroupe les DTOs par catégorie, dans l'ordre de déclaration de GameModeCategory
+     * (et non l'ordre d'apparition dans GameModeType), pour un affichage stable et
+     * indépendant de l'ordre des cases ci-dessus. Une catégorie sans mode n'est pas
+     * retournée : ajouter une case à GameModeCategory ne crée une section sur la home
+     * que le jour où un GameModeType lui est effectivement rattaché.
      *
      * @return array<int, array{category: GameModeCategory, modes: array<GameMode>}>
      */
