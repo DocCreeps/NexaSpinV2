@@ -26,23 +26,33 @@ final class Bracket
         $this->validate($participants);
 
         $names = $participants->all();
-        $size = self::nextPowerOfTwo(count($names));
+        $count = count($names);
+        $size = self::nextPowerOfTwo($count);
         $this->roundCount = (int) log($size, 2);
-        $padded = array_pad($names, $size, null);
 
-        // Pairing par extrémités (index i vs size-1-i) et non séquentiel
-        // (i*2 vs i*2+1) : avec des noms tassés en tête et des slots vides en
-        // fin de tableau, un pairing séquentiel peut regrouper deux slots
-        // vides dans un même match (byeCount pair) — ce match resterait à
-        // jamais non jouable, bloquant la propagation. Le byeCount est
-        // toujours < size/2 (propriété de la puissance de 2 supérieure), donc
-        // ce pairing garantit qu'aucun match du round 1 n'a ses deux slots vides.
+        $totalRound1Slots = $size / 2; // Ex: 16 matchs au Round 1 pour un arbre de 32
+        $byesCount = $size - $count;   // Ex: 32 - 20 = 12 BYEs
+        $realMatchesCount = $count - $totalRound1Slots; // Ex: 20 - 16 = 4 VRAIS matchs (8 joueurs)
+
         $round1 = [];
-        for ($i = 0; $i < $size / 2; $i++) {
-            $round1[] = new BracketMatch(1, $i, $padded[$i], $padded[$size - 1 - $i]);
+        $playerIndex = 0;
+
+        // On alterne les vrais matchs et les BYEs pour que la propagation vers le Round 2 soit parfaite
+        for ($i = 0; $i < $totalRound1Slots; $i++) {
+            if ($i < $realMatchesCount) {
+                // Vrai match (2 joueurs s'affrontent)
+                $round1[] = new BracketMatch(1, $i, $names[$playerIndex], $names[$playerIndex + 1]);
+                $playerIndex += 2;
+            } else {
+                // Match BYE (1 joueur passe d'office, l'autre slot est null)
+                $round1[] = new BracketMatch(1, $i, $names[$playerIndex] ?? null, null);
+                $playerIndex++;
+            }
         }
+
         $this->rounds[1] = $round1;
 
+        // Construction des rounds suivants
         for ($round = 2; $round <= $this->roundCount; $round++) {
             $this->rounds[$round] = [];
             for ($i = 0; $i < $size / (2 ** $round); $i++) {
@@ -50,6 +60,7 @@ final class Bracket
             }
         }
 
+        // Propage les BYEs vers le Round 2
         $this->propagateResolvedMatches();
     }
 

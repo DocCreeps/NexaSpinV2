@@ -2,36 +2,30 @@
 
 namespace App\Application\Bracket\Actions;
 
-use App\Application\Bracket\DTOs\BracketData;
+use App\Domain\Bracket\Collections\Participants;
 use App\Domain\Bracket\Entities\Bracket;
 use App\Domain\Bracket\ValueObjects\Participant;
 
-/**
- * Action (Use Case) reconstruisant un Bracket cohérent à partir d'un état plat
- * (participants + résultats déjà saisis). Un composant Livewire ne stocke jamais
- * l'entité Bracket directement (non sérialisable proprement) : il ne conserve
- * que ce tableau plat, rejoué ici à chaque action serveur — même principe que
- * `HandlesDraw` qui reconstruit un `Draw` à chaque tirage.
- */
 final class RebuildBracketAction
 {
-    public function __construct(
-        private readonly CreateBracketAction $createBracketAction,
-    ) {}
-
     /**
-     * @param array<int, string> $participantNames
-     * @param array<int, array{round: int, position: int, winner: string}> $results Dans l'ordre de saisie.
+     * @param array<int, string> $participants
+     * @param array<int, array{round: int, position: int, winner: string}> $results
      */
-    public function execute(array $participantNames, array $results): Bracket
+    public function execute(array $participants, array $results): Bracket
     {
-        $bracket = $this->createBracketAction->execute(new BracketData($participantNames));
+        $collection = new Participants(
+            array_map(fn(string $name) => new Participant($name), $participants)
+        );
 
+        $bracket = new Bracket($collection);
+
+        // Rejoue tous les résultats enregistrés
         foreach ($results as $result) {
             $bracket->recordResult(
                 $result['round'],
                 $result['position'],
-                new Participant($result['winner']),
+                new Participant($result['winner'])
             );
         }
 

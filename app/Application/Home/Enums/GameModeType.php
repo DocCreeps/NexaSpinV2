@@ -13,11 +13,12 @@ enum GameModeType: string
     case TEAMS = 'teams';
     case TOMBOLA = 'tombola';
     case BRACKET = 'bracket';
+    case BRACKETJV = 'bracketjv';
     case NUMBER_ROULETTE = 'number_roulette';
     case RANDOM_TIMER = 'random_timer';
     case CUSTOM_DICE = 'custom_dice';
-
     case DICE_421 = 'dice_421';
+
     /**
      * Transforme l'enum en objet de présentation (DTO).
      */
@@ -111,11 +112,10 @@ enum GameModeType: string
                 category: GameModeCategory::DEV,
                 minParticipants: 3,
             ),
-
             self::BRACKET => new GameMode(
                 icon: '🥊',
                 title: 'Tournoi à élimination directe',
-                description: 'Générez un bracket libre et suivez le tournoi jusqu’à la finale.',
+                description: 'Générez un arbre à élimination directe classique et suivez la progression jusqu’au champion.',
                 route: route('draw.bracket'),
                 available: true,
                 color: 'from-violet-500 to-purple-600',
@@ -124,6 +124,19 @@ enum GameModeType: string
                 minParticipants: 4,
                 metaTitle: 'Tournoi à Élimination Directe — Bracket Libre | NexaSpin',
                 metaDescription: 'Créez un bracket de tournoi libre à partir de 4 participants, saisissez les résultats de chaque match et suivez la progression jusqu’au champion.',
+            ),
+            self::BRACKETJV => new GameMode(
+                icon: '🛡️',
+                title: 'Tournoi à double élimination (Upper / Lower)',
+                description: 'Donnez deux chances à chaque joueur avec un tableau principal et un tableau de repêchage.',
+                route: route('draw.bracket'), // Modifie la route si tu as créé une route dédiée (ex: route('draw.bracket-double'))
+                available: true,
+                color: 'from-fuchsia-500 to-pink-600',
+                shadow: 'shadow-fuchsia-500/10 hover:shadow-fuchsia-500/20',
+                category: GameModeCategory::TOOLS,
+                minParticipants: 4,
+                metaTitle: 'Tournoi Double Élimination — Upper & Lower Bracket | NexaSpin',
+                metaDescription: 'Générez un tournoi avec tableau principal et repêchage (Upper et Lower Bracket). Deux chances pour chaque joueur d’atteindre la finale.',
             ),
             self::NUMBER_ROULETTE => new GameMode(
                 icon: '🔢',
@@ -157,7 +170,7 @@ enum GameModeType: string
                 shadow: 'shadow-zinc-500/5',
                 category: GameModeCategory::DEV,
                 minParticipants: null,
-            )
+            ),
         };
     }
 
@@ -175,11 +188,7 @@ enum GameModeType: string
     }
 
     /**
-     * Regroupe les DTOs par catégorie, dans l'ordre de déclaration de GameModeCategory
-     * (et non l'ordre d'apparition dans GameModeType), pour un affichage stable et
-     * indépendant de l'ordre des cases ci-dessus. Une catégorie sans mode n'est pas
-     * retournée : ajouter une case à GameModeCategory ne crée une section sur la home
-     * que le jour où un GameModeType lui est effectivement rattaché.
+     * Regroupe les DTOs par catégorie, dans l'ordre de déclaration de GameModeCategory.
      *
      * @return array<int, array{category: GameModeCategory, modes: array<GameMode>}>
      */

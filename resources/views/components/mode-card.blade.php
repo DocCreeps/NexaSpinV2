@@ -4,14 +4,15 @@
 $isAvailable = $mode->available;
 @endphp
 
-<{{ $isAvailable ? 'a' : 'div' }} @if($isAvailable) href="{{ $mode->route }}" class="card-hard card-hard-hover group relative flex h-full flex-row items-center gap-3 rounded-xl border-2 border-ink bg-panel p-3 no-underline !text-inherit transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:flex-col sm:items-stretch sm:justify-between sm:gap-0 sm:p-5" @else role="region" aria-label="{{ $mode->title }} (non disponible)" class="relative flex h-full cursor-not-allowed select-none flex-row items-center gap-3 rounded-xl border-2 border-ink/30 bg-[repeating-linear-gradient(45deg,var(--color-wash),var(--color-wash)_6px,var(--color-surface)_6px,var(--color-surface)_12px)] p-3 opacity-70 sm:flex-col sm:items-stretch sm:justify-between sm:gap-0 sm:p-5" @endif>
+<{{ $isAvailable ? 'a' : 'div' }} @if($isAvailable) href="{{ $mode->route }}" class="card-hard card-hard-hover group relative flex h-full flex-row items-start gap-3 rounded-xl border-2 border-ink bg-panel p-3 no-underline !text-inherit transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:flex-col sm:items-stretch sm:justify-between sm:gap-0 sm:p-5" @else role="region" aria-label="{{ $mode->title }} (non disponible)" class="relative flex h-full cursor-not-allowed select-none flex-row items-start gap-3 rounded-xl border-2 border-ink/30 bg-[repeating-linear-gradient(45deg,var(--color-wash),var(--color-wash)_6px,var(--color-surface)_6px,var(--color-surface)_12px)] p-3 opacity-70 sm:flex-col sm:items-stretch sm:justify-between sm:gap-0 sm:p-5" @endif>
+
     {{-- Icône + meta mobile --}}
     <div class="flex shrink-0 items-center gap-3 sm:w-full sm:justify-between">
         <span class="flex h-11 w-11 items-center justify-center rounded-lg border-2 border-ink bg-gradient-to-br {{ $mode->color }} text-lg sm:h-10 sm:w-10 sm:text-base">
             {{ $mode->icon }}
         </span>
 
-        {{-- Badge catégorie / SOON : desktop only ici, mobile plus bas --}}
+        {{-- Badge catégorie / SOON --}}
         <span class="hidden font-mono text-[8px] tracking-widest text-faint sm:inline">
             @if($isAvailable && $category)
             {{ Str::upper($category) }}
@@ -28,18 +29,18 @@ $isAvailable = $mode->available;
                 {{ $mode->title }}
             </h3>
 
-            {{-- Chevron mobile (disponible uniquement) --}}
             @if($isAvailable)
             <span class="mt-0.5 shrink-0 font-display text-primary sm:hidden" aria-hidden="true">▸</span>
             @endif
         </div>
 
-        <p class="mt-0.5 line-clamp-1 text-xs leading-relaxed text-muted sm:mt-2 sm:line-clamp-2 sm:text-sm">
+        {{-- Description complète (line-clamp supprimé) --}}
+        <p class="mt-1 text-xs leading-relaxed text-muted sm:mt-2 sm:text-sm">
             {{ $mode->description }}
         </p>
 
-        {{-- Meta mobile compacte --}}
-        <div class="mt-1 flex items-center gap-2 text-[11px] text-subtle sm:hidden">
+        {{-- Meta mobile --}}
+        <div class="mt-2 flex items-center gap-2 text-[11px] text-subtle sm:hidden">
             @if(! $isAvailable)
             <span class="font-mono text-[8px] tracking-widest text-faint">SOON</span>
             <span aria-hidden="true">·</span>
