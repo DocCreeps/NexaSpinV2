@@ -52,16 +52,12 @@
             <div x-show="open" x-cloak x-transition.opacity.duration.150ms class="card-hard space-y-3 rounded-xl border-2 border-ink bg-panel p-3.5">
                 {{-- Bascule type de filtre --}}
                 <div class="inline-flex rounded-lg border-2 border-ink bg-wash p-0.5">
-                    <button type="button" wire:click="setFilterType('mode')" @class([
-                        'rounded-md px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest transition',
-                        'bg-ink text-white' => $filterType === 'mode',
+                    <button type="button" wire:click="setFilterType('mode')" @class([ 'rounded-md px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest transition' , 'bg-ink text-white'=> $filterType === 'mode',
                         'text-muted' => $filterType !== 'mode',
                         ])>
                         Par mode
                     </button>
-                    <button type="button" wire:click="setFilterType('category')" @class([
-                        'rounded-md px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest transition',
-                        'bg-ink text-white' => $filterType === 'category',
+                    <button type="button" wire:click="setFilterType('category')" @class([ 'rounded-md px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest transition' , 'bg-ink text-white'=> $filterType === 'category',
                         'text-muted' => $filterType !== 'category',
                         ])>
                         Par catégorie
@@ -70,9 +66,7 @@
 
                 {{-- Options du filtre actif --}}
                 <div class="flex flex-wrap items-center gap-2">
-                    <button type="button" wire:click="setFilter('all')" @class([
-                        'rounded-xl border-2 border-ink px-3.5 py-2 font-mono text-[11px] uppercase tracking-widest transition',
-                        'bg-ink text-white shadow-hard' => $filter === 'all',
+                    <button type="button" wire:click="setFilter('all')" @class([ 'rounded-xl border-2 border-ink px-3.5 py-2 font-mono text-[11px] uppercase tracking-widest transition' , 'bg-ink text-white shadow-hard'=> $filter === 'all',
                         'bg-wash text-muted' => $filter !== 'all',
                         ])>
                         Tout
@@ -80,9 +74,7 @@
 
                     @php $options = $filterType === 'category' ? $this->availableCategoryFilters : $this->availableFilters; @endphp
                     @foreach($options as $option)
-                    <button type="button" wire:click="setFilter('{{ $option['value'] }}')" @class([
-                        'rounded-xl border-2 border-ink px-3.5 py-2 font-mono text-[11px] uppercase tracking-widest transition',
-                        'bg-ink text-white shadow-hard' => $filter === $option['value'],
+                    <button type="button" wire:click="setFilter('{{ $option['value'] }}')" @class([ 'rounded-xl border-2 border-ink px-3.5 py-2 font-mono text-[11px] uppercase tracking-widest transition' , 'bg-ink text-white shadow-hard'=> $filter === $option['value'],
                         'bg-wash text-muted' => $filter !== $option['value'],
                         ])>
                         {{ $option['label'] }}
@@ -116,9 +108,7 @@
                         @if($type === 'single')
                         {{-- TIRAGE UNIQUE --}}
                         <div class="flex flex-wrap items-center gap-2">
-                            <span @class([
-                                'h-2.5 w-2.5 shrink-0 rounded-full',
-                                'bg-secondary' => ($entry['side'] ?? '') === 'face',
+                            <span @class([ 'h-2.5 w-2.5 shrink-0 rounded-full' , 'bg-secondary'=> ($entry['side'] ?? '') === 'face',
                                 'bg-ink/40' => ($entry['side'] ?? '') === 'pile',
                                 ])></span>
                             <span class="font-display text-base tracking-wide">
@@ -129,9 +119,7 @@
                             <span class="text-xs text-muted">
                                 · pari « <strong class="text-ink">{{ $entry['bet_label'] ?? ($entry['bet'] === 'pile' ? 'Pile' : 'Face') }}</strong> »
                             </span>
-                            <span @class([
-                                'rounded-md border px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase',
-                                'border-ink bg-secondary text-ink' => $entry['bet_won'],
+                            <span @class([ 'rounded-md border px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase' , 'border-ink bg-secondary text-ink'=> $entry['bet_won'],
                                 'border-danger/30 bg-danger/10 text-danger' => ! $entry['bet_won'],
                                 ])>
                                 {{ $entry['bet_won'] ? '✓ Gagné' : '✗ Perdu' }}
@@ -162,9 +150,7 @@
 
                         @case('dice_421')
                         <div class="flex flex-wrap items-center gap-2.5">
-                            <span @class([
-                                'rounded-md border px-2 py-0.5 font-mono text-xs font-bold uppercase',
-                                'border-ink bg-secondary text-ink' => $entry['won'],
+                            <span @class([ 'rounded-md border px-2 py-0.5 font-mono text-xs font-bold uppercase' , 'border-ink bg-secondary text-ink'=> $entry['won'],
                                 'border-line bg-wash text-subtle' => ! $entry['won'],
                                 ])>
                                 {{ $entry['won'] ? '✓ Gagné' : '✗ Perdu' }}
@@ -224,21 +210,28 @@
                         @break
 
                         @case('number_roulette')
+                        @php
+                        $result = $entry['result'] ?? '?';
+                        $color = $entry['color'] ?? 'black';
+                        $totalStake = $entry['total_stake'] ?? $entry['stake'] ?? 0;
+                        $payout = $entry['payout'] ?? 0;
+                        $betsCount = count($entry['bets'] ?? []);
+
+                        $label = $entry['bet_type_label']
+                        ?? ($betsCount > 0 ? $betsCount . ' ' . \Illuminate\Support\Str::plural('pari', $betsCount) : 'Roulette');
+                        @endphp
                         <div class="flex flex-wrap items-center gap-2.5">
-                            <span @class([
-                                'flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-ink/30 font-mono text-[10px] font-bold',
-                                'bg-emerald-600 text-white' => $entry['color'] === 'green',
-                                'bg-red-600 text-white' => $entry['color'] === 'red',
-                                'bg-ink text-white' => $entry['color'] === 'black',
-                                ])>{{ $entry['result'] }}</span>
-                            <span class="text-sm text-ink">{{ $entry['bet_type_label'] }}</span>
-                            <span class="font-mono text-xs text-subtle">mise {{ $entry['stake'] }}</span>
-                            <span @class([
-                                'rounded-md border px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase',
-                                'border-ink bg-secondary text-ink' => $entry['won'],
-                                'border-danger/30 bg-danger/10 text-danger' => ! $entry['won'],
-                                ])>
-                                {{ $entry['payout'] > 0 ? '+' : '' }}{{ $entry['payout'] }}
+                            <span @class([ 'flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-ink/30 font-mono text-[10px] font-bold' , 'bg-emerald-600 text-white'=> in_array($result, ['0', '00'], true) || $color === 'green',
+                                'bg-red-600 text-white' => $color === 'red',
+                                'bg-ink text-white' => $color === 'black',
+                                ])>{{ $result }}</span>
+
+                            <span class="text-sm text-ink">{{ $label }}</span>
+                            <span class="font-mono text-xs text-subtle">mise {{ $totalStake }}</span>
+
+                            <span @class([ 'rounded-md border px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase' , 'border-ink bg-secondary text-ink'=> $payout > 0,
+                                'border-danger/30 bg-danger/10 text-danger' => $payout <= 0, ])>
+                                    {{ $payout > 0 ? '+' : '' }}{{ $payout }}
                             </span>
                         </div>
                         @break
