@@ -9,8 +9,9 @@ namespace App\Application\Home\Enums;
 enum GameModeCategory: string
 {
     case WHEEL = 'wheel';
-    case OTHER = 'other';
     case GAME = 'games';
+    case TOOLS = 'tools';
+    case OTHER = 'other';
     case DEV = 'dev';
 
 
@@ -21,6 +22,7 @@ enum GameModeCategory: string
             self::OTHER => 'Autres tirages',
             self::DEV => 'En Développement',
             self::GAME => 'Jeux',
+            self::TOOLS => 'Outils',
         };
     }
 }

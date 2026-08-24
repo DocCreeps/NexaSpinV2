@@ -18,7 +18,6 @@ enum GameModeType: string
     case CUSTOM_DICE = 'custom_dice';
 
     case DICE_421 = 'dice_421';
-
     /**
      * Transforme l'enum en objet de présentation (DTO).
      */
@@ -34,7 +33,7 @@ enum GameModeType: string
                 color: 'from-indigo-500 to-violet-600',
                 shadow: 'shadow-indigo-500/10 hover:shadow-indigo-500/20',
                 category: GameModeCategory::WHEEL,
-                minParticipants: 2,
+                minParticipants: 3,
                 metaTitle: 'Roue Classique — Tirage au Sort Instantané | NexaSpin',
                 metaDescription: 'Créez votre roue de la fortune en ligne : ajoutez vos participants, lancez le tirage et désignez un gagnant en un clic. 100% gratuit, sans inscription.',
             ),
@@ -112,16 +111,19 @@ enum GameModeType: string
                 category: GameModeCategory::DEV,
                 minParticipants: 3,
             ),
+
             self::BRACKET => new GameMode(
                 icon: '🥊',
                 title: 'Tournoi à élimination directe',
-                description: 'Générez un bracket 1 contre 1 et suivez le tournoi jusqu’à la finale.',
-                route: null,
-                available: false,
-                color: 'from-zinc-400 to-zinc-500',
-                shadow: 'shadow-zinc-500/5',
-                category: GameModeCategory::DEV,
+                description: 'Générez un bracket libre et suivez le tournoi jusqu’à la finale.',
+                route: route('draw.bracket'),
+                available: true,
+                color: 'from-violet-500 to-purple-600',
+                shadow: 'shadow-violet-500/10 hover:shadow-violet-500/20',
+                category: GameModeCategory::TOOLS,
                 minParticipants: 4,
+                metaTitle: 'Tournoi à Élimination Directe — Bracket Libre | NexaSpin',
+                metaDescription: 'Créez un bracket de tournoi libre à partir de 4 participants, saisissez les résultats de chaque match et suivez la progression jusqu’au champion.',
             ),
             self::NUMBER_ROULETTE => new GameMode(
                 icon: '🔢',
@@ -155,7 +157,7 @@ enum GameModeType: string
                 shadow: 'shadow-zinc-500/5',
                 category: GameModeCategory::DEV,
                 minParticipants: null,
-            ),
+            )
         };
     }
 

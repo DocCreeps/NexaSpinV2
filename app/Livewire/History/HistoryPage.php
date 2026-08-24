@@ -3,19 +3,43 @@
 namespace App\Livewire\History;
 
 use App\Application\History\HistoryStore;
+use App\Application\Home\Enums\GameModeCategory;
 use App\Application\Home\Enums\GameModeType;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
 /**
- * Page unique regroupant l'historique de tous les modes de jeu, filtrable par mode.
+ * Page unique regroupant l'historique de tous les modes de jeu, filtrable par mode
+ * ou par catégorie de mode.
  */
 class HistoryPage extends Component
 {
-    /** Filtre courant : 'all' ou la valeur d'un GameModeType. Reflété dans l'URL (?filter=). */
+    /** Type de filtre courant : 'mode' ou 'category'. Reflété dans l'URL (?filterType=). */
+    #[Url]
+    public string $filterType = 'mode';
+
+    /**
+     * Filtre courant : 'all', ou la valeur d'un GameModeType (filterType 'mode')
+     * ou d'une GameModeCategory (filterType 'category'). Reflété dans l'URL (?filter=).
+     */
     #[Url]
     public string $filter = 'all';
+
+    /**
+     * Bascule le type de filtre (mode / catégorie) et réinitialise le filtre à 'all'.
+     */
+    public function setFilterType(string $filterType): void
+    {
+        if (! in_array($filterType, ['mode', 'category'], true)) {
+            return;
+        }
+
+        $this->filterType = $filterType;
+        $this->filter = 'all';
+
+        unset($this->entries);
+    }
 
     public function setFilter(string $filter): void
     {
@@ -25,15 +49,21 @@ class HistoryPage extends Component
     }
 
     /**
-     * Vide l'historique du filtre courant (tous les modes si 'all').
+     * Vide l'historique du filtre courant (tous les modes si 'all', tous les modes
+     * de la catégorie si un filtre par catégorie est actif).
      */
     public function clear(): void
     {
         $store = app(HistoryStore::class);
-        $mode = GameModeType::tryFrom($this->filter);
 
-        if ($mode !== null) {
-            $store->clear($mode);
+        $modesToClear = $this->filterType === 'category'
+            ? $this->modesForCategory(GameModeCategory::tryFrom($this->filter))
+            : array_filter([GameModeType::tryFrom($this->filter)]);
+
+        if ($modesToClear !== []) {
+            foreach ($modesToClear as $mode) {
+                $store->clear($mode);
+            }
         } else {
             $store->clearAll();
         }
@@ -48,6 +78,22 @@ class HistoryPage extends Component
     public function entries(): array
     {
         $store = app(HistoryStore::class);
+
+        if ($this->filterType === 'category') {
+            $category = GameModeCategory::tryFrom($this->filter);
+
+            if ($category === null) {
+                return $store->allModes();
+            }
+
+            $modes = $this->modesForCategory($category);
+
+            return collect($store->allModes())
+                ->filter(fn(array $entry) => in_array(GameModeType::from($entry['mode']), $modes, true))
+                ->values()
+                ->all();
+        }
+
         $mode = GameModeType::tryFrom($this->filter);
 
         if ($mode !== null) {
@@ -74,6 +120,40 @@ class HistoryPage extends Component
                 'value' => $mode->value,
                 'label' => $mode->toDto()->title,
             ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Liste des catégories filtrables (catégorie DEV exclue : aucun mode disponible,
+     * donc jamais d'historique possible).
+     *
+     * @return array<int, array{value: string, label: string}>
+     */
+    #[Computed]
+    public function availableCategoryFilters(): array
+    {
+        return collect(GameModeType::grouped())
+            ->reject(fn(array $group) => $group['category'] === GameModeCategory::DEV)
+            ->map(fn(array $group) => [
+                'value' => $group['category']->value,
+                'label' => $group['category']->label(),
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array<int, GameModeType>
+     */
+    private function modesForCategory(?GameModeCategory $category): array
+    {
+        if ($category === null) {
+            return [];
+        }
+
+        return collect(GameModeType::cases())
+            ->filter(fn(GameModeType $mode) => $mode->toDto()->category === $category)
             ->values()
             ->all();
     }

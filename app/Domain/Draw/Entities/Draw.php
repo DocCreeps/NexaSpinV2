@@ -38,9 +38,9 @@ final class Draw
      */
     private function validate(): void
     {
-        if ($this->participants->count() < 2) {
+        if ($this->participants->count() < 3) {
             throw new InvalidDrawException(
-                'A draw requires at least two participants.'
+                'A draw requires at least three participants.'
             );
         }
     }

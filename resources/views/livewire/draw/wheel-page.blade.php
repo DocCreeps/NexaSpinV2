@@ -73,7 +73,7 @@
                     >
                     <span x-show="!spinning">
                         @if(! $this->canDraw())
-                        AJOUTER AU MOINS 2 PARTICIPANTS
+                        AJOUTER AU MOINS 3 PARTICIPANTS
                         @else
                         ▶ LANCER LE TIRAGE
                         @endif
