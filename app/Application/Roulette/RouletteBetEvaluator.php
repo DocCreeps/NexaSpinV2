@@ -26,6 +26,7 @@ final class RouletteBetEvaluator
             RouletteBetType::COLUMN_1 => RoulettePocket::column($result) === 1,
             RouletteBetType::COLUMN_2 => RoulettePocket::column($result) === 2,
             RouletteBetType::COLUMN_3 => RoulettePocket::column($result) === 3,
+            RouletteBetType::TOP_LINE => in_array($result, ['0', '00', '1', '2', '3'], true),
         };
     }
 }

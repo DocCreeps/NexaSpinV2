@@ -21,6 +21,7 @@ enum RouletteBetType: string
     case COLUMN_1 = 'column_1';
     case COLUMN_2 = 'column_2';
     case COLUMN_3 = 'column_3';
+    case TOP_LINE = 'top_line';
 
     public function label(): string
     {
@@ -38,6 +39,7 @@ enum RouletteBetType: string
             self::COLUMN_1 => '1ère colonne',
             self::COLUMN_2 => '2e colonne',
             self::COLUMN_3 => '3e colonne',
+            self::TOP_LINE => 'Top Line (0-00-1-2-3)',
         };
     }
 
@@ -50,6 +52,7 @@ enum RouletteBetType: string
             self::STRAIGHT => 35,
             self::RED, self::BLACK, self::EVEN, self::ODD, self::LOW, self::HIGH => 1,
             self::DOZEN_1, self::DOZEN_2, self::DOZEN_3, self::COLUMN_1, self::COLUMN_2, self::COLUMN_3 => 2,
+            self::TOP_LINE => 6,
         };
     }
 
