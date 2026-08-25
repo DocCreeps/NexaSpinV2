@@ -9,7 +9,8 @@ use App\Livewire\Draw\WheelPage;
 use App\Livewire\History\HistoryPage;
 use App\Livewire\Roulette\NumberRoulettePage;
 use App\Livewire\Teams\TeamsPage;
-use App\Livewire\Bracket\BracketPage;
+use App\Livewire\Tournament\Bracket\DoubleEliminationBracketPage;
+use App\Livewire\Tournament\Pool\PoolStagePage;
 use App\Livewire\Tombola\TombolaPage;
 use Illuminate\Support\Facades\Route;
 
@@ -25,7 +26,8 @@ Route::middleware('throttle:120,1')->group(function (): void {
     Route::get('/tombola', TombolaPage::class)->name('tombola');
     Route::get('/roulette', NumberRoulettePage::class)->name('roulette.number');
     Route::get('/historique', HistoryPage::class)->name('history');
-    Route::get('/bracket', BracketPage::class)->name('draw.bracket');
-    });
+    Route::get('/bracket', DoubleEliminationBracketPage::class)->name('draw.bracket');
+    Route::get('/poules', PoolStagePage::class)->name('draw.pools');
+});
 
 
