@@ -12,8 +12,8 @@ enum GameModeType: string
     case COIN_FLIP = 'coin_flip';
     case TEAMS = 'teams';
     case TOMBOLA = 'tombola';
-    case BRACKET = 'bracket';
     case BRACKETJV = 'bracketjv';
+    case POOL = 'pool';
     case NUMBER_ROULETTE = 'number_roulette';
     case RANDOM_TIMER = 'random_timer';
     case CUSTOM_DICE = 'custom_dice';
@@ -116,19 +116,6 @@ enum GameModeType: string
                 metaTitle: 'Tombola en Ligne — Tirage de Plusieurs Gagnants | NexaSpin',
                 metaDescription: 'Tirez me plusieurs gagnants d’un coup parmi une liste de participants pondérés : 1er lot, 2e lot, 3e lot... Gratuit et sans inscription.',
             ),
-            self::BRACKET => new GameMode(
-                icon: '🥊',
-                title: 'Tournoi à élimination directe',
-                description: 'Générez un arbre à élimination directe classique et suivez la progression jusqu’au champion.',
-                route: route('draw.bracket'),
-                available: true,
-                color: 'from-violet-500 to-purple-600',
-                shadow: 'shadow-violet-500/10 hover:shadow-violet-500/20',
-                category: GameModeCategory::TOOLS,
-                minParticipants: 4,
-                metaTitle: 'Tournoi à Élimination Directe — Bracket Libre | NexaSpin',
-                metaDescription: 'Créez un bracket de tournoi libre à partir de 4 participants, saisissez les résultats de chaque match et suivez la progression jusqu’au champion.',
-            ),
             self::BRACKETJV => new GameMode(
                 icon: '🛡️',
                 title: 'Tournoi à double élimination (Upper / Lower)',
@@ -141,6 +128,19 @@ enum GameModeType: string
                 minParticipants: 4,
                 metaTitle: 'Tournoi Double Élimination — Upper & Lower Bracket | NexaSpin',
                 metaDescription: 'Générez un tournoi avec tableau principal et repêchage (Upper et Lower Bracket). Deux chances pour chaque joueur d’atteindre la finale.',
+            ),
+            self::POOL => new GameMode(
+                icon: '🔄',
+                title: 'Phase de poules',
+                description: 'Répartissez vos participants en poules équilibrées : round-robin complet, aucun match vide.',
+                route: route('draw.pools'),
+                available: true,
+                color: 'from-cyan-500 to-blue-600',
+                shadow: 'shadow-cyan-500/10 hover:shadow-cyan-500/20',
+                category: GameModeCategory::TOOLS,
+                minParticipants: 4,
+                metaTitle: 'Phase de Poules — Round-Robin Équilibré | NexaSpin',
+                metaDescription: 'Générez une phase de poules équilibrée à partir de vos participants : chacun affronte tous les membres de sa poule, sans aucun match vide.',
             ),
             self::NUMBER_ROULETTE => new GameMode(
                 icon: '🔢',
@@ -194,11 +194,7 @@ enum GameModeType: string
     }
 
     /**
-     * Regroupe les DTOs par catégorie, dans l'ordre de déclaration de GameModeCategory
-     * (et non l'ordre d'apparition dans GameModeType), pour un affichage stable et
-     * indépendant de l'ordre des cases ci-dessus. Une catégorie sans mode n'est pas
-     * retournée : ajouter une case à GameModeCategory ne crée une section sur la home
-     * que le jour où un GameModeType lui est effectivement rattaché.
+     * Regroupe les DTOs par catégorie, dans l'ordre de déclaration de GameModeCategory.
      *
      * @return array<int, array{category: GameModeCategory, modes: array<GameMode>}>
      */

@@ -209,6 +209,27 @@
                         </div>
                         @break
 
+                        @case('bracketjv')
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="text-lg leading-none">🛡️</span>
+                            <span class="font-display text-base tracking-wide">{{ $entry['champion'] }}</span>
+                            <span class="font-mono text-[11px] text-subtle">
+                                {{ count($entry['participants']) }} participant{{ count($entry['participants']) > 1 ? 's' : '' }}
+                            </span>
+                        </div>
+                        @break
+
+                        @case('pool')
+                        @php $poolsCount = count($entry['standings'] ?? []); @endphp
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="text-lg leading-none">🔄</span>
+                            <span class="font-display text-base tracking-wide">{{ $poolsCount }} poule{{ $poolsCount > 1 ? 's' : '' }}</span>
+                            <span class="font-mono text-[11px] text-subtle">
+                                {{ count($entry['participants']) }} participant{{ count($entry['participants']) > 1 ? 's' : '' }}
+                            </span>
+                        </div>
+                        @break
+
                         @case('number_roulette')
                         @php
                         $result = $entry['result'] ?? '?';
