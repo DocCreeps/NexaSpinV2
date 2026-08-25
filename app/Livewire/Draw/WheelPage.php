@@ -21,7 +21,7 @@ class WheelPage extends Component
     use ManagesParticipants;
 
     private const MAX_LABELS_ON_WHEEL = 10;
-    private const MIN_PARTICIPANTS = 2;
+    private const MIN_PARTICIPANTS = 3;
     private const MAX_HISTORY = 100;
 
     public ?string $result = null;

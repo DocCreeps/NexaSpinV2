@@ -30,30 +30,58 @@
         </header>
 
         {{-- FILTRES --}}
-        <div class="flex flex-wrap items-center gap-2">
-            <button type="button" wire:click="setFilter('all')" @class([
-                'rounded-xl border-2 border-ink px-3.5 py-2 font-mono text-[11px] uppercase tracking-widest transition',
-                'bg-ink text-white shadow-hard' => $filter === 'all',
-                'bg-panel text-muted' => $filter !== 'all',
-                ])>
-                Tout
-            </button>
+        <div class="space-y-2.5" x-data="{ open: false }">
+            <div class="flex flex-wrap items-center gap-2">
+                <button type="button" x-on:click="open = ! open" class="inline-flex items-center gap-2 rounded-xl border-2 border-ink bg-panel px-3.5 py-2 font-mono text-[11px] uppercase tracking-widest text-ink transition hover:bg-wash">
+                    <span>Filtres</span>
+                    @if($filter !== 'all')
+                    <span class="rounded-full border border-ink bg-secondary px-1.5 font-mono text-[9px] font-bold text-ink">
+                        {{ $filterType === 'category' ? \App\Application\Home\Enums\GameModeCategory::from($filter)->label() : \App\Application\Home\Enums\GameModeType::from($filter)->toDto()->title }}
+                    </span>
+                    @endif
+                    <span class="text-[9px] transition-transform" x-bind:class="open ? 'rotate-180' : ''">▾</span>
+                </button>
 
-            @foreach($this->availableFilters as $option)
-            <button type="button" wire:click="setFilter('{{ $option['value'] }}')" @class([
-                'rounded-xl border-2 border-ink px-3.5 py-2 font-mono text-[11px] uppercase tracking-widest transition',
-                'bg-ink text-white shadow-hard' => $filter === $option['value'],
-                'bg-panel text-muted' => $filter !== $option['value'],
-                ])>
-                {{ $option['label'] }}
-            </button>
-            @endforeach
+                @if(count($this->entries))
+                <button type="button" wire:click="clear" wire:confirm="Vider {{ $filter === 'all' ? 'tout l’historique' : 'l’historique de ce filtre' }} ?" class="ml-auto rounded-xl border-2 border-ink bg-panel px-3.5 py-2 font-mono text-[11px] uppercase tracking-widest text-subtle transition hover:text-danger">
+                    Vider {{ $filter === 'all' ? 'tout' : 'ce filtre' }}
+                </button>
+                @endif
+            </div>
 
-            @if(count($this->entries))
-            <button type="button" wire:click="clear" wire:confirm="Vider {{ $filter === 'all' ? 'tout l’historique' : 'l’historique de ce mode' }} ?" class="ml-auto rounded-xl border-2 border-ink bg-panel px-3.5 py-2 font-mono text-[11px] uppercase tracking-widest text-subtle transition hover:text-danger">
-                Vider {{ $filter === 'all' ? 'tout' : 'ce filtre' }}
-            </button>
-            @endif
+            <div x-show="open" x-cloak x-transition.opacity.duration.150ms class="card-hard space-y-3 rounded-xl border-2 border-ink bg-panel p-3.5">
+                {{-- Bascule type de filtre --}}
+                <div class="inline-flex rounded-lg border-2 border-ink bg-wash p-0.5">
+                    <button type="button" wire:click="setFilterType('mode')" @class([ 'rounded-md px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest transition' , 'bg-ink text-white'=> $filterType === 'mode',
+                        'text-muted' => $filterType !== 'mode',
+                        ])>
+                        Par mode
+                    </button>
+                    <button type="button" wire:click="setFilterType('category')" @class([ 'rounded-md px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest transition' , 'bg-ink text-white'=> $filterType === 'category',
+                        'text-muted' => $filterType !== 'category',
+                        ])>
+                        Par catégorie
+                    </button>
+                </div>
+
+                {{-- Options du filtre actif --}}
+                <div class="flex flex-wrap items-center gap-2">
+                    <button type="button" wire:click="setFilter('all')" @class([ 'rounded-xl border-2 border-ink px-3.5 py-2 font-mono text-[11px] uppercase tracking-widest transition' , 'bg-ink text-white shadow-hard'=> $filter === 'all',
+                        'bg-wash text-muted' => $filter !== 'all',
+                        ])>
+                        Tout
+                    </button>
+
+                    @php $options = $filterType === 'category' ? $this->availableCategoryFilters : $this->availableFilters; @endphp
+                    @foreach($options as $option)
+                    <button type="button" wire:click="setFilter('{{ $option['value'] }}')" @class([ 'rounded-xl border-2 border-ink px-3.5 py-2 font-mono text-[11px] uppercase tracking-widest transition' , 'bg-ink text-white shadow-hard'=> $filter === $option['value'],
+                        'bg-wash text-muted' => $filter !== $option['value'],
+                        ])>
+                        {{ $option['label'] }}
+                    </button>
+                    @endforeach
+                </div>
+            </div>
         </div>
 
         {{-- LISTE --}}
@@ -80,9 +108,7 @@
                         @if($type === 'single')
                         {{-- TIRAGE UNIQUE --}}
                         <div class="flex flex-wrap items-center gap-2">
-                            <span @class([
-                                'h-2.5 w-2.5 shrink-0 rounded-full',
-                                'bg-secondary' => ($entry['side'] ?? '') === 'face',
+                            <span @class([ 'h-2.5 w-2.5 shrink-0 rounded-full' , 'bg-secondary'=> ($entry['side'] ?? '') === 'face',
                                 'bg-ink/40' => ($entry['side'] ?? '') === 'pile',
                                 ])></span>
                             <span class="font-display text-base tracking-wide">
@@ -93,9 +119,7 @@
                             <span class="text-xs text-muted">
                                 · pari « <strong class="text-ink">{{ $entry['bet_label'] ?? ($entry['bet'] === 'pile' ? 'Pile' : 'Face') }}</strong> »
                             </span>
-                            <span @class([
-                                'rounded-md border px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase',
-                                'border-ink bg-secondary text-ink' => $entry['bet_won'],
+                            <span @class([ 'rounded-md border px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase' , 'border-ink bg-secondary text-ink'=> $entry['bet_won'],
                                 'border-danger/30 bg-danger/10 text-danger' => ! $entry['bet_won'],
                                 ])>
                                 {{ $entry['bet_won'] ? '✓ Gagné' : '✗ Perdu' }}
@@ -126,9 +150,7 @@
 
                         @case('dice_421')
                         <div class="flex flex-wrap items-center gap-2.5">
-                            <span @class([
-                                'rounded-md border px-2 py-0.5 font-mono text-xs font-bold uppercase',
-                                'border-ink bg-secondary text-ink' => $entry['won'],
+                            <span @class([ 'rounded-md border px-2 py-0.5 font-mono text-xs font-bold uppercase' , 'border-ink bg-secondary text-ink'=> $entry['won'],
                                 'border-line bg-wash text-subtle' => ! $entry['won'],
                                 ])>
                                 {{ $entry['won'] ? '✓ Gagné' : '✗ Perdu' }}
@@ -159,6 +181,57 @@
                                 @if($entry['mode'] === 'weighted')
                                 · poids {{ $entry['weights'][$entry['winner']] ?? '?' }}
                                 @endif
+                            </span>
+                        </div>
+                        @break
+
+                        @case('teams')
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="text-lg leading-none">👥</span>
+                            <span class="font-display text-base tracking-wide">{{ $entry['teams_count'] }} équipes</span>
+                            <span class="font-mono text-[11px] text-subtle">
+                                {{ count($entry['participants']) }} participant{{ count($entry['participants']) > 1 ? 's' : '' }}
+                                @if(count($entry['substitutes'] ?? []))
+                                · {{ count($entry['substitutes']) }} remplaçant{{ count($entry['substitutes']) > 1 ? 's' : '' }}
+                                @endif
+                            </span>
+                        </div>
+                        @break
+
+                        @case('tombola')
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="text-lg leading-none">🎟️</span>
+                            <span class="font-display text-base tracking-wide">{{ $entry['winners'][0] ?? '?' }}</span>
+                            <span class="font-mono text-[11px] text-subtle">
+                                {{ count($entry['winners']) }} lot{{ count($entry['winners']) > 1 ? 's' : '' }}
+                                · {{ count($entry['participants']) }} participant{{ count($entry['participants']) > 1 ? 's' : '' }}
+                            </span>
+                        </div>
+                        @break
+
+                        @case('number_roulette')
+                        @php
+                        $result = $entry['result'] ?? '?';
+                        $color = $entry['color'] ?? 'black';
+                        $totalStake = $entry['total_stake'] ?? $entry['stake'] ?? 0;
+                        $payout = $entry['payout'] ?? 0;
+                        $betsCount = count($entry['bets'] ?? []);
+
+                        $label = $entry['bet_type_label']
+                        ?? ($betsCount > 0 ? $betsCount . ' ' . \Illuminate\Support\Str::plural('pari', $betsCount) : 'Roulette');
+                        @endphp
+                        <div class="flex flex-wrap items-center gap-2.5">
+                            <span @class([ 'flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-ink/30 font-mono text-[10px] font-bold' , 'bg-emerald-600 text-white'=> in_array($result, ['0', '00'], true) || $color === 'green',
+                                'bg-red-600 text-white' => $color === 'red',
+                                'bg-ink text-white' => $color === 'black',
+                                ])>{{ $result }}</span>
+
+                            <span class="text-sm text-ink">{{ $label }}</span>
+                            <span class="font-mono text-xs text-subtle">mise {{ $totalStake }}</span>
+
+                            <span @class([ 'rounded-md border px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase' , 'border-ink bg-secondary text-ink'=> $payout > 0,
+                                'border-danger/30 bg-danger/10 text-danger' => $payout <= 0, ])>
+                                    {{ $payout > 0 ? '+' : '' }}{{ $payout }}
                             </span>
                         </div>
                         @break

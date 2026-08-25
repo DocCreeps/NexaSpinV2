@@ -32,8 +32,9 @@ return [
     |
     */
 
-    // 3 mois (en minutes) : la session sert aussi d'identifiant persistant pour
-    // l'historique des tirages (voir App\Application\History\HistoryStore).
+    // 1 mois (en minutes) : la session sert aussi d'identifiant persistant pour
+    // l'historique des tirages (voir App\Application\History\HistoryStore), avec
+    // la même durée de rétention (30 jours) que le cache d'historique.
     // On ne veut donc plus d'une session "courte" de 2h par défaut.
     'lifetime' => (int) env('SESSION_LIFETIME', 43200),
 
@@ -132,7 +133,7 @@ return [
 
     'cookie' => env(
         'SESSION_COOKIE',
-        Str::slug((string) env('APP_NAME', 'laravel')).'-session'
+        Str::slug((string) env('APP_NAME', 'laravel')) . '-session'
     ),
 
     /*
