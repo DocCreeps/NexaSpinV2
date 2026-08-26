@@ -246,6 +246,23 @@ class DoubleEliminationBracketPage extends Component
         $this->saveProgress();
     }
 
+    /**
+     * Valide automatiquement un match dès que les deux scores sont saisis
+     * (déclenché par wire:change sur les champs de score). Ne fait rien tant
+     * que l'un des deux manque ; s'ils sont égaux, recordResult() se charge
+     * de refuser et d'afficher l'erreur (pas d'égalité possible en bracket).
+     */
+    public function autoRecordIfReady(string $section, ?int $round, ?int $position): void
+    {
+        $prefix = $round !== null ? "{$section}_{$round}_{$position}" : $section;
+        $keyA = "{$prefix}_a";
+        $keyB = "{$prefix}_b";
+
+        if (is_numeric($this->scores[$keyA] ?? null) && is_numeric($this->scores[$keyB] ?? null)) {
+            $this->recordResult($section, $round, $position);
+        }
+    }
+
     private function findMatch(string $section, ?int $round, ?int $position)
     {
         $bracket = $this->bracket();

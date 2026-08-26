@@ -14,14 +14,15 @@ final class RecordPoolMatchResultAction
 
     /**
      * @param array<int, string> $participants
-     * @param array<int, array{pool: string, matchIndex: int, winner: string}> $previousResults
+     * @param array<int, array{pool: string, matchIndex: int, winner: string|null}> $previousResults
+     * @param string|null $winnerName Nom du vainqueur, ou null pour enregistrer un match nul.
      */
     public function execute(
         array $participants,
         array $previousResults,
         string $poolName,
         int $matchIndex,
-        string $winnerName,
+        ?string $winnerName,
     ): PoolStage {
         $stage = $this->rebuildAction->execute($participants, $previousResults);
 
@@ -43,7 +44,11 @@ final class RecordPoolMatchResultAction
             throw new InvalidPoolMatchResultException("Match introuvable ({$poolName} #{$matchIndex}).");
         }
 
-        $match->recordResult(new Participant($winnerName));
+        if ($winnerName === null) {
+            $match->recordDraw();
+        } else {
+            $match->recordResult(new Participant($winnerName));
+        }
 
         return $stage;
     }

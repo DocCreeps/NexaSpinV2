@@ -88,7 +88,7 @@
         @if(count($this->entries))
         <div class="custom-scrollbar space-y-2.5">
             @foreach($this->entries as $entry)
-            @php $isWheelMode = in_array($entry['mode'], ['classic', 'weighted', 'elimination'], true); @endphp
+            @php $hasDetails = in_array($entry['mode'], ['classic', 'weighted', 'elimination', 'tombola', 'number_roulette', 'teams'], true); @endphp
             <div class="card-hard rounded-2xl border-2 border-ink bg-panel px-4 py-3.5 sm:px-5">
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <span class="rounded-md border-2 border-ink bg-wash px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-widest text-subtle">
@@ -259,7 +259,7 @@
                         @endswitch
                     </div>
 
-                    @if($isWheelMode)
+                    @if($hasDetails)
                     @php $modeLabel = \App\Application\Home\Enums\GameModeType::from($entry['mode'])->toDto()->title; @endphp
                     <button type="button" x-on:click="openEntry = Object.assign({}, @js($entry), { modeLabel: @js($modeLabel) })" class="shrink-0 rounded-lg border-2 border-ink bg-wash px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-widest text-subtle transition hover:border-ink hover:bg-ink hover:text-white">
                         Détails

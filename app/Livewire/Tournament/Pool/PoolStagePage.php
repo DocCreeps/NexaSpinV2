@@ -31,6 +31,14 @@ class PoolStagePage extends Component
 
     public ?string $error = null;
 
+    /**
+     * Mode de saisie des résultats : avec scores (par défaut, un champ de
+     * score sous chaque nom) ou "sans score" (un bouton Victoire sous
+     * chaque nom + un bouton Nul au milieu). Modifiable uniquement avant le
+     * lancement de la phase (cf. garde dans start()/addParticipant()).
+     */
+    public bool $withScores = true;
+
     #[Locked]
     public bool $started = false;
 
@@ -55,6 +63,7 @@ class PoolStagePage extends Component
         $this->participants = $saved['participants'] ?? [];
         $this->results = $saved['results'] ?? [];
         $this->started = $saved['started'] ?? false;
+        $this->withScores = $saved['withScores'] ?? true;
 
         if ($this->started && $this->participants !== []) {
             $this->isComplete = $this->stage()->isComplete();
@@ -73,7 +82,19 @@ class PoolStagePage extends Component
             'participants' => $this->participants,
             'results' => $this->results,
             'started' => $this->started,
+            'withScores' => $this->withScores,
         ]);
+    }
+
+    public function toggleScoreMode(): void
+    {
+        if ($this->started) {
+            return;
+        }
+
+        $this->withScores = ! $this->withScores;
+
+        $this->saveProgress();
     }
 
     public function addParticipant(): void
@@ -134,6 +155,14 @@ class PoolStagePage extends Component
             return;
         }
 
+        // Répartition en poules = simple découpage séquentiel de la liste (voir
+        // PoolStage::distribute()) : on mélange donc l'ordre des participants ici,
+        // une seule fois, avant de créer les poules. L'ordre mélangé est ensuite
+        // celui persisté (saveProgress() ci-dessous) et rejoué à l'identique à
+        // chaque reconstruction (stage()/RebuildPoolStageAction), pour que la
+        // composition des poules reste stable au fil des rechargements.
+        shuffle($this->participants);
+
         try {
             app(CreatePoolStageAction::class)->execute(new ParticipantListData($this->participants));
         } catch (InvalidPoolStageException $e) {
@@ -151,7 +180,7 @@ class PoolStagePage extends Component
         $this->saveProgress();
     }
 
-    public function recordResult(string $poolName, int $matchIndex, ?string $manualWinner = null): void
+    public function recordResult(string $poolName, int $matchIndex, ?string $manualWinner = null, bool $manualDraw = false): void
     {
         if (! $this->started) {
             return;
@@ -182,10 +211,11 @@ class PoolStagePage extends Component
         $valB = $this->scores[$keyB] ?? null;
 
         $winnerName = $manualWinner;
+        $isDraw = $manualDraw;
 
-        if ($manualWinner === null) {
+        if (! $isDraw && $manualWinner === null) {
             if (! is_numeric($valA) || ! is_numeric($valB)) {
-                $this->error = 'Veuillez saisir les scores des deux participants.';
+                $this->error = 'Veuillez saisir les scores des deux participants (ou déclarer un match nul).';
                 return;
             }
 
@@ -193,13 +223,13 @@ class PoolStagePage extends Component
             $scoreB = (int) $valB;
 
             if ($scoreA === $scoreB) {
-                $this->error = 'Il ne peut pas y avoir d’égalité.';
-                return;
+                // Scores identiques : match nul, pas d'erreur.
+                $isDraw = true;
+            } else {
+                $winnerName = $scoreA > $scoreB
+                    ? $match->participantA()->name
+                    : $match->participantB()->name;
             }
-
-            $winnerName = $scoreA > $scoreB
-                ? $match->participantA()->name
-                : $match->participantB()->name;
         }
 
         try {
@@ -208,7 +238,7 @@ class PoolStagePage extends Component
                 $this->results,
                 $poolName,
                 $matchIndex,
-                $winnerName,
+                $isDraw ? null : $winnerName,
             );
         } catch (InvalidPoolMatchResultException $e) {
             $this->error = $e->getMessage();
@@ -218,7 +248,7 @@ class PoolStagePage extends Component
         $this->results[] = [
             'pool' => $poolName,
             'matchIndex' => $matchIndex,
-            'winner' => $winnerName,
+            'winner' => $isDraw ? null : $winnerName,
             'score_a' => is_numeric($valA) ? (int) $valA : null,
             'score_b' => is_numeric($valB) ? (int) $valB : null,
         ];
@@ -232,13 +262,35 @@ class PoolStagePage extends Component
                 'participants' => $this->participants,
                 'standings' => collect($stage->pools())->mapWithKeys(
                     fn ($pool) => [$pool->name => collect($pool->standings())->map(
-                        fn ($row) => ['name' => $row['participant']->name, 'wins' => $row['wins']]
+                        fn ($row) => [
+                            'name' => $row['participant']->name,
+                            'wins' => $row['wins'],
+                            'draws' => $row['draws'],
+                            'losses' => $row['losses'],
+                            'points' => $row['points'],
+                        ]
                     )->all()]
                 )->all(),
             ]);
         }
 
         $this->saveProgress();
+    }
+
+    /**
+     * Valide automatiquement un match dès que les deux scores sont saisis
+     * (déclenché par wire:change sur les champs de score). Ne fait rien tant
+     * que l'un des deux manque, silencieusement — aucun message d'erreur ne
+     * doit apparaître avant que l'utilisateur ait fini de saisir.
+     */
+    public function autoRecordIfReady(string $poolName, int $matchIndex): void
+    {
+        $keyA = "{$poolName}_{$matchIndex}_a";
+        $keyB = "{$poolName}_{$matchIndex}_b";
+
+        if (is_numeric($this->scores[$keyA] ?? null) && is_numeric($this->scores[$keyB] ?? null)) {
+            $this->recordResult($poolName, $matchIndex);
+        }
     }
 
     public function restart(): void
@@ -249,6 +301,7 @@ class PoolStagePage extends Component
         $this->scores = [];
         $this->isComplete = false;
         $this->started = false;
+        $this->withScores = true;
         $this->error = null;
 
         unset($this->stage);

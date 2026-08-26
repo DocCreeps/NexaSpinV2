@@ -14,6 +14,7 @@ use App\Domain\Tournament\ValueObjects\Participant;
 final class PoolMatch
 {
     private ?Participant $winner = null;
+    private bool $draw = false;
 
     public function __construct(
         public readonly int $index,
@@ -36,9 +37,14 @@ final class PoolMatch
         return $this->winner;
     }
 
+    public function isDraw(): bool
+    {
+        return $this->draw;
+    }
+
     public function isResolved(): bool
     {
-        return $this->winner !== null;
+        return $this->winner !== null || $this->draw;
     }
 
     /**
@@ -51,5 +57,16 @@ final class PoolMatch
         }
 
         $this->winner = $winner;
+        $this->draw = false;
+    }
+
+    /**
+     * Enregistre un match nul : aucun vainqueur, chaque participant reçoit
+     * un match joué (comptabilisé côté classement via Pool::standings()).
+     */
+    public function recordDraw(): void
+    {
+        $this->winner = null;
+        $this->draw = true;
     }
 }

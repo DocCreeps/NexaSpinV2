@@ -3,8 +3,10 @@
         spinning: false,
         revealed: null,
         finished: false,
-        cycleTimer: null
+        cycleTimer: null,
+        openEntry: null
     }"
+    x-on:keydown.escape.window="openEntry = null"
     x-on:roulette-spin.window="
         spinning = true;
         finished = false;
@@ -258,15 +260,16 @@
 
             @if(count($history))
             <div class="flex flex-wrap gap-2 overflow-x-auto pb-2">
+                @php $modeLabel = \App\Application\Home\Enums\GameModeType::NUMBER_ROULETTE->toDto()->title; @endphp
                 @foreach(array_reverse($history) as $entry)
-                <div @class([
-                    'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border-2 border-ink font-mono text-xs font-bold text-white shadow-hard',
+                <button type="button" x-on:click="openEntry = Object.assign({}, @js($entry), { mode: 'number_roulette', modeLabel: @js($modeLabel) })" @class([
+                    'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border-2 border-ink font-mono text-xs font-bold text-white shadow-hard transition hover:scale-105 active:scale-95',
                     'bg-emerald-600' => in_array($entry['result'], ['0', '00'], true),
                     'bg-red-600' => $entry['color'] === 'red',
                     'bg-ink' => $entry['color'] === 'black',
-                ]) title="Mise : {{ $entry['total_stake'] }} | Gain net : {{ $entry['payout'] }}">
+                ]) title="Mise : {{ $entry['total_stake'] }} | Gain net : {{ $entry['payout'] }} — cliquer pour voir le détail">
                     {{ $entry['result'] }}
-                </div>
+                </button>
                 @endforeach
             </div>
             @else
@@ -275,4 +278,6 @@
         </section>
 
     </div>
+
+    <x-history.details-modal />
 </div>

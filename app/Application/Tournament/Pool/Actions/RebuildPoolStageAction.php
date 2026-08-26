@@ -10,7 +10,7 @@ final class RebuildPoolStageAction
 {
     /**
      * @param array<int, string> $participants
-     * @param array<int, array{pool: string, matchIndex: int, winner: string}> $results
+     * @param array<int, array{pool: string, matchIndex: int, winner: string|null}> $results
      */
     public function execute(array $participants, array $results): PoolStage
     {
@@ -29,7 +29,11 @@ final class RebuildPoolStageAction
 
             foreach ($pool->matches() as $match) {
                 if ($match->index === $result['matchIndex']) {
-                    $match->recordResult(new Participant($result['winner']));
+                    if (($result['winner'] ?? null) === null) {
+                        $match->recordDraw();
+                    } else {
+                        $match->recordResult(new Participant($result['winner']));
+                    }
                     break;
                 }
             }
