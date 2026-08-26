@@ -86,10 +86,20 @@
             @endif
 
             @if(count($participants) >= 4)
-            <p class="mb-6 text-xs text-faint">
+            <p class="mb-4 text-xs text-faint">
                 La taille des poules est calculée automatiquement à partir du nombre de participants, pour rester équilibrée et éviter tout match vide.
             </p>
             @endif
+
+            <div class="mb-6 flex items-center justify-between gap-3 rounded-xl border-2 border-ink/10 bg-wash px-4 py-3">
+                <div>
+                    <p class="text-sm font-bold text-ink">Tournoi sans score</p>
+                    <p class="text-xs text-muted">Remplace la saisie des scores par un simple bouton Victoire / Nul sur chaque match.</p>
+                </div>
+                <button type="button" wire:click="toggleScoreMode" role="switch" aria-checked="{{ $withScores ? 'false' : 'true' }}" class="btn-press relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border-2 border-ink transition-colors {{ ! $withScores ? 'bg-primary' : 'bg-wash' }}">
+                    <span class="inline-block h-4.5 w-4.5 transform rounded-full border-2 border-ink bg-panel transition-transform {{ ! $withScores ? 'translate-x-5' : 'translate-x-0.5' }}"></span>
+                </button>
+            </div>
 
             <button type="button" wire:click="start" @disabled(! $this->canStart()) class="btn-press w-full rounded-xl border-2 border-ink bg-primary py-3.5 font-display text-sm text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-info focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50">
                 @if(! $this->canStart())
@@ -138,6 +148,9 @@
                             <tr class="border-b border-ink/10 text-left font-mono text-[9px] uppercase tracking-widest text-subtle">
                                 <th class="pb-1.5">Joueur</th>
                                 <th class="pb-1.5 text-center">V</th>
+                                <th class="pb-1.5 text-center">N</th>
+                                <th class="pb-1.5 text-center">D</th>
+                                <th class="pb-1.5 text-center">Pts</th>
                                 <th class="pb-1.5 text-center">J</th>
                             </tr>
                         </thead>
@@ -146,6 +159,9 @@
                             <tr class="border-b border-ink/5 font-semibold text-ink">
                                 <td class="py-1 truncate">{{ $row['participant']->name }}</td>
                                 <td class="py-1 text-center font-mono">{{ $row['wins'] }}</td>
+                                <td class="py-1 text-center font-mono text-faint">{{ $row['draws'] }}</td>
+                                <td class="py-1 text-center font-mono text-danger">{{ $row['losses'] }}</td>
+                                <td class="py-1 text-center font-mono font-bold">{{ $row['points'] }}</td>
                                 <td class="py-1 text-center font-mono text-faint">{{ $row['played'] }}</td>
                             </tr>
                             @endforeach
@@ -153,40 +169,72 @@
                     </table>
 
                     {{-- Matchs --}}
-                    <div class="space-y-2">
+                    <div class="space-y-1.5">
                         @foreach($pool->matches() as $match)
                         @php
                             $isResolved = $match->isResolved();
+                            $isDraw = $isResolved && $match->isDraw();
                             $winner = $match->winner();
                             $keyA = "{$pool->name}_{$match->index}_a";
                             $keyB = "{$pool->name}_{$match->index}_b";
                             $savedResult = collect($results)->firstWhere(fn($r) => $r['pool'] === $pool->name && $r['matchIndex'] === $match->index);
                         @endphp
-                        <div class="rounded-lg border-2 border-ink/10 bg-wash p-2">
-                            <div class="flex items-center justify-between gap-2 text-xs font-bold">
-                                <span class="{{ $isResolved && $winner->equals($match->participantA()) ? 'text-success' : 'text-ink' }} truncate">
-                                    {{ $match->participantA()->name }}
-                                </span>
-                                @if($isResolved && isset($savedResult['score_a']))
-                                <span class="font-mono">{{ $savedResult['score_a'] }} – {{ $savedResult['score_b'] }}</span>
+
+                        @if($withScores)
+                        {{-- Ligne compacte : Nom  score VS score  Nom, validation automatique --}}
+                        <div class="flex items-center gap-2 rounded-lg border-2 border-ink/10 bg-wash px-2.5 py-2 text-xs">
+                            <span class="min-w-0 flex-1 truncate font-bold {{ $isResolved && ! $isDraw && $winner->equals($match->participantA()) ? 'text-ink' : 'text-ink' }}">
+                                {{ $isResolved && ! $isDraw && $winner->equals($match->participantA()) ? '🏆 ' : '' }}{{ $match->participantA()->name }}
+                            </span>
+
+                            <div class="flex shrink-0 items-center gap-1 font-mono text-[11px] font-bold">
+                                @if(! $isResolved)
+                                <input type="number" min="0" wire:model.defer="scores.{{ $keyA }}" wire:change="autoRecordIfReady('{{ $pool->name }}', {{ $match->index }})" class="h-7 w-9 rounded-md border border-ink bg-panel text-center focus:outline-none focus:ring-2 focus:ring-info" placeholder="–">
+                                <span class="text-faint">:</span>
+                                <input type="number" min="0" wire:model.defer="scores.{{ $keyB }}" wire:change="autoRecordIfReady('{{ $pool->name }}', {{ $match->index }})" class="h-7 w-9 rounded-md border border-ink bg-panel text-center focus:outline-none focus:ring-2 focus:ring-info" placeholder="–">
+                                @elseif($isDraw)
+                                <span class="text-subtle">{{ $savedResult['score_a'] ?? '–' }}</span>
+                                <span class="text-faint">:</span>
+                                <span class="text-subtle">{{ $savedResult['score_b'] ?? '–' }}</span>
                                 @else
-                                <span class="text-faint">vs</span>
+                                <span class="{{ $winner->equals($match->participantA()) ? 'text-ink' : 'text-subtle' }}">{{ $savedResult['score_a'] ?? '–' }}</span>
+                                <span class="text-faint">:</span>
+                                <span class="{{ $winner->equals($match->participantB()) ? 'text-ink' : 'text-subtle' }}">{{ $savedResult['score_b'] ?? '–' }}</span>
                                 @endif
-                                <span class="{{ $isResolved && $winner->equals($match->participantB()) ? 'text-success' : 'text-ink' }} truncate text-right">
-                                    {{ $match->participantB()->name }}
-                                </span>
                             </div>
 
-                            @if(! $isResolved)
-                            <div class="mt-2 flex items-center gap-1.5">
-                                <input type="number" min="0" wire:model.defer="scores.{{ $keyA }}" class="h-7 w-10 rounded-md border border-ink bg-panel text-center font-mono text-xs font-bold text-ink focus:outline-none focus:ring-2 focus:ring-info" placeholder="0">
-                                <input type="number" min="0" wire:model.defer="scores.{{ $keyB }}" class="h-7 w-10 rounded-md border border-ink bg-panel text-center font-mono text-xs font-bold text-ink focus:outline-none focus:ring-2 focus:ring-info" placeholder="0">
-                                <button type="button" wire:click="recordResult('{{ $pool->name }}', {{ $match->index }})" class="btn-press flex-1 rounded-lg border-2 border-ink bg-primary py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-white hover:bg-info">
-                                    ✓ Valider
-                                </button>
-                            </div>
-                            @endif
+                            <span class="min-w-0 flex-1 truncate text-right font-bold text-ink">
+                                {{ $match->participantB()->name }}{{ $isResolved && ! $isDraw && $winner->equals($match->participantB()) ? ' 🏆' : '' }}
+                            </span>
                         </div>
+                        @else
+                        {{-- Sans scores : boutons Victoire / Nul, toujours en une ligne --}}
+                        <div class="flex items-center gap-2 rounded-lg border-2 border-ink/10 bg-wash px-2.5 py-2 text-xs">
+                            <span class="min-w-0 flex-1 truncate font-bold text-ink">
+                                {{ $isResolved && ! $isDraw && $winner->equals($match->participantA()) ? '🏆 ' : '' }}{{ $match->participantA()->name }}
+                            </span>
+
+                            <div class="flex shrink-0 items-center gap-1">
+                                @if(! $isResolved)
+                                <button type="button" wire:click="recordResult('{{ $pool->name }}', {{ $match->index }}, '{{ addslashes($match->participantA()->name) }}')" class="btn-press rounded border border-ink bg-panel px-1.5 py-0.5 font-mono text-[9px] uppercase text-subtle hover:bg-ink hover:text-white">
+                                    Victoire
+                                </button>
+                                <button type="button" wire:click="recordResult('{{ $pool->name }}', {{ $match->index }}, null, true)" class="btn-press rounded border border-ink bg-panel px-1.5 py-0.5 font-mono text-[9px] uppercase text-subtle hover:bg-ink hover:text-white">
+                                    Nul
+                                </button>
+                                <button type="button" wire:click="recordResult('{{ $pool->name }}', {{ $match->index }}, '{{ addslashes($match->participantB()->name) }}')" class="btn-press rounded border border-ink bg-panel px-1.5 py-0.5 font-mono text-[9px] uppercase text-subtle hover:bg-ink hover:text-white">
+                                    Victoire
+                                </button>
+                                @elseif($isDraw)
+                                <span class="rounded-md border border-ink/20 bg-panel px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-widest text-subtle">Nul</span>
+                                @endif
+                            </div>
+
+                            <span class="min-w-0 flex-1 truncate text-right font-bold text-ink">
+                                {{ $match->participantB()->name }}{{ $isResolved && ! $isDraw && $winner->equals($match->participantB()) ? ' 🏆' : '' }}
+                            </span>
+                        </div>
+                        @endif
                         @endforeach
                     </div>
                 </section>

@@ -134,7 +134,7 @@
                             </div>
                             <div class="flex flex-1 flex-col justify-around gap-6">
                                 @foreach($matches as $match)
-                                @include('livewire.bracket.partials.match-card', [
+                                @include('livewire.tournament.bracket.partials.match-card', [
                                     'match' => $match,
                                     'section' => 'upper',
                                     'round' => $roundNumber,
@@ -173,7 +173,7 @@
                             </div>
                             <div class="flex flex-1 flex-col justify-around gap-6">
                                 @foreach($visibleMatches as $match)
-                                @include('livewire.bracket.partials.match-card', [
+                                @include('livewire.tournament.bracket.partials.match-card', [
                                     'match' => $match,
                                     'section' => 'lower',
                                     'round' => $roundNumber,
@@ -194,7 +194,7 @@
                 <h2 class="mb-3 font-display text-base uppercase tracking-wide text-ink">🏆 Grande finale</h2>
                 <div class="grid max-w-md grid-cols-1 gap-6 sm:grid-cols-2">
                     @if($this->bracket->grandFinal())
-                    @include('livewire.bracket.partials.match-card', [
+                    @include('livewire.tournament.bracket.partials.match-card', [
                         'match' => $this->bracket->grandFinal(),
                         'section' => 'grand_final',
                         'round' => null,
@@ -204,7 +204,7 @@
                     @endif
 
                     @if($this->bracket->grandFinalReset() && ($this->bracket->grandFinalReset()->isPlayable() || $this->bracket->grandFinalReset()->isResolved()))
-                    @include('livewire.bracket.partials.match-card', [
+                    @include('livewire.tournament.bracket.partials.match-card', [
                         'match' => $this->bracket->grandFinalReset(),
                         'section' => 'grand_final_reset',
                         'round' => null,

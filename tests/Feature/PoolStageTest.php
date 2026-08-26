@@ -1,6 +1,7 @@
 <?php
 
 use App\Domain\Tournament\Collections\Participants;
+use App\Domain\Tournament\Pool\Entities\Pool;
 use App\Domain\Tournament\Pool\Entities\PoolStage;
 use App\Domain\Tournament\ValueObjects\Participant;
 
@@ -76,4 +77,24 @@ it('automatically picks the pool count without any manual input', function () {
         ->and(count((new PoolStage(makePoolParticipants(8)))->pools()))->toBe(2)
         // 16 participants : viser des poules de taille ~4 donne 4 poules.
         ->and(count((new PoolStage(makePoolParticipants(16)))->pools()))->toBe(4);
+});
+
+it('avoids a participant playing two consecutive matches in the flat match order when the pool is large enough', function () {
+    // À partir de 5 participants dans une même poule, chaque journée compte
+    // assez de matchs pour toujours trouver une paire "propre" à placer en
+    // tête de la journée suivante. En dessous (poule de 3 ou 4), ce n'est pas
+    // toujours possible structurellement, ce test porte donc sur des poules
+    // directement instanciées à la taille voulue plutôt que sur PoolStage
+    // (qui pourrait répartir en poules plus petites).
+    foreach ([5, 6, 7, 8, 9, 10, 12] as $size) {
+        $pool = new Pool('Test', makePoolParticipants($size)->all());
+        $matches = $pool->matches();
+
+        for ($i = 0; $i < count($matches) - 1; $i++) {
+            $current = [$matches[$i]->participantA()->name, $matches[$i]->participantB()->name];
+            $next = [$matches[$i + 1]->participantA()->name, $matches[$i + 1]->participantB()->name];
+
+            expect(array_intersect($current, $next))->toBe([]);
+        }
+    }
 });

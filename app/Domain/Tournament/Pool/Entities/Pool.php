@@ -13,6 +13,11 @@ use App\Domain\Tournament\ValueObjects\Participant;
  * participants, un participant est au repos à tour de rôle sur chaque
  * journée — ce n'est jamais un "match vide" puisqu'aucun PoolMatch n'est créé
  * pour un repos : seuls des matchs à deux participants réels existent.
+ *
+ * La liste à plat des matchs (matches()), utilisée pour l'affichage et la
+ * saisie séquentielle des résultats, est en plus réordonnée pour qu'un même
+ * participant n'enchaîne jamais deux matchs consécutifs dans cet ordre :
+ * voir orderDaysToAvoidBackToBack().
  */
 final class Pool
 {
@@ -44,6 +49,9 @@ final class Pool
     /**
      * Génère le calendrier round-robin via la méthode du cercle : un participant
      * fixe en position 0, les autres tournent d'un cran à chaque journée.
+     * Les paires de chaque journée sont ensuite réordonnées (sans changer leur
+     * répartition par journée) pour éviter qu'un participant n'enchaîne deux
+     * matchs consécutifs dans la liste à plat des matchs.
      */
     private function buildSchedule(): void
     {
@@ -56,7 +64,9 @@ final class Pool
         $n = count($players);
         $rounds = $n - 1;
         $half = intdiv($n, 2);
-        $matchIndex = 0;
+
+        /** @var array<int, array<int, array{0: Participant, 1: Participant}>> $rawDays */
+        $rawDays = [];
 
         for ($round = 0; $round < $rounds; $round++) {
             $day = [];
@@ -66,13 +76,11 @@ final class Pool
                 $b = $players[$n - 1 - $i];
 
                 if ($a !== null && $b !== null) {
-                    $match = new PoolMatch($matchIndex++, $a, $b);
-                    $day[] = $match;
-                    $this->matches[] = $match;
+                    $day[] = [$a, $b];
                 }
             }
 
-            $this->matchdays[] = $day;
+            $rawDays[] = $day;
 
             // Rotation : tout le monde tourne d'un cran sauf le premier joueur (fixe).
             $last = $players[$n - 1];
@@ -81,6 +89,88 @@ final class Pool
             }
             $players[1] = $last;
         }
+
+        $matchIndex = 0;
+
+        foreach ($this->orderDaysToAvoidBackToBack($rawDays) as $day) {
+            $dayMatches = [];
+
+            foreach ($day as [$a, $b]) {
+                $match = new PoolMatch($matchIndex++, $a, $b);
+                $dayMatches[] = $match;
+                $this->matches[] = $match;
+            }
+
+            $this->matchdays[] = $dayMatches;
+        }
+    }
+
+    /**
+     * Réordonne les paires de chaque journée (l'ensemble des journées et leur
+     * contenu reste inchangé, seul l'ordre interne varie) pour qu'aucun
+     * participant ne se retrouve dans le dernier match d'une journée puis le
+     * premier match de la journée suivante — ce qui, dans la liste à plat des
+     * matchs utilisée pour la saisie, lui ferait enchaîner deux matchs sans
+     * aucun autre match entre les deux. Best-effort : dans une poule trop
+     * petite (une seule paire par journée), ce n'est structurellement pas
+     * toujours évitable.
+     *
+     * @param array<int, array<int, array{0: Participant, 1: Participant}>> $days
+     * @return array<int, array<int, array{0: Participant, 1: Participant}>>
+     */
+    private function orderDaysToAvoidBackToBack(array $days): array
+    {
+        $ordered = [];
+        $previousLastPair = null;
+
+        foreach ($days as $day) {
+            $day = $this->moveCleanPairFirst($day, $previousLastPair);
+            $ordered[] = $day;
+            $previousLastPair = $day === [] ? null : $day[array_key_last($day)];
+        }
+
+        return $ordered;
+    }
+
+    /**
+     * Place en tête de $pairs la première paire ne partageant aucun
+     * participant avec $bannedPair (le dernier match de la journée
+     * précédente), pour casser l'enchaînement. Ne fait rien si $bannedPair
+     * est null, si $pairs a moins de deux éléments, ou si aucune paire
+     * "propre" n'existe (poule trop petite pour l'éviter).
+     *
+     * @param array<int, array{0: Participant, 1: Participant}> $pairs
+     * @param array{0: Participant, 1: Participant}|null $bannedPair
+     * @return array<int, array{0: Participant, 1: Participant}>
+     */
+    private function moveCleanPairFirst(array $pairs, ?array $bannedPair): array
+    {
+        if ($bannedPair === null || count($pairs) < 2) {
+            return $pairs;
+        }
+
+        [$bannedA, $bannedB] = $bannedPair;
+
+        $cleanIndex = null;
+
+        foreach ($pairs as $i => [$a, $b]) {
+            $touchesBanned = $a->equals($bannedA) || $a->equals($bannedB)
+                || $b->equals($bannedA) || $b->equals($bannedB);
+
+            if (! $touchesBanned) {
+                $cleanIndex = $i;
+                break;
+            }
+        }
+
+        if ($cleanIndex === null || $cleanIndex === 0) {
+            return $pairs;
+        }
+
+        $clean = $pairs[$cleanIndex];
+        unset($pairs[$cleanIndex]);
+
+        return array_merge([$clean], array_values($pairs));
     }
 
     public function size(): int
@@ -118,18 +208,24 @@ final class Pool
     }
 
     /**
-     * Classement basé sur le nombre de victoires (ordre décroissant). En cas
-     * d'égalité, l'ordre d'origine des participants est conservé (tri stable).
+     * Classement basé sur les points (victoire = 3, nul = 1, défaite = 0),
+     * ordre décroissant, départagé par le nombre de victoires. En cas
+     * d'égalité totale, l'ordre d'origine des participants est conservé
+     * (tri stable).
      *
-     * @return array<int, array{participant: Participant, wins: int, played: int}>
+     * @return array<int, array{participant: Participant, wins: int, draws: int, losses: int, played: int, points: int}>
      */
     public function standings(): array
     {
         $wins = [];
+        $draws = [];
+        $losses = [];
         $played = [];
 
         foreach ($this->participants as $participant) {
             $wins[$participant->name] = 0;
+            $draws[$participant->name] = 0;
+            $losses[$participant->name] = 0;
             $played[$participant->name] = 0;
         }
 
@@ -138,21 +234,42 @@ final class Pool
                 continue;
             }
 
-            $played[$match->participantA()->name]++;
-            $played[$match->participantB()->name]++;
-            $wins[$match->winner()->name]++;
+            $nameA = $match->participantA()->name;
+            $nameB = $match->participantB()->name;
+
+            $played[$nameA]++;
+            $played[$nameB]++;
+
+            if ($match->isDraw()) {
+                $draws[$nameA]++;
+                $draws[$nameB]++;
+
+                continue;
+            }
+
+            $winnerName = $match->winner()->name;
+            $loserName = $winnerName === $nameA ? $nameB : $nameA;
+
+            $wins[$winnerName]++;
+            $losses[$loserName]++;
         }
 
         $standings = array_map(
             fn (Participant $p) => [
                 'participant' => $p,
                 'wins' => $wins[$p->name],
+                'draws' => $draws[$p->name],
+                'losses' => $losses[$p->name],
                 'played' => $played[$p->name],
+                'points' => ($wins[$p->name] * 2) + $draws[$p->name],
             ],
             $this->participants
         );
 
-        usort($standings, fn ($a, $b) => $b['wins'] <=> $a['wins']);
+        usort(
+            $standings,
+            fn ($a, $b) => $b['points'] <=> $a['points'] ?: $b['wins'] <=> $a['wins']
+        );
 
         return $standings;
     }
