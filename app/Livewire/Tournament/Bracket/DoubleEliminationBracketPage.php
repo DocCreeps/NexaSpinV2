@@ -62,6 +62,20 @@ class DoubleEliminationBracketPage extends Component
         $this->results = $saved['results'] ?? [];
         $this->started = $saved['started'] ?? false;
 
+        // Pré-remplit les champs de score depuis les résultats déjà enregistrés :
+        // le mode "édition" (voir la vue) peut ainsi afficher les valeurs
+        // existantes sans jamais avoir à toucher $this->results juste pour les
+        // consulter — cliquer sur ✎ puis annuler ne doit rien modifier.
+        foreach ($this->results as $r) {
+            $prefix = $r['round'] !== null ? "{$r['section']}_{$r['round']}_{$r['position']}" : $r['section'];
+            if (array_key_exists('score_a', $r)) {
+                $this->scores["{$prefix}_a"] = $r['score_a'];
+            }
+            if (array_key_exists('score_b', $r)) {
+                $this->scores["{$prefix}_b"] = $r['score_b'];
+            }
+        }
+
         if ($this->started && $this->participants !== []) {
             $bracket = app(RebuildDoubleEliminationBracketAction::class)->execute($this->participants, $this->results);
             $this->champion = $bracket->isComplete() ? $bracket->champion()?->name : null;
@@ -169,6 +183,7 @@ class DoubleEliminationBracketPage extends Component
         }
 
         $this->error = null;
+        $wasComplete = $this->champion !== null;
 
         $match = $this->findMatch($section, $round, $position);
 
@@ -209,10 +224,34 @@ class DoubleEliminationBracketPage extends Component
             return;
         }
 
+        // S'il existe déjà un résultat pour ce match (correction), on repart
+        // des résultats *sans* son ancienne entrée. hasDownstreamResult()
+        // garantit qu'aucun match suivant n'a encore exploité l'ancien
+        // résultat — sinon on refuse plutôt que de laisser un état incohérent.
+        $existingIndex = null;
+        foreach ($this->results as $i => $r) {
+            if ($r['section'] === $section && $r['round'] === $round && $r['position'] === $position) {
+                $existingIndex = $i;
+                break;
+            }
+        }
+
+        if ($existingIndex !== null && $this->bracket()->hasDownstreamResult($section, $round, $position)) {
+            $this->error = 'Ce match a déjà influencé un match suivant (vainqueur propagé ou perdant repêché) : impossible de le modifier tant que ce match suivant n’est pas lui-même annulé.';
+            return;
+        }
+
+        $previousResults = $existingIndex === null
+            ? $this->results
+            : array_values(array_filter(
+                $this->results,
+                fn (array $r) => ! ($r['section'] === $section && $r['round'] === $round && $r['position'] === $position)
+            ));
+
         try {
             $bracket = app(RecordDoubleEliminationMatchResultAction::class)->execute(
                 $this->participants,
-                $this->results,
+                $previousResults,
                 $section,
                 $round,
                 $position,
@@ -223,7 +262,7 @@ class DoubleEliminationBracketPage extends Component
             return;
         }
 
-        $this->results[] = [
+        $previousResults[] = [
             'section' => $section,
             'round' => $round,
             'position' => $position,
@@ -231,12 +270,17 @@ class DoubleEliminationBracketPage extends Component
             'score_a' => is_numeric($valA) ? (int) $valA : null,
             'score_b' => is_numeric($valB) ? (int) $valB : null,
         ];
+        $this->results = $previousResults;
 
         unset($this->bracket);
 
-        if ($bracket->isComplete()) {
-            $this->champion = $bracket->champion()?->name;
+        // Toujours recalculé (pas seulement si complet) : une correction peut
+        // aussi bien faire apparaître un besoin de reset que le faire
+        // disparaître, et saveProgress() se fie à $this->champion pour savoir
+        // s'il doit vider ou conserver la progression sauvegardée.
+        $this->champion = $bracket->isComplete() ? $bracket->champion()?->name : null;
 
+        if ($this->champion !== null && ! $wasComplete) {
             app(HistoryStore::class)->push(self::MODE, [
                 'champion' => $this->champion,
                 'participants' => $this->participants,

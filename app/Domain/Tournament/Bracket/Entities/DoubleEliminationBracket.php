@@ -365,6 +365,71 @@ final class DoubleEliminationBracket
         return null;
     }
 
+    /**
+     * Indique si le résultat d'un match a déjà eu un effet visible et résolu
+     * sur un autre match (vainqueur propagé et/ou perdant repêché en lower
+     * bracket dans un match lui-même déjà résolu). Sert à interdire la
+     * modification d'un résultat dont la "propagation" a déjà été rejouée
+     * plus loin dans l'arbre — la changer casserait la cohérence de tout ce
+     * qui a été enregistré après, sans qu'on puisse le réparer autrement
+     * qu'en effaçant ces résultats suivants.
+     */
+    public function hasDownstreamResult(string $section, ?int $round, ?int $position): bool
+    {
+        return match ($section) {
+            'upper' => $round !== null && $position !== null && $this->upperHasDownstreamResult($round, $position),
+            'lower' => $round !== null && $position !== null && $this->lowerHasDownstreamResult($round, $position),
+            'grand_final' => $this->grandFinalReset?->isResolved() ?? false,
+            'grand_final_reset' => false,
+            default => false,
+        };
+    }
+
+    private function upperHasDownstreamResult(int $round, int $position): bool
+    {
+        $match = $this->upperRounds[$round][$position] ?? null;
+
+        if ($match === null || ! $match->isResolved()) {
+            return false;
+        }
+
+        // Le vainqueur avance vers le round UB suivant (ou vers la grande finale
+        // s'il s'agit du dernier round de l'UB).
+        if ($round < $this->upperRoundCount) {
+            $next = $this->upperRounds[$round + 1][intdiv($position, 2)] ?? null;
+            if ($next?->isResolved()) {
+                return true;
+            }
+        } elseif ($this->grandFinal?->isResolved()) {
+            return true;
+        }
+
+        // Le perdant est repêché en lower bracket : si ce match-là est déjà résolu...
+        if ($this->loserOf($match) === null) {
+            return false; // bye : personne à repêcher, rien à casser en aval.
+        }
+
+        $lbMatch = $round === 1
+            ? ($this->lowerRounds[1][intdiv($position, 2)] ?? null)
+            : ($this->lowerRounds[2 * ($round - 1)][$position] ?? null);
+
+        return $lbMatch?->isResolved() ?? false;
+    }
+
+    private function lowerHasDownstreamResult(int $round, int $position): bool
+    {
+        if ($round < $this->lowerRoundCount) {
+            $nextRound = $round + 1;
+            $nextPosition = $round % 2 === 1 ? $position : intdiv($position, 2);
+            $next = $this->lowerRounds[$nextRound][$nextPosition] ?? null;
+
+            return $next?->isResolved() ?? false;
+        }
+
+        // Dernier round du LB : le vainqueur avance vers la grande finale.
+        return $this->grandFinal?->isResolved() ?? false;
+    }
+
     public function isComplete(): bool
     {
         if ($this->grandFinal === null || ! $this->grandFinal->isResolved()) {

@@ -65,6 +65,19 @@ class PoolStagePage extends Component
         $this->started = $saved['started'] ?? false;
         $this->withScores = $saved['withScores'] ?? true;
 
+        // Pré-remplit les champs de score depuis les résultats déjà enregistrés,
+        // pour que le mode "édition" (voir la vue) puisse afficher les valeurs
+        // existantes sans jamais avoir à toucher $this->results juste pour les
+        // consulter — cliquer sur ✎ puis annuler ne doit rien modifier.
+        foreach ($this->results as $r) {
+            if (array_key_exists('score_a', $r)) {
+                $this->scores["{$r['pool']}_{$r['matchIndex']}_a"] = $r['score_a'];
+            }
+            if (array_key_exists('score_b', $r)) {
+                $this->scores["{$r['pool']}_{$r['matchIndex']}_b"] = $r['score_b'];
+            }
+        }
+
         if ($this->started && $this->participants !== []) {
             $this->isComplete = $this->stage()->isComplete();
         }
@@ -187,6 +200,7 @@ class PoolStagePage extends Component
         }
 
         $this->error = null;
+        $wasComplete = $this->isComplete;
 
         $pool = $this->stage()->poolByName($poolName);
         $match = null;
@@ -200,7 +214,7 @@ class PoolStagePage extends Component
             }
         }
 
-        if (! $match || $match->isResolved()) {
+        if (! $match) {
             return;
         }
 
@@ -232,10 +246,19 @@ class PoolStagePage extends Component
             }
         }
 
+        // Modification d'un match déjà résolu : on repart des résultats
+        // *sans* son ancienne entrée (les matchs de poule sont indépendants
+        // les uns des autres, donc ce retrait ne remet en cause aucun autre
+        // résultat, contrairement au bracket).
+        $previousResults = array_values(array_filter(
+            $this->results,
+            fn (array $r) => ! ($r['pool'] === $poolName && $r['matchIndex'] === $matchIndex)
+        ));
+
         try {
             $stage = app(RecordPoolMatchResultAction::class)->execute(
                 $this->participants,
-                $this->results,
+                $previousResults,
                 $poolName,
                 $matchIndex,
                 $isDraw ? null : $winnerName,
@@ -245,37 +268,43 @@ class PoolStagePage extends Component
             return;
         }
 
-        $this->results[] = [
+        $previousResults[] = [
             'pool' => $poolName,
             'matchIndex' => $matchIndex,
             'winner' => $isDraw ? null : $winnerName,
             'score_a' => is_numeric($valA) ? (int) $valA : null,
             'score_b' => is_numeric($valB) ? (int) $valB : null,
         ];
+        $this->results = $previousResults;
 
         unset($this->stage);
 
         if ($stage->isComplete()) {
             $this->isComplete = true;
 
-            app(HistoryStore::class)->push(self::MODE, [
-                'participants' => $this->participants,
-                'standings' => collect($stage->pools())->mapWithKeys(
-                    fn ($pool) => [$pool->name => collect($pool->standings())->map(
-                        fn ($row) => [
-                            'name' => $row['participant']->name,
-                            'wins' => $row['wins'],
-                            'draws' => $row['draws'],
-                            'losses' => $row['losses'],
-                            'points' => $row['points'],
-                        ]
-                    )->all()]
-                )->all(),
-            ]);
+            if (! $wasComplete) {
+                app(HistoryStore::class)->push(self::MODE, [
+                    'participants' => $this->participants,
+                    'standings' => collect($stage->pools())->mapWithKeys(
+                        fn ($pool) => [$pool->name => collect($pool->standings())->map(
+                            fn ($row) => [
+                                'name' => $row['participant']->name,
+                                'wins' => $row['wins'],
+                                'draws' => $row['draws'],
+                                'losses' => $row['losses'],
+                                'points' => $row['points'],
+                            ]
+                        )->all()]
+                    )->all(),
+                ]);
+            }
+        } else {
+            $this->isComplete = false;
         }
 
         $this->saveProgress();
     }
+
 
     /**
      * Valide automatiquement un match dès que les deux scores sont saisis
