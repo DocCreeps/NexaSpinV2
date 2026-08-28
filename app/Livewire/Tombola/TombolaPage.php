@@ -2,12 +2,9 @@
 
 namespace App\Livewire\Tombola;
 
-use App\Application\Draw\Actions\RunDrawAction;
-use App\Application\Draw\DTOs\DrawData;
 use App\Application\History\HistoryStore;
 use App\Application\Home\Enums\GameModeType;
-use App\Domain\Draw\Enums\DrawDisplay;
-use App\Domain\Draw\Enums\DrawType;
+use App\Application\Tombola\Actions\DrawLotAction;
 use App\Livewire\Draw\Concerns\ManagesParticipants;
 use Livewire\Component;
 
@@ -204,60 +201,15 @@ class TombolaPage extends Component
             return;
         }
 
-        if (count($this->remainingPool) < 3) {
-            $index = $this->getRandomWeightedIndex($this->remainingWeights);
-            $winnerName = $this->remainingPool[$index] ?? null;
-        } else {
-            $result = app(RunDrawAction::class)->execute(new DrawData(
-                participants: $this->remainingPool,
-                type: DrawType::WEIGHTED,
-                display: DrawDisplay::WHEEL,
-                weights: $this->remainingWeights,
-            ));
+        $result = app(DrawLotAction::class)->execute(
+            remainingPool: $this->remainingPool,
+            remainingWeights: $this->remainingWeights,
+            allowDuplicates: $this->allowDuplicates,
+        );
 
-            $winnerName = $result->winner->name;
-            $index = array_search($winnerName, $this->remainingPool, true);
-        }
-
-        if ($winnerName !== null && $index !== false) {
-            $this->winners[] = $winnerName;
-
-            if ($this->allowDuplicates) {
-                $this->remainingWeights[$index]--;
-
-                if ($this->remainingWeights[$index] <= 0) {
-                    unset($this->remainingPool[$index], $this->remainingWeights[$index]);
-
-                    $this->remainingPool = array_values($this->remainingPool);
-                    $this->remainingWeights = array_values($this->remainingWeights);
-                }
-            } else {
-                unset($this->remainingPool[$index], $this->remainingWeights[$index]);
-
-                $this->remainingPool = array_values($this->remainingPool);
-                $this->remainingWeights = array_values($this->remainingWeights);
-            }
-        }
-    }
-
-    private function getRandomWeightedIndex(array $weights): int
-    {
-        $totalWeight = array_sum($weights);
-        if ($totalWeight <= 0) {
-            return 0;
-        }
-
-        $random = random_int(1, $totalWeight);
-        $current = 0;
-
-        foreach ($weights as $index => $weight) {
-            $current += $weight;
-            if ($random <= $current) {
-                return $index;
-            }
-        }
-
-        return 0;
+        $this->winners[] = $result->winner;
+        $this->remainingPool = $result->remainingPool;
+        $this->remainingWeights = $result->remainingWeights;
     }
 
     private function finish(): void

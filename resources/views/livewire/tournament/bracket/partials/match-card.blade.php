@@ -21,7 +21,7 @@
         && ! $this->bracket->hasDownstreamResult($section, $round, $position);
 @endphp
 
-<div class="card-hard flex items-center gap-2 rounded-lg border-2 border-ink bg-panel px-2.5 py-2 text-xs shadow-hard" title="{{ $label }}" x-data="{ editing: false }">
+<div class="card-hard flex items-center gap-2 rounded-lg border-2 border-ink bg-panel px-2.5 py-2 text-xs shadow-hard" title="{{ $label }}" x-data="{ editing: false }" @click.outside="editing = false">
     <span @class([
         'h-1.5 w-1.5 shrink-0 rounded-full',
         'bg-faint/40' => $isBye,
@@ -56,9 +56,9 @@
             </template>
             <template x-if="editing">
                 <div class="flex items-center gap-1">
-                    <input type="number" min="0" wire:model.defer="scores.{{ $prefix }}_a" wire:change="autoRecordIfReady('{{ $section }}', {{ $roundArg }}, {{ $positionArg }})" class="h-7 w-9 rounded-md border border-ink bg-wash text-center focus:outline-none focus:ring-2 focus:ring-info">
+                    <input type="number" min="0" wire:model.defer="scores.{{ $prefix }}_a" wire:change="autoRecordIfReady('{{ $section }}', {{ $roundArg }}, {{ $positionArg }})" x-on:change="editing = false" class="h-7 w-9 rounded-md border border-ink bg-wash text-center focus:outline-none focus:ring-2 focus:ring-info">
                     <span class="text-faint">:</span>
-                    <input type="number" min="0" wire:model.defer="scores.{{ $prefix }}_b" wire:change="autoRecordIfReady('{{ $section }}', {{ $roundArg }}, {{ $positionArg }})" class="h-7 w-9 rounded-md border border-ink bg-wash text-center focus:outline-none focus:ring-2 focus:ring-info">
+                    <input type="number" min="0" wire:model.defer="scores.{{ $prefix }}_b" wire:change="autoRecordIfReady('{{ $section }}', {{ $roundArg }}, {{ $positionArg }})" x-on:change="editing = false" class="h-7 w-9 rounded-md border border-ink bg-wash text-center focus:outline-none focus:ring-2 focus:ring-info">
                     <button type="button" x-on:click="editing = false" title="Annuler" class="ml-1 rounded p-1 text-faint transition hover:bg-wash hover:text-ink">
                         ✕
                     </button>
