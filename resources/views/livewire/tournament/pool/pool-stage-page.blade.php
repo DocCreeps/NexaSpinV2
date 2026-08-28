@@ -182,7 +182,7 @@
 
                         @if($withScores)
                         {{-- Ligne compacte : Nom  score VS score  Nom, validation automatique --}}
-                        <div class="flex items-center gap-2 rounded-lg border-2 border-ink/10 bg-wash px-2.5 py-2 text-xs">
+                        <div class="flex items-center gap-2 rounded-lg border-2 border-ink/10 bg-wash px-2.5 py-2 text-xs" x-data="{ editing: false }">
                             <span class="min-w-0 flex-1 truncate font-bold {{ $isResolved && ! $isDraw && $winner->equals($match->participantA()) ? 'text-ink' : 'text-ink' }}">
                                 {{ $isResolved && ! $isDraw && $winner->equals($match->participantA()) ? '🏆 ' : '' }}{{ $match->participantA()->name }}
                             </span>
@@ -192,14 +192,37 @@
                                 <input type="number" min="0" wire:model.defer="scores.{{ $keyA }}" wire:change="autoRecordIfReady('{{ $pool->name }}', {{ $match->index }})" class="h-7 w-9 rounded-md border border-ink bg-panel text-center focus:outline-none focus:ring-2 focus:ring-info" placeholder="–">
                                 <span class="text-faint">:</span>
                                 <input type="number" min="0" wire:model.defer="scores.{{ $keyB }}" wire:change="autoRecordIfReady('{{ $pool->name }}', {{ $match->index }})" class="h-7 w-9 rounded-md border border-ink bg-panel text-center focus:outline-none focus:ring-2 focus:ring-info" placeholder="–">
-                                @elseif($isDraw)
-                                <span class="text-subtle">{{ $savedResult['score_a'] ?? '–' }}</span>
-                                <span class="text-faint">:</span>
-                                <span class="text-subtle">{{ $savedResult['score_b'] ?? '–' }}</span>
                                 @else
-                                <span class="{{ $winner->equals($match->participantA()) ? 'text-ink' : 'text-subtle' }}">{{ $savedResult['score_a'] ?? '–' }}</span>
-                                <span class="text-faint">:</span>
-                                <span class="{{ $winner->equals($match->participantB()) ? 'text-ink' : 'text-subtle' }}">{{ $savedResult['score_b'] ?? '–' }}</span>
+                                {{-- Résolu : affichage statique + ✎, ou en édition + ✕. Ni l'un ni
+                                     l'autre ne fait d'aller-retour serveur tant que le score n'a
+                                     pas réellement changé — un clic accidentel sur ✎ se corrige en
+                                     un clic sur ✕, sans rien avoir modifié. --}}
+                                <template x-if="! editing">
+                                    <div class="flex items-center gap-1">
+                                        @if($isDraw)
+                                        <span class="text-subtle">{{ $savedResult['score_a'] ?? '–' }}</span>
+                                        <span class="text-faint">:</span>
+                                        <span class="text-subtle">{{ $savedResult['score_b'] ?? '–' }}</span>
+                                        @else
+                                        <span class="{{ $winner->equals($match->participantA()) ? 'text-ink' : 'text-subtle' }}">{{ $savedResult['score_a'] ?? '–' }}</span>
+                                        <span class="text-faint">:</span>
+                                        <span class="{{ $winner->equals($match->participantB()) ? 'text-ink' : 'text-subtle' }}">{{ $savedResult['score_b'] ?? '–' }}</span>
+                                        @endif
+                                        <button type="button" x-on:click="editing = true" title="Modifier le résultat" class="ml-1 rounded p-1 text-faint transition hover:bg-wash hover:text-ink">
+                                            ✎
+                                        </button>
+                                    </div>
+                                </template>
+                                <template x-if="editing">
+                                    <div class="flex items-center gap-1">
+                                        <input type="number" min="0" wire:model.defer="scores.{{ $keyA }}" wire:change="autoRecordIfReady('{{ $pool->name }}', {{ $match->index }})" class="h-7 w-9 rounded-md border border-ink bg-panel text-center focus:outline-none focus:ring-2 focus:ring-info">
+                                        <span class="text-faint">:</span>
+                                        <input type="number" min="0" wire:model.defer="scores.{{ $keyB }}" wire:change="autoRecordIfReady('{{ $pool->name }}', {{ $match->index }})" class="h-7 w-9 rounded-md border border-ink bg-panel text-center focus:outline-none focus:ring-2 focus:ring-info">
+                                        <button type="button" x-on:click="editing = false" title="Annuler" class="ml-1 rounded p-1 text-faint transition hover:bg-wash hover:text-ink">
+                                            ✕
+                                        </button>
+                                    </div>
+                                </template>
                                 @endif
                             </div>
 
@@ -209,7 +232,7 @@
                         </div>
                         @else
                         {{-- Sans scores : boutons Victoire / Nul, toujours en une ligne --}}
-                        <div class="flex items-center gap-2 rounded-lg border-2 border-ink/10 bg-wash px-2.5 py-2 text-xs">
+                        <div class="flex items-center gap-2 rounded-lg border-2 border-ink/10 bg-wash px-2.5 py-2 text-xs" x-data="{ editing: false }">
                             <span class="min-w-0 flex-1 truncate font-bold text-ink">
                                 {{ $isResolved && ! $isDraw && $winner->equals($match->participantA()) ? '🏆 ' : '' }}{{ $match->participantA()->name }}
                             </span>
@@ -225,8 +248,33 @@
                                 <button type="button" wire:click="recordResult('{{ $pool->name }}', {{ $match->index }}, '{{ addslashes($match->participantB()->name) }}')" class="btn-press rounded border border-ink bg-panel px-1.5 py-0.5 font-mono text-[9px] uppercase text-subtle hover:bg-ink hover:text-white">
                                     Victoire
                                 </button>
-                                @elseif($isDraw)
-                                <span class="rounded-md border border-ink/20 bg-panel px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-widest text-subtle">Nul</span>
+                                @else
+                                <template x-if="! editing">
+                                    <div class="flex items-center gap-1">
+                                        @if($isDraw)
+                                        <span class="rounded-md border border-ink/20 bg-panel px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-widest text-subtle">Nul</span>
+                                        @endif
+                                        <button type="button" x-on:click="editing = true" title="Modifier le résultat" class="rounded p-1 text-faint transition hover:bg-wash hover:text-ink">
+                                            ✎
+                                        </button>
+                                    </div>
+                                </template>
+                                <template x-if="editing">
+                                    <div class="flex items-center gap-1">
+                                        <button type="button" wire:click="recordResult('{{ $pool->name }}', {{ $match->index }}, '{{ addslashes($match->participantA()->name) }}')" class="btn-press rounded border border-ink bg-panel px-1.5 py-0.5 font-mono text-[9px] uppercase text-subtle hover:bg-ink hover:text-white">
+                                            Victoire
+                                        </button>
+                                        <button type="button" wire:click="recordResult('{{ $pool->name }}', {{ $match->index }}, null, true)" class="btn-press rounded border border-ink bg-panel px-1.5 py-0.5 font-mono text-[9px] uppercase text-subtle hover:bg-ink hover:text-white">
+                                            Nul
+                                        </button>
+                                        <button type="button" wire:click="recordResult('{{ $pool->name }}', {{ $match->index }}, '{{ addslashes($match->participantB()->name) }}')" class="btn-press rounded border border-ink bg-panel px-1.5 py-0.5 font-mono text-[9px] uppercase text-subtle hover:bg-ink hover:text-white">
+                                            Victoire
+                                        </button>
+                                        <button type="button" x-on:click="editing = false" title="Annuler" class="rounded p-1 text-faint transition hover:bg-wash hover:text-ink">
+                                            ✕
+                                        </button>
+                                    </div>
+                                </template>
                                 @endif
                             </div>
 

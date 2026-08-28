@@ -120,3 +120,38 @@ it('cascades a round 1 bye into the lower bracket without leaving a dead match',
             ->toBeTrue();
     }
 });
+
+it('blocks editing a match once its result has propagated to a resolved downstream match', function () {
+    $bracket = new DoubleEliminationBracket(makeParticipants(8));
+
+    foreach ($bracket->upperRounds()[1] as $match) {
+        expect($bracket->hasDownstreamResult('upper', 1, $match->position))->toBeFalse();
+    }
+
+    foreach ($bracket->upperRounds()[1] as $match) {
+        $bracket->recordUpperResult(1, $match->position, $match->participantA());
+    }
+
+    // Rien n'a encore été rejoué derrière : tout le round 1 reste éditable.
+    foreach ($bracket->upperRounds()[1] as $match) {
+        expect($bracket->hasDownstreamResult('upper', 1, $match->position))->toBeFalse();
+    }
+
+    // LB round 1 match 0 est nourri par les perdants de UB R1 position 0 ET 1
+    // (voir DoubleEliminationBracket::dropLoserToLowerBracket) : le jouer
+    // bloque donc l'édition de CES DEUX matchs UB R1, mais pas des autres.
+    $lbMatch0 = $bracket->lowerRounds()[1][0];
+    $bracket->recordLowerResult(1, 0, $lbMatch0->participantA());
+
+    expect($bracket->hasDownstreamResult('upper', 1, 0))->toBeTrue()
+        ->and($bracket->hasDownstreamResult('upper', 1, 1))->toBeTrue()
+        ->and($bracket->hasDownstreamResult('upper', 1, 2))->toBeFalse()
+        ->and($bracket->hasDownstreamResult('upper', 1, 3))->toBeFalse();
+
+    // UB round 2 match 0 est nourri par les vainqueurs de UB R1 position 0 et 1 :
+    // le jouer confirme leur blocage (déjà vrai) sans toucher aux positions 2/3.
+    $bracket->recordUpperResult(2, 0, $bracket->upperRounds()[2][0]->participantA());
+
+    expect($bracket->hasDownstreamResult('upper', 1, 2))->toBeFalse()
+        ->and($bracket->hasDownstreamResult('upper', 1, 3))->toBeFalse();
+});
