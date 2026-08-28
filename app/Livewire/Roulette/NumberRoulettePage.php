@@ -22,7 +22,10 @@ public string $selectedBetType = 'red';
 public ?string $selectedBetNumber = null;
 public int $stake = 50;
 
+#[Locked]
 public int $bankroll = 0;
+
+#[Locked]
 public int $startingBankroll = 0;
 
 public ?string $error = null;

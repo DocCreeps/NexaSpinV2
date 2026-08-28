@@ -15,8 +15,6 @@ enum GameModeType: string
     case BRACKETJV = 'bracketjv';
     case POOL = 'pool';
     case NUMBER_ROULETTE = 'number_roulette';
-    case RANDOM_TIMER = 'random_timer';
-    case CUSTOM_DICE = 'custom_dice';
     case DICE_421 = 'dice_421';
 
     /**
@@ -154,28 +152,6 @@ enum GameModeType: string
                 minParticipants: null,
                 metaTitle: 'Roulette Numérique Américaine — Jouez avec une Cagnotte | NexaSpin',
                 metaDescription: 'Jouez à la roulette américaine en ligne : misez sur un numéro, une couleur, une douzaine ou une colonne et suivez votre cagnotte. Gratuit et sans inscription.',
-            ),
-            self::RANDOM_TIMER => new GameMode(
-                icon: '⏱️',
-                title: 'Minuteur aléatoire',
-                description: 'Tirez une durée aléatoire dans une plage donnée (ex. une pause entre 5 et 15 minutes).',
-                route: null,
-                available: false,
-                color: 'from-zinc-400 to-zinc-500',
-                shadow: 'shadow-zinc-500/5',
-                category: GameModeCategory::DEV,
-                minParticipants: null,
-            ),
-            self::CUSTOM_DICE => new GameMode(
-                icon: '⚅',
-                title: 'Dés personnalisés',
-                description: 'Choisissez librement le nombre de dés et de faces pour vos propres parties.',
-                route: null,
-                available: false,
-                color: 'from-zinc-400 to-zinc-500',
-                shadow: 'shadow-zinc-500/5',
-                category: GameModeCategory::DEV,
-                minParticipants: null,
             ),
         };
     }

@@ -17,8 +17,7 @@ final class TeamsGenerator
      */
     public function generate(array $participants, int $teamsCount): array
     {
-        $shuffled = array_values($participants);
-        shuffle($shuffled);
+        $shuffled = self::secureShuffle($participants);
 
         $perTeam = intdiv(count($shuffled), $teamsCount);
         $substitutesCount = count($shuffled) % $teamsCount;
@@ -37,5 +36,25 @@ final class TeamsGenerator
             'teams' => array_values($teams),
             'substitutes' => $substitutes,
         ];
+    }
+
+    /**
+     * Mélange Fisher-Yates via random_int() (CSPRNG), au lieu de shuffle()
+     * (Mersenne Twister non cryptographique) — même exigence d'aléatoire que
+     * le reste des tirages de l'application (voir Participants::random()).
+     *
+     * @param  array<int, string>  $participants
+     * @return array<int, string>
+     */
+    private static function secureShuffle(array $participants): array
+    {
+        $items = array_values($participants);
+
+        for ($i = count($items) - 1; $i > 0; $i--) {
+            $j = random_int(0, $i);
+            [$items[$i], $items[$j]] = [$items[$j], $items[$i]];
+        }
+
+        return $items;
     }
 }
