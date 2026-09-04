@@ -41,9 +41,13 @@
 | 🎡 Roue classique | Tirage aléatoire simple et rapide pour désigner un seul gagnant. | ✅ Fonctionnel |  |
 | ⚔️ Roue par élimination | Élimination progressive des participants jusqu'à ce qu'il n'en reste qu'un. | ✅ Fonctionnel |  |
 | 🎯 Roue pondérée | Tirage aléatoire où chaque participant a un poids personnalisé pour influencer les résultats. | ✅ Fonctionnel | |
-| 🪙 Pile ou face | Simule un lancer de pièce équitable entre deux options, avec système de paris (pile/face) et libellés personnalisables. | ✅ Fonctionnel | Carte active sur l’accueil, route et composant Livewire opérationnels, y compris les paris. Couvert par 6 fichiers de tests (Domain, Application, Livewire) et par le `throttle:120,1` partagé avec les routes de tirage. |
-| 🎲 421 (dés) | Jeu de dés classique : gardez les dés qui vous arrangent, relancez les autres, visez la combinaison 4-2-1 en 3 lancers maximum. | ✅ Fonctionnel | Carte active sur l’accueil, route et composant Livewire opérationnels (`RollDiceAction`, `FourTwoOneStrategy`, `Dice421Page`). Couverture ajoutée dans cette révision (voir [Corrigé récemment](#-corrigé-récemment)). |
-| 👥 Tirage par équipes | Permet de former des équipes de manière aléatoire (non encore développé). | 🔒 Non implémenté | Carte visible mais grisée sur l’accueil. |
+| 🪙 Pile ou face | Simule un lancer de pièce équitable entre deux options, avec système de paris (pile/face) et libellés personnalisables. | ✅ Fonctionnel | Carte active sur l'accueil, route et composant Livewire opérationnels, y compris les paris. Partage le `throttle:120,1` avec les autres routes de tirage. |
+| 🎲 421 (dés) | Jeu de dés classique : gardez les dés qui vous arrangent, relancez les autres, visez la combinaison 4-2-1 en 3 lancers maximum. | ✅ Fonctionnel | `RollDiceAction`, `FourTwoOneStrategy`, `Dice421Page`. |
+| 👥 Tirage par équipes | Répartit les participants en N équipes tirées au sort ; les participants excédentaires deviennent des remplaçants non assignés. | ✅ Fonctionnel | `TeamsGenerator`, `TeamsPage` (`/equipes`). |
+| 🎟️ Tombola | Tirage pondéré sans remise de plusieurs lots, en une fois ou lot par lot. | ✅ Fonctionnel | `TombolaPage` (`/tombola`). |
+| 🎰 Roulette numérique | Roulette américaine (0, 00, 1-36) avec mises casino (plein, chances simples, douzaines, colonnes) et cagnotte persistée. | ✅ Fonctionnel | `RoulettePocket`, `RouletteBetEvaluator`, `BankrollStore`, `NumberRoulettePage` (`/roulette`). |
+| 🛡️ Tournoi à double élimination | Tableau principal (Upper Bracket) + tableau de repêchage (Lower Bracket) et grande finale. | ✅ Fonctionnel | `DoubleEliminationBracket`, `DoubleEliminationBracketPage` (`/bracket`). |
+| 🔄 Phase de poules | Répartition automatique en poules équilibrées (round-robin complet, taille calculée à partir du nombre de participants). | ✅ Fonctionnel | `PoolStage`, `PoolStagePage` (`/poules`). |
 
 
 
@@ -123,6 +127,8 @@ app/
 │   ├── Strategies/              # FourTwoOneStrategy (règles du 421 classique)
 │   └── Contracts/               # DiceGameStrategy
 │
+├── Domain/Draw/Support/        # WeightedRandomPicker (tirage pondéré hors de l'entité `Draw`, ex. un seul candidat restant)
+│
 ├── Application/Draw/          # Orchestration (pont Domain ↔ UI)
 │   ├── Actions/                # RunDrawAction (construit `Draw`, délègue à la stratégie)
 │   ├── DTOs/                   # DrawData (transmet les données de l’UI au Domain)
@@ -142,6 +148,32 @@ app/
 ├── Application/History/        # Historique des tirages (transverse à tous les modes)
 │   └── HistoryStore.php         # Lecture/écriture en cache, rattaché à la session (push/all/allModes/clear)
 │
+├── Domain/Tournament/           # Règles métier des formats de tournoi
+│   ├── Bracket/Entities/         # BracketMatch, DoubleEliminationBracket (Upper/Lower Bracket + grande finale)
+│   ├── Pool/Entities/            # Pool, PoolMatch, PoolStage (répartition + round-robin équilibré)
+│   ├── Collections/              # Participants
+│   └── ValueObjects/             # Participant
+│
+├── Application/Tournament/      # Orchestration des tournois
+│   ├── Bracket/Actions/           # Create/Rebuild/RecordMatchResult (double élimination)
+│   ├── Pool/Actions/              # Create/Rebuild/RecordMatchResult (poules)
+│   └── TournamentProgressStore.php # Sauvegarde de la progression en cache (comme HistoryStore)
+│
+├── Domain/Roulette/              # Table des cases de la roulette américaine
+│   ├── RoulettePocket.php          # Couleur, parité, douzaine, colonne pour chaque case
+│   └── Enums/RouletteBetType.php   # Types de mises + multiplicateurs de gain
+│
+├── Application/Roulette/         # Orchestration de la roulette numérique
+│   ├── RouletteBetEvaluator.php    # Détermine si une mise est gagnante
+│   └── BankrollStore.php           # Cagnotte persistée en cache, rattachée à la session
+│
+├── Application/Teams/            # Tirage par équipes
+│   └── TeamsGenerator.php          # Répartit les participants en N équipes + remplaçants
+│
+├── Application/Tombola/          # Orchestration du tirage de lots
+│   ├── Actions/                   # DrawLotAction (tirage pondéré, avec/sans remise ; délègue à RunDrawAction dès que possible)
+│   └── DTOs/                      # LotDrawResult
+│
 ├── Http/Middleware/
 │   └── SecurityHeaders.php    # CSP (prod uniquement) + en-têtes de sécurité HTTP
 │
@@ -155,6 +187,15 @@ app/
     │   └── CoinFlipPage.php    # Tirage simple/multiple + paris + libellés personnalisables
     ├── Dice/
     │   └── Dice421Page.php     # Partie de 421 : lancers, dés gardés, historique local
+    ├── Teams/
+    │   └── TeamsPage.php       # Répartition en équipes (/equipes)
+    ├── Tombola/
+    │   └── TombolaPage.php     # Tirage de lots, pondéré sans remise (/tombola)
+    ├── Roulette/
+    │   └── NumberRoulettePage.php # Roulette américaine + cagnotte (/roulette)
+    ├── Tournament/
+    │   ├── Bracket/DoubleEliminationBracketPage.php # /bracket
+    │   └── Pool/PoolStagePage.php                   # /poules
     └── History/
         └── HistoryPage.php     # Page /historique : liste unifiée tous modes, filtrable
 ```
@@ -217,34 +258,14 @@ app/
 ### 🟡 Fonctionnel mais incomplet
 - **Déploiement sans porte de qualité** : Le workflow GitHub Actions déploie directement sur `master` sans exécuter `composer test` ou `composer run analyse`.
 - **Pas de persistance** : Les tirages ne sont pas sauvegardés en base de données (choix assumé pour l’instant).
-- **Tirage par équipes non implémenté** : Carte visible mais désactivée (`available: false`) sur l’accueil.
 
 ### ✅ Corrigé récemment
-- **Historique des tirages en cache** : `App\Application\History\HistoryStore` enregistre chaque tirage (tous modes) en cache, rattaché à la session du visiteur (session étendue à 1 mois dans `config/session.php` pour ne pas perdre l'historique après 2h d'inactivité ; même durée de rétention (1 mois) côté cache). Nouvelle page `/historique` (composant `HistoryPage`) : liste unifiée de tous les tirages, filtrable par mode, avec popup de détails (participants, poids, ordre des éliminations) pour les roues. Chaque page de mode affiche aussi un résumé rapide de ses derniers tirages, avec lien vers l'historique complet. Sur `CoinFlipPage`, les tirages multiples (série auto) sont désormais des entrées distinctes des tirages simples (`type: 'single'|'multiple'`), avec gagnant de la série calculé au max de faces.
-- **Résultat affiché seulement après la fin de l'animation** : sur les 5 modes, le résultat n'atterrit dans l'historique/le résumé rapide qu'après la fin de l'animation côté client (+ court délai réglable, actuellement 500ms) plutôt qu'instantanément à la requête Livewire — évite de spoiler le résultat avant que l'animation ne soit terminée visuellement (`pendingHistoryEntries`/`confirmFlip()` pour le pile ou face, `pendingHistoryEntry`/`confirmDraw()` pour les roues classique et pondérée, `pendingTournamentEntry`/`confirmTournamentHistory()` pour la roue d'élimination — cette dernière ne différant que la mise en historique du tournoi, pas la logique de jeu elle-même qui doit rester synchrone).
-- **Refonte visuelle complète, direction « borne d’arcade »** : nouvelle palette néo-brutaliste à ombres dures (`--shadow-hard`, `--shadow-press`), nouvelles polices auto-hébergées (Work Sans, Bungee, Press Start 2P via Bunny Fonts/Vite), nouveaux utilitaires CSS (`btn-press`, `card-hard`, `card-hard-hover`, `tile-selected`, `text-outline`) et prise en charge de `prefers-reduced-motion`. Appliquée à l’accueil, aux cartes de mode, à la roue, au pile ou face et au 421. Ajout d’un logo.
-- **Résolution du bug de polices bloquées par la CSP sur `/421`** : le `<link>` direct vers `fonts.googleapis.com`/`fonts.gstatic.com` a été supprimé ; les polices passent désormais par le même pipeline Vite que le reste du site (plus de retombée silencieuse sur la police système en production).
-- **Historique et compteur du 421 différés jusqu’à la fin de l’animation** : `roll()` ne pousse plus l’entrée d’historique immédiatement mais la stocke dans `pendingHistoryEntry` (`#[Locked]`) et appelle `skipRender()` ; c’est `finalizeRoll()`, déclenché par Alpine à la fin de l’animation des dés, qui l’applique. Évite que le résultat ou l’historique n’apparaissent avant que l’animation soit terminée.
-- **Ajout des tests du jeu de dés 421** : `RollDiceAction`, `FourTwoOneStrategy`, `DiceCombinationEvaluator`, `DiceRoll`, `Dice421Page` sont désormais couverts par des tests (Domain, Application, Livewire) — l’implémentation existait déjà mais n’était pas testée et n’apparaissait pas dans ce README.
-- **Correction du statut « Pile ou face » dans ce README** : contrairement à ce qu’indiquait une précédente version, `FlipCoinAction`, `RandomCoinFlipStrategy`, `CoinFlipBet`, `CoinFlipResult` et `CoinFlipPage` (y compris les paris) sont bien couverts par 6 fichiers de tests, et la route `/pile-ou-face` a bien un `throttle:120,1`.
-- **Sitemap généré automatiquement à partir des routes** : `GenerateSitemap` n’énumère plus les routes à la main ; il parcourt `Route::getRoutes()` et ne garde que les routes GET, nommées, sans paramètre et hors routes internes Livewire (`livewire.*`). Toute nouvelle route publique apparaît donc dans le sitemap sans y toucher, avec une priorité par défaut (`0.5`) surchargeable via la constante `PRIORITIES`.
-- **Sécurité HTTP** : ajout de `SecurityHeaders` (CSP appliquée uniquement en production — Vite/HMR ont besoin d’une origine séparée en dev —, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`), et `throttle:120,1` sur les routes de tirage.
-- **Aléatoire non cryptographique corrigé** : `Participants::random()` utilise désormais `random_int()` (CSPRNG) au lieu d’`array_rand()`, cohérent avec `WeightedDrawStrategy`.
-- **Bug de rotation de roue à la relance** : `WheelPage` et `WeightedWheelPage` dispatchaient un angle **absolu** à un composant Alpine qui **accumule** les rotations (`rotation += ...`) — la roue s’arrêtait au mauvais endroit après un premier tirage. Corrigé via `WheelSegmentBuilder::cumulativeRotationFor()`, qui calcule un delta relatif à la rotation déjà appliquée (logique déjà en place sur `EliminationWheelPage`, désormais centralisée et partagée par les trois pages).
-- **Blocage possible sur la roue d’élimination** : ajout d’un détecteur d’état bloqué (`isStuck()`/`unstick()`) si `confirmElimination()` n’est jamais rappelée (ex. coupure réseau pendant l’animation).
-- **`CoinFlipPage::$bet` verrouillée** (`#[Locked]`) : empêche un payload Livewire forgé de fixer `$bet` à une valeur arbitraire côté client ; `evaluateBet()` utilise `CoinSide::tryFrom()` en défense en profondeur plutôt que `from()`.
-- **Accueil regroupé par catégorie** : nouvel enum `GameModeCategory` (Roues / Autres tirages / Jeux), `GameModeType::grouped()` génère les sections dynamiquement — une catégorie sans mode actif n’apparaît pas, et en ajouter une nouvelle ne nécessite aucune modification de `home.blade.php`. *(Ces enums s'appelaient `DrawModeCategory`/`DrawModeType` au moment de ce commit, renommés depuis en `GameModeCategory`/`GameModeType` suite à l'ajout du 421.)*
-- **Accueil responsive** : catégories en colonnes auto-adaptatives (`grid-cols-[repeat(auto-fit,minmax(280px,1fr))]`, pas de nombre codé en dur) à partir de `md:` ; sur mobile, chaque catégorie est un accordéon repliable (Alpine.js, première catégorie ouverte par défaut) pour éviter une page à rallonge. `<x-mode-card>` a deux mises en page distinctes : carte verticale complète dès `md:`, rangée horizontale compacte (icône + titre/description tronqués + chevron) en dessous. Les effets `hover` sont désormais gated par `md:group-hover:` pour ne jamais rester "collés" après un tap tactile.
-- **Ajout des paris sur pile ou face** : `CoinFlipBet` (Domain) porte la règle gagné/perdu, historique des paris et libellés de faces personnalisables (`pileLabel`/`faceLabel`).
-- **Bug du tirage pondéré résolu** : `HandlesDraw::executeDraw()` appelle désormais `$this->drawType()` au lieu d’un `DrawType::RANDOM` codé en dur ; `WeightedDrawStrategy` est bien invoquée.
-- **Segments SVG proportionnels aux poids** : `WheelSegmentBuilder` calcule désormais la taille des parts selon `Participant::$weight`.
-- **Implémentation du Pile ou face** : `FlipCoinAction`, `RandomCoinFlipStrategy`, `CoinFlipPage` et la route `/pile-ou-face` sont en place et actifs sur l’accueil.
-- Fusion de `DrawFactory` et `DrawStrategyResolver` en un seul point de résolution.
-- Alignement des namespaces et dossiers.
-- Réparation de la suite de tests (`phpunit.xml`, script `composer test`).
-- Implémentation de `WeightedDrawStrategy` (algorithme *Roulette Wheel Selection*).
-- Passage de `RunDrawAction` par l’entité `Draw` pour appliquer ses invariants.
-- Correction de `composer run setup` pour un clone frais.
+*Historique complet (y compris les correctifs plus anciens) dans la section « 📜 Historique des commits clés » plus bas.*
+- **Nouveaux modes actifs** : Tirage par équipes (`TeamsGenerator`), Tombola (tirage pondéré sans/avec remise), Roulette numérique américaine avec cagnotte persistée (`BankrollStore`), tournois à double élimination et phases de poules (`Application/Tournament`) — tous intégrés à l'historique unifié `/historique`.
+- **Historique en cache unifié** : `HistoryStore` enregistre chaque tirage (tous modes) rattaché à la session ; page `/historique` filtrable par mode/catégorie ; le résultat n'atterrit dans l'historique qu'après la fin de l'animation côté client (`pendingHistoryEntry`/`confirmDraw()` et équivalents par mode), pour ne pas spoiler avant l'animation.
+- **Tombola alignée sur l'architecture Domain/Application** : le tirage pondéré (avec le cas particulier à un seul candidat restant, non géré par l'entité `Draw`) est désormais extrait dans `Domain\Draw\Support\WeightedRandomPicker` et `Application\Tombola\Actions\DrawLotAction`, au lieu de vivre dans le composant Livewire.
+- **Durcissement sécurité/aléatoire** : `NumberRoulettePage::$bankroll` verrouillée (`#[Locked]`) contre un payload Livewire forgé ; `TeamsGenerator` utilise `random_int()` (CSPRNG) au lieu de `shuffle()`, cohérent avec le reste des tirages ; `CoinFlipPage::$bet` déjà verrouillée de la même façon.
+- **Suite de tests Pest étendue à tous les modes** : voir la section « 🧪 Tests et qualité de code » plus bas — auparavant seuls les tournois (bracket/poules) étaient couverts.
 
 ---
 
@@ -295,6 +316,9 @@ app/
 | `design type borne arcade` + `redisign` | Refonte visuelle néo-brutaliste « borne d’arcade » : nouvelle palette à ombres dures, nouvelles polices auto-hébergées (Work Sans, Bungee, Press Start 2P), nouveaux utilitaires CSS, ajout du logo. |
 | `attendre fin annimation pour compteur et historique` | Historique et compteur du 421 appliqués seulement après la fin de l’animation Alpine (`pendingHistoryEntry` + `finalizeRoll()`). |
 | `historique en cache` + `popup details roues` | `HistoryStore`, page `/historique` unifiée et filtrable, résumés rapides par mode, résultat différé après animation sur les 5 modes, popup de détails (participants/poids/éliminations) pour les roues. |
+| `Tombola, Roulette casino, tirage equipe` | Ajout de trois nouveaux modes actifs : Tirage par équipes (`TeamsGenerator`), Tombola (tirage pondéré sans remise), Roulette numérique américaine avec cagnotte persistée (`BankrollStore`). |
+| `start bracket` → `bracket` | Implémentation du tournoi à double élimination (`DoubleEliminationBracket`) : Upper/Lower Bracket, gestion des byes, grande finale et match de reset. |
+| `refacto bracket` | Ajout de la phase de poules (`PoolStage`) en parallèle du bracket, sous `Application/Tournament`. |
 
 </details>
 
@@ -339,15 +363,11 @@ L’application sera accessible sur **[http://localhost:8000](http://localhost:8
 ```bash
 composer test
 ```
-- **160+ déclarations de test** (Pest) couvrant :
-  - Gestion des participants (ajout/suppression/édition, y compris pondération).
-  - Résolution de stratégie et exécution des tirages.
-  - Tirage pondéré (résultat **et** segments SVG proportionnels).
-  - Déroulé complet d’une élimination.
-  - Pile ou face : tirage simple/multiple, système de paris, libellés personnalisés, statistiques.
-  - 421 : lancer de dés (dés gardés vs relancés), détection de combinaison (421, brelan, suite), fin de partie, historique.
-  - Chargement des routes.
-  - Génération des segments SVG.
+- Suite de tests Pest organisée par domaine sous `tests/Feature/` (`Draw/`, `CoinFlip/`, `Dice/`, `Teams/`, `Tombola/`, `Roulette/`, `History/`, `Tournament/`), couvrant :
+  - Domain/Application de chaque mode (participants, stratégies de tirage, actions) — cas nominaux et cas d'erreur (effectifs insuffisants, pool vide, mise invalide...).
+  - Composants Livewire (validation, verrouillage des propriétés sensibles, persistance en historique, événements dispatchés) plutôt que leur implémentation interne.
+  - Tournois à double élimination (y compris effectifs qui ne sont pas une puissance de 2) et phases de poules.
+  - Un test de fumée qui charge chaque page publique.
 
 ### Analyse statique
 ```bash
@@ -366,8 +386,6 @@ composer run analyse
   - Responsive, accessibilité.
 - [ ] **Améliorer le pipeline de déploiement** :
   - Ajouter `composer test` et `composer run analyse` comme portes de qualité dans `deploy.yml`.
-- [ ] **Implémenter le mode manquant** :
-  - Tirage par équipes (`GameModeType::TEAMS`).
 - [ ] **Peaufiner Pile ou face** (voir `TODO`) :
   - Amélioration du design.
 - [ ] **Persistance en base de données** :

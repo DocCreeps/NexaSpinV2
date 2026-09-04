@@ -155,3 +155,49 @@ it('blocks editing a match once its result has propagated to a resolved downstre
     expect($bracket->hasDownstreamResult('upper', 1, 2))->toBeFalse()
         ->and($bracket->hasDownstreamResult('upper', 1, 3))->toBeFalse();
 });
+
+it('reaches a champion for participant counts that are not a power of two, without ever throwing', function (int $count) {
+    $bracket = new DoubleEliminationBracket(makeParticipants($count));
+
+    // On joue systématiquement tout match jouable (slot A gagnant), jusqu'à
+    // ce que plus aucune progression ne soit possible : le tournoi doit
+    // atteindre un champion sans qu'aucun bye/match fantôme ne bloque le jeu.
+    for ($safety = 0; $safety < 100; $safety++) {
+        $playedSomething = false;
+
+        foreach ($bracket->upperRounds() as $round => $matches) {
+            foreach ($matches as $match) {
+                if ($match->isPlayable()) {
+                    $bracket->recordUpperResult($round, $match->position, $match->participantA());
+                    $playedSomething = true;
+                }
+            }
+        }
+
+        foreach ($bracket->lowerRounds() as $round => $matches) {
+            foreach ($matches as $match) {
+                if ($match->isPlayable()) {
+                    $bracket->recordLowerResult($round, $match->position, $match->participantA());
+                    $playedSomething = true;
+                }
+            }
+        }
+
+        if ($bracket->grandFinal()?->isPlayable()) {
+            $bracket->recordGrandFinalResult($bracket->grandFinal()->participantA());
+            $playedSomething = true;
+        }
+
+        if ($bracket->grandFinalReset()?->isPlayable()) {
+            $bracket->recordGrandFinalResetResult($bracket->grandFinalReset()->participantA());
+            $playedSomething = true;
+        }
+
+        if ($bracket->isComplete() || ! $playedSomething) {
+            break;
+        }
+    }
+
+    expect($bracket->isComplete())->toBeTrue()
+        ->and($bracket->champion())->not->toBeNull();
+})->with([5, 6, 7, 9, 11, 13]);
