@@ -54,18 +54,11 @@
 > **Historique des tirages en cache** : chaque tirage (tous modes) est conservé côté serveur dans le cache (`App\Application\History\HistoryStore`), rattaché à la session du visiteur (1 mois de rétention). Page `/historique` : liste unifiée filtrable par mode, popup de détails (participants, poids, ordre des éliminations) pour les roues. Un résumé rapide des derniers tirages est aussi affiché directement sur chaque page de mode.
 > **Aucune persistance en base de données** : les participants et résultats vivent dans l’état des composants Livewire (session uniquement) ; seul l’historique des tirages passe par le cache, pas de table dédiée.
 > **Déploiement continu** : synchronisation automatique de `master` vers un VPS via GitHub Actions (sans porte de qualité, voir [Dette technique](#-dette-technique-et-limites-connues)).
-> **Accueil organisé par catégorie** : les modes sont regroupés en sections (`GameModeCategory` : Roues / Autres tirages / Jeux / En Développement), générées dynamiquement — ajouter une nouvelle catégorie n’implique aucune modification de la vue.
+> **Accueil organisé par catégorie** : les modes sont regroupés en sections (`GameModeCategory` : Roues / Autres tirages / Jeux / Outils / En Développement), générées dynamiquement — ajouter une nouvelle catégorie n’implique aucune modification de la vue.
 
 ---
 
 ## 📸 Aperçu
-
-<!--
-  Images à ajouter dans `docs/screenshots/` puis committer.
-  Remplacer les liens ci-dessous une fois les fichiers présents (garder les mêmes noms
-  ou mettre à jour les chemins). Format conseillé : PNG, 1280px de large max, thème clair
-  (celui de l'app par défaut).
--->
 
 | Accueil | Roue classique |
 |---|---|
@@ -78,8 +71,6 @@
 | Pile ou face | 421 |
 |---|---|
 | ![Pile ou face](docs/screenshots/coinflip.png) | ![Jeu du 421](docs/screenshots/dice-421.png) |
-
----
 
 ---
 
@@ -102,7 +93,7 @@
 ## 🏗️ Architecture
 *Séparation Domain / Application / UI, inspirée de la Clean Architecture et du DDD léger.*
 
-### Découpage par domaine métier (`Draw`, `CoinFlip` et `Dice`)
+### Découpage par domaine métier
 ```
 app/
 ├── Domain/Draw/               # Règles métier pures (0 dépendance à Laravel)
@@ -221,10 +212,12 @@ app/
 ### Avantages
 - **Testabilité** : Le Domain se teste sans base de données, sans HTTP, sans Livewire.
 - **Portabilité** : `Draw`, `Participant`, `RandomDrawStrategy` pourraient être copiés dans un projet PHP sans Laravel.
-- **Évolutivité** : Ajouter un nouveau type de tirage (ex. : équipes) ne nécessite que :
-  1. Une nouvelle stratégie (`TeamDrawStrategy`).
+- **Évolutivité** : Ajouter une nouvelle stratégie de tirage (ex. : sans remise) ne nécessite que :
+  1. Une nouvelle stratégie implémentant `DrawStrategy`.
   2. Une entrée dans `DrawType`.
   3. Une route et un composant Livewire.
+  
+  *(Ça ne vaut que pour un nouveau type de tirage au sens strict — les modes ajoutés depuis, comme les équipes ou la tombola, ont leur propre logique dédiée plutôt que de réutiliser `Draw`/`DrawStrategy`.)*
 
 ### Coûts assumés
 - **Plus de fichiers** : 1 fonctionnalité simple = plus de couches, plus d’indirection.
@@ -329,7 +322,7 @@ app/
 ### Prérequis
 - PHP 8.4
 - Composer
-- Node.js (pour Tailwind CSS)
+- Node.js 22+ (version utilisée en CI, voir `.github/workflows/deploy.yml`)
 
 ### Étapes
 ```bash
@@ -386,7 +379,7 @@ composer run analyse
   - Responsive, accessibilité.
 - [ ] **Améliorer le pipeline de déploiement** :
   - Ajouter `composer test` et `composer run analyse` comme portes de qualité dans `deploy.yml`.
-- [ ] **Peaufiner Pile ou face** (voir `TODO`) :
+- [ ] **Peaufiner Pile ou face** :
   - Amélioration du design.
 - [ ] **Persistance en base de données** :
   - L'historique des tirages passe aujourd'hui par le cache (rattaché à la session, 1 mois) plutôt qu'une vraie table — suffisant pour l'usage actuel, mais une migration vers une table dédiée permettrait un historique multi-appareils/compte et sans limite de rétention, si un besoin réel émerge.
