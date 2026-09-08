@@ -46,6 +46,35 @@ class HistoryStore
     }
 
     /**
+     * Enregistre ou met à jour l'entrée d'historique d'une "session" de jeu
+     * (plusieurs manches/parties jouées à la suite, tant que l'utilisateur ne
+     * vide pas l'historique ou ne quitte pas la page). Contrairement à
+     * push(), un appel avec le même $sessionId remplace l'entrée précédente
+     * au lieu d'en empiler une nouvelle : l'historique affiche une ligne par
+     * session (le plus souvent un score cumulé), pas une ligne par manche.
+     *
+     * @param  array<string, mixed>  $entry
+     */
+    public function pushSession(GameModeType $mode, string $sessionId, array $entry): void
+    {
+        $entries = array_values(array_filter(
+            $this->all($mode),
+            fn (array $existing) => ($existing['session_id'] ?? null) !== $sessionId
+        ));
+
+        $entry['session_id'] = $sessionId;
+        $entry['recorded_at'] = Carbon::now()->toIso8601String();
+
+        array_unshift($entries, $entry);
+
+        if (count($entries) > self::MAX_ENTRIES) {
+            $entries = array_slice($entries, 0, self::MAX_ENTRIES);
+        }
+
+        Cache::put($this->key($mode), $entries, Carbon::now()->addDays(self::TTL_DAYS));
+    }
+
+    /**
      * Retourne l'historique d'un mode, du plus récent au plus ancien.
      *
      * @return array<int, array<string, mixed>>

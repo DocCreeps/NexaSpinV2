@@ -9,6 +9,8 @@
       - tombola : lots attribués, participants
       - number_roulette : détail de chaque pari
       - teams : composition de chaque équipe (titulaires + remplaçants)
+      - rock_paper_scissors / tic_tac_toe : détail manche par manche / partie
+        par partie d'une session groupée (voir HistoryStore::pushSession)
 --}}
 <div x-show="openEntry" x-cloak class="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
 
@@ -47,6 +49,20 @@
                             <div class="mt-1 flex items-center gap-2">
                                 <span class="text-2xl leading-none">👥</span>
                                 <p class="truncate font-display text-2xl leading-tight text-ink" x-text="openEntry.teams_count + ' équipes'"></p>
+                            </div>
+                        </template>
+
+                        <template x-if="openEntry.mode === 'rock_paper_scissors'">
+                            <div class="mt-1 flex items-center gap-2">
+                                <span class="text-2xl leading-none">✂️</span>
+                                <p class="truncate font-display text-2xl leading-tight text-ink" x-text="openEntry.score.a + 'V · ' + openEntry.score.draw + 'N · ' + openEntry.score.b + 'D'"></p>
+                            </div>
+                        </template>
+
+                        <template x-if="openEntry.mode === 'tic_tac_toe'">
+                            <div class="mt-1 flex items-center gap-2">
+                                <span class="text-2xl leading-none">⭕</span>
+                                <p class="truncate font-display text-2xl leading-tight text-ink" x-text="openEntry.score.x + ' - ' + openEntry.score.o"></p>
                             </div>
                         </template>
                     </div>
@@ -192,6 +208,38 @@
                                     </div>
                                 </div>
                             </template>
+                        </div>
+                    </template>
+
+                    {{-- PIERRE-FEUILLE-CISEAUX : détail de chaque manche de la session --}}
+                    <template x-if="openEntry.mode === 'rock_paper_scissors'">
+                        <div>
+                            <p class="mb-2 font-mono text-[10px] uppercase tracking-widest text-faint" x-text="openEntry.a_label + ' vs ' + openEntry.b_label + ' · ' + (openEntry.rounds ? openEntry.rounds.length : 0) + ' manche(s)'"></p>
+                            <div class="space-y-1.5">
+                                <template x-for="(round, i) in (openEntry.rounds || [])" :key="i">
+                                    <div class="flex items-center justify-between gap-2 rounded-lg border-2 px-3 py-1.5" :class="round.outcome === 'win' ? 'border-ink bg-secondary/20' : (round.outcome === 'lose' ? 'border-danger/30 bg-danger/5' : 'border-line bg-wash')">
+                                        <span class="font-mono text-[11px] text-subtle" x-text="'Manche ' + (i + 1)"></span>
+                                        <span class="text-sm text-ink" x-text="({rock:'🪨',paper:'📄',scissors:'✂️'}[round.a] || '?') + ' vs ' + ({rock:'🪨',paper:'📄',scissors:'✂️'}[round.b] || '?')"></span>
+                                        <span class="shrink-0 rounded-md border px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase" :class="round.outcome === 'win' ? 'border-ink bg-secondary text-ink' : (round.outcome === 'lose' ? 'border-danger/30 bg-danger/10 text-danger' : 'border-ink/20 bg-panel text-subtle')" x-text="round.outcome === 'win' ? openEntry.a_label : (round.outcome === 'lose' ? openEntry.b_label : 'Nul')"></span>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+
+                    {{-- MORPION : détail de chaque partie de la session --}}
+                    <template x-if="openEntry.mode === 'tic_tac_toe'">
+                        <div>
+                            <p class="mb-2 font-mono text-[10px] uppercase tracking-widest text-faint" x-text="openEntry.x_label + ' (✕) vs ' + openEntry.o_label + ' (◯) · ' + (openEntry.games ? openEntry.games.length : 0) + ' partie(s)'"></p>
+                            <div class="space-y-1.5">
+                                <template x-for="(game, i) in (openEntry.games || [])" :key="i">
+                                    <div class="flex items-center justify-between gap-2 rounded-lg border-2 px-3 py-1.5" :class="game.winner ? 'border-ink bg-secondary/20' : 'border-line bg-wash'">
+                                        <span class="font-mono text-[11px] text-subtle" x-text="'Partie ' + (i + 1)"></span>
+                                        <span class="text-sm text-ink" x-text="game.winner === 'x' ? (openEntry.x_label + ' (✕)') : (game.winner === 'o' ? (openEntry.o_label + ' (◯)') : 'Égalité')"></span>
+                                        <span class="shrink-0 font-mono text-[10px] text-faint" x-text="game.moves_count + ' coups'"></span>
+                                    </div>
+                                </template>
+                            </div>
                         </div>
                     </template>
                 </div>
