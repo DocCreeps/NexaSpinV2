@@ -16,6 +16,9 @@ enum GameModeType: string
     case POOL = 'pool';
     case NUMBER_ROULETTE = 'number_roulette';
     case DICE_421 = 'dice_421';
+    case ROCK_PAPER_SCISSORS = 'rock_paper_scissors';
+    case TIC_TAC_TOE = 'tic_tac_toe';
+    case DICE_ROLLER = 'dice_roller';
 
     /**
      * Transforme l'enum en objet de présentation (DTO).
@@ -87,6 +90,45 @@ enum GameModeType: string
                 minParticipants: null,
                 metaTitle: 'Jeu du 421 en Ligne — Lancez les Dés | NexaSpin',
                 metaDescription: 'Jouez au mythique jeu de dés du 421 gratuitement en ligne. Lancez les dés, tentez de faire 4-2-1 et suivez vos meilleurs tirages sans inscription.',
+            ),
+            self::ROCK_PAPER_SCISSORS => new GameMode(
+                icon: '✂️',
+                title: 'Pierre-feuille-ciseaux',
+                description: 'Affrontez un adversaire aléatoire, coup après coup, dans le classique jeu de mains.',
+                route: route('rps'),
+                available: true,
+                color: 'from-orange-500 to-red-500',
+                shadow: 'shadow-orange-500/10 hover:shadow-orange-500/20',
+                category: GameModeCategory::GAME,
+                minParticipants: null,
+                metaTitle: 'Pierre-Feuille-Ciseaux en Ligne | NexaSpin',
+                metaDescription: 'Jouez à pierre-feuille-ciseaux gratuitement contre un adversaire aléatoire. Historique des manches inclus, sans inscription.',
+            ),
+            self::TIC_TAC_TOE => new GameMode(
+                icon: '⭕',
+                title: 'Morpion',
+                description: 'Un plateau, deux joueurs, le premier à aligner trois symboles gagne.',
+                route: route('tictactoe'),
+                available: true,
+                color: 'from-sky-500 to-indigo-500',
+                shadow: 'shadow-sky-500/10 hover:shadow-sky-500/20',
+                category: GameModeCategory::GAME,
+                minParticipants: 2,
+                metaTitle: 'Morpion en Ligne à Deux Joueurs | NexaSpin',
+                metaDescription: 'Jouez au morpion à deux sur le même écran. Gratuit, sans inscription, avec historique des parties.',
+            ),
+            self::DICE_ROLLER => new GameMode(
+                icon: '🎲',
+                title: 'Lanceur de dés',
+                description: 'Choisissez un type de dé façon JDR (d4 à d100) et le nombre à lancer d’un coup.',
+                route: route('dice.roller'),
+                available: true,
+                color: 'from-teal-500 to-emerald-600',
+                shadow: 'shadow-teal-500/10 hover:shadow-teal-500/20',
+                category: GameModeCategory::GAME,
+                minParticipants: null,
+                metaTitle: 'Lanceur de Dés en Ligne (d4 à d100) | NexaSpin',
+                metaDescription: 'Lancez des dés de jeu de rôle (d4, d6, d8, d10, d12, d20, d100) en choisissant le nombre de dés. Gratuit et sans inscription.',
             ),
             self::TEAMS => new GameMode(
                 icon: '👥',

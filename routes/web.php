@@ -12,6 +12,10 @@ use App\Livewire\Teams\TeamsPage;
 use App\Livewire\Tournament\Bracket\DoubleEliminationBracketPage;
 use App\Livewire\Tournament\Pool\PoolStagePage;
 use App\Livewire\Tombola\TombolaPage;
+use App\Livewire\DiceRoller\DiceRollerPage;
+use App\Livewire\RockPaperScissors\RpsPage;
+use App\Livewire\TicTacToe\TicTacToePage;
+
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
@@ -28,6 +32,9 @@ Route::middleware('throttle:120,1')->group(function (): void {
     Route::get('/historique', HistoryPage::class)->name('history');
     Route::get('/bracket', DoubleEliminationBracketPage::class)->name('draw.bracket');
     Route::get('/poules', PoolStagePage::class)->name('draw.pools');
+    Route::get('/pierre-feuille-ciseaux', RpsPage::class)->name('rps');
+    Route::get('/morpion', TicTacToePage::class)->name('tictactoe');
+    Route::get('/lanceur-de-des', DiceRollerPage::class)->name('dice.roller');
 });
 
 

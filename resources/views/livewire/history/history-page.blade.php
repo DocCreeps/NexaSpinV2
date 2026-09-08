@@ -88,7 +88,7 @@
         @if(count($this->entries))
         <div class="custom-scrollbar space-y-2.5">
             @foreach($this->entries as $entry)
-            @php $hasDetails = in_array($entry['mode'], ['classic', 'weighted', 'elimination', 'tombola', 'number_roulette', 'teams'], true); @endphp
+            @php $hasDetails = in_array($entry['mode'], ['classic', 'weighted', 'elimination', 'tombola', 'number_roulette', 'teams', 'rock_paper_scissors', 'tic_tac_toe'], true); @endphp
             <div class="card-hard rounded-2xl border-2 border-ink bg-panel px-4 py-3.5 sm:px-5">
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <span class="rounded-md border-2 border-ink bg-wash px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-widest text-subtle">
@@ -256,6 +256,38 @@
                             </span>
                         </div>
                         @break
+
+                        @case('rock_paper_scissors')
+                        <div class="flex flex-wrap items-center gap-2.5">
+                            <span class="text-lg leading-none">✂️</span>
+                            <span class="font-mono text-[11px] text-subtle">
+                                {{ $entry['a_label'] ?? 'Joueur 1' }} vs {{ $entry['b_label'] ?? 'Joueur 2' }}
+                            </span>
+                            <span class="font-display text-base tracking-wide">
+                                {{ $entry['score']['a'] ?? 0 }}V · {{ $entry['score']['draw'] ?? 0 }}N · {{ $entry['score']['b'] ?? 0 }}D
+                            </span>
+                            <span class="font-mono text-[11px] text-faint">
+                                {{ $entry['rounds_count'] ?? 0 }} manche{{ ($entry['rounds_count'] ?? 0) > 1 ? 's' : '' }}
+                            </span>
+                        </div>
+                        @break
+
+                        @case('tic_tac_toe')
+                        <div class="flex flex-wrap items-center gap-2.5">
+                            <span class="text-lg leading-none">⭕</span>
+                            <span class="font-mono text-[11px] text-subtle">
+                                {{ $entry['x_label'] ?? 'Joueur X' }} vs {{ $entry['o_label'] ?? 'Joueur O' }}
+                            </span>
+                            <span class="font-display text-base tracking-wide">
+                                {{ $entry['score']['x'] ?? 0 }}V · {{ $entry['score']['draw'] ?? 0 }}N · {{ $entry['score']['o'] ?? 0 }}D
+                            </span>
+                            <span class="font-mono text-[11px] text-faint">
+                                {{ $entry['games_count'] ?? 0 }} partie{{ ($entry['games_count'] ?? 0) > 1 ? 's' : '' }}
+                            </span>
+                        </div>
+                        @break
+
+
                         @endswitch
                     </div>
 
