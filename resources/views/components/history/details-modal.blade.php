@@ -230,15 +230,39 @@
                     {{-- MORPION : détail de chaque partie de la session --}}
                     <template x-if="openEntry.mode === 'tic_tac_toe'">
                         <div>
-                            <p class="mb-2 font-mono text-[10px] uppercase tracking-widest text-faint" x-text="openEntry.x_label + ' (✕) vs ' + openEntry.o_label + ' (◯) · ' + (openEntry.games ? openEntry.games.length : 0) + ' partie(s)'"></p>
+                            {{-- En-tête de la session --}}
+                            <div class="mb-2 flex items-center justify-between font-mono text-[10px] uppercase tracking-widest text-faint">
+                                <span x-text="openEntry.x_label + ' (✕) vs ' + openEntry.o_label + ' (◯)'"></span>
+                                <span x-text="(openEntry.games ? openEntry.games.length : 0) + ' partie(s)'"></span>
+                            </div>
+
+                            {{-- Liste des parties --}}
                             <div class="space-y-1.5">
                                 <template x-for="(game, i) in (openEntry.games || [])" :key="i">
                                     <div class="flex items-center justify-between gap-2 rounded-lg border-2 px-3 py-1.5" :class="game.winner ? 'border-ink bg-secondary/20' : 'border-line bg-wash'">
-                                        <span class="font-mono text-[11px] text-subtle" x-text="'Partie ' + (i + 1)"></span>
-                                        <span class="text-sm text-ink" x-text="game.winner === 'x' ? (openEntry.x_label + ' (✕)') : (game.winner === 'o' ? (openEntry.o_label + ' (◯)') : 'Égalité')"></span>
-                                        <span class="shrink-0 font-mono text-[10px] text-faint" x-text="game.moves_count + ' coups'"></span>
+
+                                        {{-- Numéro de partie + Badge difficulté de CETTE partie --}}
+                                        <div class="flex items-center gap-1.5 min-w-0">
+                                            <span class="font-mono text-[11px] text-subtle shrink-0" x-text="'Partie ' + (i + 1)"></span>
+
+                                            <template x-if="game.difficulty_label || game.difficulty">
+                                                <span class="rounded border border-ink/30 bg-panel px-1.5 py-0.5 font-mono text-[9px] text-ink truncate" x-text="game.difficulty_label || game.difficulty">
+                                                </span>
+                                            </template>
+                                        </div>
+
+                                        {{-- Résultat --}}
+                                        <span class="text-sm font-medium text-ink truncate" x-text="game.winner === 'x' ? (openEntry.x_label + ' (✕)') : (game.winner === 'o' ? (openEntry.o_label + ' (◯)') : 'Égalité')"></span>
+
+                                        {{-- Nombre de coups --}}
+                                        <span class="shrink-0 font-mono text-[10px] text-faint" x-text="(game.moves_count ?? game.moves) + ' coups'"></span>
                                     </div>
                                 </template>
+                            </div>
+                        </div>
+                    </template>
+
+
                             </div>
                         </div>
                     </template>

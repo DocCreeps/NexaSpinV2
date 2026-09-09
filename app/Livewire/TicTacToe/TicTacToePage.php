@@ -7,37 +7,32 @@ use App\Application\Home\Enums\GameModeType;
 use App\Application\TicTacToe\Actions\ChooseAiMoveAction;
 use App\Application\TicTacToe\Actions\ReplayMovesAction;
 use App\Domain\TicTacToe\Entities\Board;
+use App\Domain\TicTacToe\Enums\DifficultyLevel;
 use App\Domain\TicTacToe\Enums\Mark;
 use App\Domain\TicTacToe\Enums\TicTacToeOpponentType;
 use App\Domain\TicTacToe\Exceptions\InvalidMoveException;
+use App\Domain\TicTacToe\Strategies\HeuristicTicTacToeStrategy;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 /**
- * Composant Livewire gérant une partie de morpion, contre l'IA ou à deux
- * joueurs (même écran). Suit le pattern de PoolStagePage/DoubleEliminationBracketPage :
- * seule la liste des coups est persistée, l'entité Board est reconstruite à
- * chaque accès via #[Computed] + ReplayMovesAction, jamais stockée
- * directement en propriété publique.
- *
- * Regroupement par session : toutes les parties jouées depuis l'ouverture de
- * la page (ou depuis le dernier "Vider l'historique") partagent le même
- * $sessionId et sont fusionnées en une seule entrée dans l'historique global
- * (/historique) via HistoryStore::pushSession(), mise à jour partie après
- * partie plutôt qu'empilée une par une.
+ * Composant Livewire gérant une partie de morpion (Tic-Tac-Toe).
  */
 class TicTacToePage extends Component
 {
     private const MAX_HISTORY = 100;
 
-    /** Identifiant de la session en cours, régénéré à l'ouverture de la page et à chaque "Vider l'historique". */
+    /** Identifiant de la session en cours */
     #[Locked]
     public string $sessionId;
 
-    /** 'ai' ou 'local'. Verrouillé dès que la session contient au moins une partie (ou une partie en cours). */
-    public string $opponentType = TicTacToeOpponentType::LOCAL->value;
+    /** Mode IA sélectionné par défaut */
+    public string $opponentType = TicTacToeOpponentType::AI->value;
+
+    /** Difficulté par défaut */
+    public string $difficulty = DifficultyLevel::MEDIUM->value;
 
     /** @var array<int, int> */
     #[Locked]
@@ -56,34 +51,44 @@ class TicTacToePage extends Component
         $this->sessionId = (string) Str::uuid();
     }
 
-    /**
-     * Change l'adversaire (IA / local). Refusé une fois la session commencée
-     * (partie en cours ou déjà terminée) pour ne pas mélanger deux types
-     * d'adversaire dans une même session groupée.
-     */
     public function setOpponentType(string $type): void
     {
-        if ($this->history !== [] || $this->moves !== []) {
+        // Interdit le changement uniquement si une partie est en cours
+        if ($this->isGameInProgress()) {
             return;
         }
 
         $opponent = TicTacToeOpponentType::tryFrom($type);
 
-        if ($opponent === null) {
+        if ($opponent !== null) {
+            $this->opponentType = $opponent->value;
+        }
+    }
+
+    public function setDifficulty(string $difficulty): void
+    {
+        // Interdit le changement uniquement si une partie est en cours
+        if ($this->isGameInProgress()) {
             return;
         }
 
-        $this->opponentType = $opponent->value;
+        $level = DifficultyLevel::tryFrom($difficulty);
+
+        if ($level !== null) {
+            $this->difficulty = $level->value;
+        }
     }
 
-    public function play(int $position, ChooseAiMoveAction $aiAction): void
+    private function isGameInProgress(): bool
+    {
+        return count($this->moves) > 0 && ! $this->board()->isOver();
+    }
+
+    public function play(int $position): void
     {
         $this->error = null;
 
         try {
-            // Valide le coup sur la reconstruction courante du plateau, avant
-            // de l'ajouter à la liste persistée. Un coup invalide ne modifie
-            // donc jamais $this->moves.
             $this->board()->play($position);
         } catch (InvalidMoveException $e) {
             $this->error = $e->getMessage();
@@ -94,16 +99,12 @@ class TicTacToePage extends Component
         $this->moves[] = $position;
         unset($this->board);
 
-        $this->maybePlayAiMove($aiAction);
+        $this->maybePlayAiMove();
 
         $this->recordIfFinished();
     }
 
-    /**
-     * En mode IA, joue automatiquement le coup de O juste après celui de X
-     * (le joueur humain a toujours X et commence). Ne fait rien en local.
-     */
-    private function maybePlayAiMove(ChooseAiMoveAction $aiAction): void
+    private function maybePlayAiMove(): void
     {
         if ($this->opponentType !== TicTacToeOpponentType::AI->value) {
             return;
@@ -112,6 +113,10 @@ class TicTacToePage extends Component
         if ($this->board()->isOver() || $this->board()->currentTurn() !== Mark::O) {
             return;
         }
+
+        $level = DifficultyLevel::from($this->difficulty);
+        $strategy = new HeuristicTicTacToeStrategy($level->errorRate());
+        $aiAction = new ChooseAiMoveAction($strategy);
 
         $aiMove = $aiAction->execute($this->board());
 
@@ -149,6 +154,8 @@ class TicTacToePage extends Component
         $entry = [
             'winner' => $board->winner()?->value,
             'moves_count' => count($this->moves),
+            'opponent_type' => $this->opponentType,
+            'difficulty' => $this->opponentType === TicTacToeOpponentType::AI->value ? $this->difficulty : null,
         ];
 
         $this->history[] = $entry;
@@ -166,6 +173,8 @@ class TicTacToePage extends Component
 
         app(HistoryStore::class)->pushSession(GameModeType::TIC_TAC_TOE, $this->sessionId, [
             'opponent' => $opponent->value,
+            'opponent_type' => $opponent->value,
+            'difficulty' => $this->opponentType === TicTacToeOpponentType::AI->value ? $this->difficulty : null,
             'x_label' => $opponent->xLabel(),
             'o_label' => $opponent->oLabel(),
             'score' => [
@@ -180,7 +189,7 @@ class TicTacToePage extends Component
 
     private function countWinner(?string $winner): int
     {
-        return count(array_filter($this->history, fn (array $g) => $g['winner'] === $winner));
+        return count(array_filter($this->history, fn(array $g) => $g['winner'] === $winner));
     }
 
     public function opponent(): TicTacToeOpponentType
