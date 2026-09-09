@@ -214,7 +214,12 @@ class RpsPage extends Component
     {
         return RpsOpponentType::from($this->opponentType);
     }
-
+    public function restart(): void
+    {
+        // Réinitialise l'état de la manche / partie
+        $this->reset(['playerChoice', 'opponentChoice', 'localFirstChoice', 'outcome']);
+    }
+    
     public function render()
     {
         $mode = GameModeType::ROCK_PAPER_SCISSORS->toDto();

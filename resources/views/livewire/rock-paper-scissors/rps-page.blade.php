@@ -33,7 +33,7 @@
                 </p>
             </div>
 
-            <div class="card-hard self-start rounded-xl border-2 border-ink bg-panel px-5 py-3 text-center min-w-[110px]">
+            <div class="card-hard min-w-[110px] self-start rounded-xl border-2 border-ink bg-panel px-5 py-3 text-center">
                 <p class="font-mono text-[9px] uppercase tracking-widest text-subtle">Manches</p>
                 <p class="mt-0.5 font-display text-2xl text-ink">{{ count($history) }}</p>
             </div>
@@ -44,10 +44,8 @@
             @php $locked = count($history) > 0 || $localFirstChoice !== null; @endphp
             <div class="inline-flex rounded-lg border-2 border-ink bg-panel p-0.5" @if($locked) title="Videz l'historique pour changer d'adversaire" @endif>
                 @foreach(\App\Domain\RockPaperScissors\Enums\RpsOpponentType::cases() as $type)
-                <button type="button" wire:click="setOpponentType('{{ $type->value }}')" @disabled($locked) @class([
-                        'rounded-md px-3.5 py-1.5 font-mono text-[10px] uppercase tracking-widest transition disabled:cursor-not-allowed disabled:opacity-60',
-                        'bg-ink text-white' => $opponentType === $type->value,
-                        'text-muted' => $opponentType !== $type->value,
+                <button type="button" wire:click="setOpponentType('{{ $type->value }}')" @disabled($locked) @class([ 'rounded-md px-3.5 py-1.5 font-mono text-[10px] uppercase tracking-widest transition disabled:cursor-not-allowed disabled:opacity-60' , 'bg-ink text-white'=> $opponentType === $type->value,
+                    'text-muted' => $opponentType !== $type->value,
                     ])>
                     {{ $type->label() }}
                 </button>
@@ -87,10 +85,9 @@
                     </div>
 
                     {{-- Résultat --}}
-                    <div x-show="revealed" x-cloak class="flex items-center gap-2 rounded-xl border-2 border-ink px-6 py-3 font-display text-lg shadow-hard" @class([
-                            'bg-secondary text-ink' => $outcome === 'win',
-                            'bg-danger/10 text-danger' => $outcome === 'lose',
-                            'bg-wash text-ink' => $outcome === 'draw',
+                    <div x-show="revealed" x-cloak class="flex items-center gap-2 rounded-xl border-2 border-ink px-6 py-3 font-display text-lg shadow-hard" @class([ 'bg-secondary text-ink'=> $outcome === 'win',
+                        'bg-danger/10 text-danger' => $outcome === 'lose',
+                        'bg-wash text-ink' => $outcome === 'draw',
                         ])>
                         @if($outcome === 'win')
                         🏆 Gagné !
@@ -101,56 +98,67 @@
                         @endif
                     </div>
 
-                    @if($opponentType === 'local' && $localFirstChoice !== null)
-                    {{-- En attente du 2e joueur : écran "passez l'appareil" puis ses boutons --}}
-                    <div x-show="passOverlay" x-cloak class="flex w-full max-w-md flex-col items-center gap-4 rounded-xl border-2 border-dashed border-ink bg-wash px-6 py-8 text-center">
-                        <span class="text-3xl">🔁</span>
-                        <p class="font-display text-lg text-ink">Passez l'appareil à {{ $this->opponent()->playerBLabel() }}</p>
-                        <p class="text-xs text-muted">{{ $this->opponent()->playerALabel() }} a déjà choisi.</p>
-                        <button type="button" x-on:click="passOverlay = false" class="card-hard rounded-xl border-2 border-ink bg-primary px-5 py-2.5 font-display text-sm text-white transition hover:-translate-x-px hover:-translate-y-px hover:shadow-hard-lg">
-                            C'est bon, j'ai l'appareil
+                    {{-- BOUTON REJOUER (Affiché seulement une fois la manche terminée) --}}
+                    <div x-show="revealed" x-cloak class="flex w-full max-w-md justify-center">
+                        <button type="button" x-on:click="revealed = false; passOverlay = false; $wire.restart()" class="btn-press flex items-center justify-center gap-2 rounded-xl border-2 border-ink bg-primary px-8 py-3.5 font-display text-base text-white shadow-hard transition hover:-translate-x-px hover:-translate-y-px">
+                            <span>🔄</span>
+                            <span>Rejouer</span>
                         </button>
                     </div>
 
-                    <div x-show="!passOverlay" x-cloak class="grid w-full max-w-md grid-cols-3 gap-3">
-                        <p class="col-span-3 -mt-2 mb-1 text-center font-mono text-[10px] uppercase tracking-widest text-subtle">
-                            À {{ $this->opponent()->playerBLabel() }} de choisir
-                        </p>
-                        <button type="button" wire:click="play('rock')" :disabled="playing" class="btn-press flex flex-col items-center gap-1 rounded-xl border-2 border-ink bg-primary py-4 text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-info focus-visible:ring-offset-2 disabled:opacity-50">
-                            <span class="text-2xl">🪨</span>
-                            <span class="font-mono text-[10px] uppercase tracking-widest">Pierre</span>
-                        </button>
-                        <button type="button" wire:click="play('paper')" :disabled="playing" class="btn-press flex flex-col items-center gap-1 rounded-xl border-2 border-ink bg-primary py-4 text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-info focus-visible:ring-offset-2 disabled:opacity-50">
-                            <span class="text-2xl">📄</span>
-                            <span class="font-mono text-[10px] uppercase tracking-widest">Feuille</span>
-                        </button>
-                        <button type="button" wire:click="play('scissors')" :disabled="playing" class="btn-press flex flex-col items-center gap-1 rounded-xl border-2 border-ink bg-primary py-4 text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-info focus-visible:ring-offset-2 disabled:opacity-50">
-                            <span class="text-2xl">✂️</span>
-                            <span class="font-mono text-[10px] uppercase tracking-widest">Ciseaux</span>
-                        </button>
-                    </div>
-                    @else
-                    {{-- Adversaire IA, ou local en attente du 1er joueur --}}
-                    <div class="grid w-full max-w-md grid-cols-3 gap-3">
-                        @if($opponentType === 'local')
-                        <p class="col-span-3 -mt-2 mb-1 text-center font-mono text-[10px] uppercase tracking-widest text-subtle">
-                            À {{ $this->opponent()->playerALabel() }} de choisir
-                        </p>
+                    {{-- CHOIX DES COUPS (Affiché seulement quand la manche est en cours) --}}
+                    <div x-show="!revealed" class="w-full max-w-md">
+                        @if($opponentType === 'local' && $localFirstChoice !== null)
+                        {{-- En attente du 2e joueur : écran "passez l'appareil" puis ses boutons --}}
+                        <div x-show="passOverlay" x-cloak class="flex w-full flex-col items-center gap-4 rounded-xl border-2 border-dashed border-ink bg-wash px-6 py-8 text-center">
+                            <span class="text-3xl">🔁</span>
+                            <p class="font-display text-lg text-ink">Passez l'appareil à {{ $this->opponent()->playerBLabel() }}</p>
+                            <p class="text-xs text-muted">{{ $this->opponent()->playerALabel() }} a déjà choisi.</p>
+                            <button type="button" x-on:click="passOverlay = false" class="card-hard rounded-xl border-2 border-ink bg-primary px-5 py-2.5 font-display text-sm text-white transition hover:-translate-x-px hover:-translate-y-px hover:shadow-hard-lg">
+                                C'est bon, j'ai l'appareil
+                            </button>
+                        </div>
+
+                        <div x-show="!passOverlay" x-cloak class="grid w-full grid-cols-3 gap-3">
+                            <p class="col-span-3 -mt-2 mb-1 text-center font-mono text-[10px] uppercase tracking-widest text-subtle">
+                                À {{ $this->opponent()->playerBLabel() }} de choisir
+                            </p>
+                            <button type="button" wire:click="play('rock')" :disabled="playing" class="btn-press flex flex-col items-center gap-1 rounded-xl border-2 border-ink bg-primary py-4 text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-info focus-visible:ring-offset-2 disabled:opacity-50">
+                                <span class="text-2xl">🪨</span>
+                                <span class="font-mono text-[10px] uppercase tracking-widest">Pierre</span>
+                            </button>
+                            <button type="button" wire:click="play('paper')" :disabled="playing" class="btn-press flex flex-col items-center gap-1 rounded-xl border-2 border-ink bg-primary py-4 text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-info focus-visible:ring-offset-2 disabled:opacity-50">
+                                <span class="text-2xl">📄</span>
+                                <span class="font-mono text-[10px] uppercase tracking-widest">Feuille</span>
+                            </button>
+                            <button type="button" wire:click="play('scissors')" :disabled="playing" class="btn-press flex flex-col items-center gap-1 rounded-xl border-2 border-ink bg-primary py-4 text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-info focus-visible:ring-offset-2 disabled:opacity-50">
+                                <span class="text-2xl">✂️</span>
+                                <span class="font-mono text-[10px] uppercase tracking-widest">Ciseaux</span>
+                            </button>
+                        </div>
+                        @else
+                        {{-- Adversaire IA, ou local en attente du 1er joueur --}}
+                        <div class="grid w-full grid-cols-3 gap-3">
+                            @if($opponentType === 'local')
+                            <p class="col-span-3 -mt-2 mb-1 text-center font-mono text-[10px] uppercase tracking-widest text-subtle">
+                                À {{ $this->opponent()->playerALabel() }} de choisir
+                            </p>
+                            @endif
+                            <button type="button" wire:click="play('rock')" :disabled="playing" class="btn-press flex flex-col items-center gap-1 rounded-xl border-2 border-ink bg-primary py-4 text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-info focus-visible:ring-offset-2 disabled:opacity-50">
+                                <span class="text-2xl">🪨</span>
+                                <span class="font-mono text-[10px] uppercase tracking-widest">Pierre</span>
+                            </button>
+                            <button type="button" wire:click="play('paper')" :disabled="playing" class="btn-press flex flex-col items-center gap-1 rounded-xl border-2 border-ink bg-primary py-4 text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-info focus-visible:ring-offset-2 disabled:opacity-50">
+                                <span class="text-2xl">📄</span>
+                                <span class="font-mono text-[10px] uppercase tracking-widest">Feuille</span>
+                            </button>
+                            <button type="button" wire:click="play('scissors')" :disabled="playing" class="btn-press flex flex-col items-center gap-1 rounded-xl border-2 border-ink bg-primary py-4 text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-info focus-visible:ring-offset-2 disabled:opacity-50">
+                                <span class="text-2xl">✂️</span>
+                                <span class="font-mono text-[10px] uppercase tracking-widest">Ciseaux</span>
+                            </button>
+                        </div>
                         @endif
-                        <button type="button" wire:click="play('rock')" :disabled="playing" class="btn-press flex flex-col items-center gap-1 rounded-xl border-2 border-ink bg-primary py-4 text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-info focus-visible:ring-offset-2 disabled:opacity-50">
-                            <span class="text-2xl">🪨</span>
-                            <span class="font-mono text-[10px] uppercase tracking-widest">Pierre</span>
-                        </button>
-                        <button type="button" wire:click="play('paper')" :disabled="playing" class="btn-press flex flex-col items-center gap-1 rounded-xl border-2 border-ink bg-primary py-4 text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-info focus-visible:ring-offset-2 disabled:opacity-50">
-                            <span class="text-2xl">📄</span>
-                            <span class="font-mono text-[10px] uppercase tracking-widest">Feuille</span>
-                        </button>
-                        <button type="button" wire:click="play('scissors')" :disabled="playing" class="btn-press flex flex-col items-center gap-1 rounded-xl border-2 border-ink bg-primary py-4 text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-info focus-visible:ring-offset-2 disabled:opacity-50">
-                            <span class="text-2xl">✂️</span>
-                            <span class="font-mono text-[10px] uppercase tracking-widest">Ciseaux</span>
-                        </button>
                     </div>
-                    @endif
                 </section>
             </div>
 
@@ -158,18 +166,18 @@
             <div class="space-y-6 lg:col-span-5">
                 <section class="card-hard rounded-2xl border-2 border-ink bg-panel p-5">
                     <h2 class="mb-4 font-display text-lg text-ink">Statistiques</h2>
-                    <div class="grid grid-cols-3 gap-3">
-                        <div class="rounded-xl border-2 border-ink bg-secondary/40 px-3 py-3 text-center">
-                            <p class="truncate font-mono text-[9px] uppercase tracking-widest text-ink/70">{{ $this->opponent()->playerALabel() }}</p>
-                            <p class="mt-0.5 font-display text-xl text-ink">{{ $this->winCount() }}</p>
+                    <div class="grid grid-cols-3 gap-2 sm:gap-3">
+                        <div class="flex flex-col items-center justify-center rounded-xl border-2 border-ink bg-secondary/40 px-2 py-3 text-center">
+                            <p class="font-mono text-[9px] font-bold uppercase leading-tight tracking-wider text-ink/80" title="{{ $this->opponent()->playerALabel() }}">{{ $this->opponent()->playerALabel() }}</p>
+                            <p class="mt-1 font-display text-xl text-ink">{{ $this->winCount() }}</p>
                         </div>
-                        <div class="rounded-xl border-2 border-ink bg-wash px-3 py-3 text-center">
-                            <p class="font-mono text-[9px] uppercase tracking-widest text-subtle">Nulles</p>
-                            <p class="mt-0.5 font-display text-xl text-ink">{{ $this->drawCount() }}</p>
+                        <div class="flex flex-col items-center justify-center rounded-xl border-2 border-ink bg-wash px-2 py-3 text-center">
+                            <p class="font-mono text-[9px] font-bold uppercase leading-tight tracking-wider text-subtle">Nulles</p>
+                            <p class="mt-1 font-display text-xl text-ink">{{ $this->drawCount() }}</p>
                         </div>
-                        <div class="rounded-xl border-2 border-ink bg-danger/10 px-3 py-3 text-center">
-                            <p class="truncate font-mono text-[9px] uppercase tracking-widest text-danger/70">{{ $this->opponent()->playerBLabel() }}</p>
-                            <p class="mt-0.5 font-display text-xl text-danger">{{ $this->loseCount() }}</p>
+                        <div class="flex flex-col items-center justify-center rounded-xl border-2 border-ink bg-danger/10 px-2 py-3 text-center">
+                            <p class="font-mono text-[9px] font-bold uppercase leading-tight tracking-wider text-danger/80" title="{{ $this->opponent()->playerBLabel() }}">{{ $this->opponent()->playerBLabel() }}</p>
+                            <p class="mt-1 font-display text-xl text-danger">{{ $this->loseCount() }}</p>
                         </div>
                     </div>
                 </section>
@@ -187,9 +195,7 @@
                     @if(count($history))
                     <div class="custom-scrollbar max-h-[320px] space-y-1.5 overflow-y-auto pr-1">
                         @foreach(array_reverse($history, true) as $index => $entry)
-                        <div @class([
-                            'flex items-center justify-between rounded-xl border-2 border-ink px-3 py-2 text-sm',
-                            'bg-secondary/20' => $entry['outcome'] === 'win',
+                        <div @class([ 'flex items-center justify-between rounded-xl border-2 border-ink px-3 py-2 text-sm' , 'bg-secondary/20'=> $entry['outcome'] === 'win',
                             'bg-danger/5' => $entry['outcome'] === 'lose',
                             'bg-wash' => $entry['outcome'] === 'draw',
                             ])>
@@ -198,9 +204,7 @@
                                 vs
                                 {{ ['rock' => 'Pierre', 'paper' => 'Feuille', 'scissors' => 'Ciseaux'][$entry['b']] }}
                             </span>
-                            <span @class([
-                                'rounded-md border px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase',
-                                'border-ink bg-secondary text-ink' => $entry['outcome'] === 'win',
+                            <span @class([ 'rounded-md border px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase' , 'border-ink bg-secondary text-ink'=> $entry['outcome'] === 'win',
                                 'border-danger/30 bg-danger/10 text-danger' => $entry['outcome'] === 'lose',
                                 'border-ink/20 bg-panel text-subtle' => $entry['outcome'] === 'draw',
                                 ])>
