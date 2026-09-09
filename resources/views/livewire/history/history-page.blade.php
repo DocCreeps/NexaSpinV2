@@ -275,18 +275,26 @@
                         @case('tic_tac_toe')
                         <div class="flex flex-wrap items-center gap-2.5">
                             <span class="text-lg leading-none">⭕</span>
+
                             <span class="font-mono text-[11px] text-subtle">
                                 {{ $entry['x_label'] ?? 'Joueur X' }} vs {{ $entry['o_label'] ?? 'Joueur O' }}
                             </span>
+
+                            @if(($entry['vs_ai'] ?? false) && !empty($entry['difficulty_label']))
+                            <span class="rounded-md border border-ink/20 bg-wash px-1.5 py-0.5 font-mono text-[10px] text-subtle">
+                                {{ $entry['difficulty_label'] }}
+                            </span>
+                            @endif
+
                             <span class="font-display text-base tracking-wide">
                                 {{ $entry['score']['x'] ?? 0 }}V · {{ $entry['score']['draw'] ?? 0 }}N · {{ $entry['score']['o'] ?? 0 }}D
                             </span>
+
                             <span class="font-mono text-[11px] text-faint">
                                 {{ $entry['games_count'] ?? 0 }} partie{{ ($entry['games_count'] ?? 0) > 1 ? 's' : '' }}
                             </span>
                         </div>
                         @break
-
 
                         @endswitch
                     </div>
