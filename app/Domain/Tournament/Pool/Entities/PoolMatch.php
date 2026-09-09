@@ -14,6 +14,7 @@ use App\Domain\Tournament\ValueObjects\Participant;
 final class PoolMatch
 {
     private ?Participant $winner = null;
+
     private bool $draw = false;
 
     public function __construct(

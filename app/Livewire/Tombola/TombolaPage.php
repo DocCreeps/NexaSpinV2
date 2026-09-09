@@ -13,15 +13,21 @@ class TombolaPage extends Component
     use ManagesParticipants;
 
     private const MIN_PARTICIPANTS = 3;
+
     private const MAX_HISTORY = 50;
 
     public string $drawMode = 'fixed';
+
     public int $lotsCount = 3;
+
     public bool $allowDuplicates = false;
+
     public bool $slowMode = true;
+
     public bool $autoAdvance = true;
 
     public array $remainingPool = [];
+
     public array $remainingWeights = [];
 
     /** Index du lot actuel pour le tirage lent progressif. */
@@ -119,17 +125,20 @@ class TombolaPage extends Component
 
         if (count($this->participants) < self::MIN_PARTICIPANTS) {
             $this->error = sprintf('Ajoutez au moins %d participants.', self::MIN_PARTICIPANTS);
+
             return;
         }
 
         if ($this->drawMode === 'fixed') {
             if ($this->lotsCount < 1) {
                 $this->error = 'Le nombre de lots doit être d’au moins 1.';
+
                 return;
             }
 
             if (! $this->allowDuplicates && $this->lotsCount > count($this->participants)) {
                 $this->error = sprintf('Sans remise, le nombre de lots ne peut pas dépasser le nombre de participants (%d).', count($this->participants));
+
                 return;
             }
         }

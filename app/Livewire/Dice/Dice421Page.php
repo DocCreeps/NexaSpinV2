@@ -19,6 +19,7 @@ use Livewire\Component;
 class Dice421Page extends Component
 {
     private const DICE_COUNT = 3;
+
     private const MAX_HISTORY = 100;
 
     private DiceGameStrategy $strategy;
@@ -48,8 +49,11 @@ class Dice421Page extends Component
     public int $throwCount = 0;
 
     public bool $isOver = false;
+
     public bool $isWon = false;
+
     public ?string $combinationLabel = null;
+
     public ?string $error = null;
 
     /** @var array<int, array{dice: array<int>, throws: int, won: bool, combination: ?string}> */
@@ -68,7 +72,7 @@ class Dice421Page extends Component
         $this->resetGame();
 
         $this->history = array_map(
-            static fn(array $entry) => [
+            static fn (array $entry) => [
                 'dice' => $entry['dice'],
                 'throws' => $entry['throws'],
                 'won' => $entry['won'],
@@ -197,7 +201,7 @@ class Dice421Page extends Component
 
     public function winCount(): int
     {
-        return count(array_filter($this->history, fn(array $entry) => $entry['won']));
+        return count(array_filter($this->history, fn (array $entry) => $entry['won']));
     }
 
     public function render()

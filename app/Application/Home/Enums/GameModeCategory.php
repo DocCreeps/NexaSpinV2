@@ -4,7 +4,6 @@ namespace App\Application\Home\Enums;
 
 /**
  * Catégorie de présentation d'un mode de jeu sur la page d'accueil.
- *
  */
 enum GameModeCategory: string
 {
@@ -14,7 +13,6 @@ enum GameModeCategory: string
     case TOOLS = 'tools';
 
     case DEV = 'dev';
-
 
     public function label(): string
     {

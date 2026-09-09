@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route;
 use Spatie\Sitemap\Sitemap;
 use Spatie\Sitemap\Tags\Url;
@@ -10,6 +11,7 @@ use Spatie\Sitemap\Tags\Url;
 class GenerateSitemap extends Command
 {
     protected $signature = 'sitemap:generate';
+
     protected $description = 'Génère le sitemap.xml statique de NexaSpin à partir des routes GET publiques';
 
     /**
@@ -36,16 +38,16 @@ class GenerateSitemap extends Command
 
         $sitemap->writeToFile(public_path('sitemap.xml'));
 
-        $this->info('sitemap.xml généré dans public/ (' . $this->publicRoutes()->count() . ' URLs).');
+        $this->info('sitemap.xml généré dans public/ ('.$this->publicRoutes()->count().' URLs).');
     }
 
     /**
-     * @return \Illuminate\Support\Collection<int, \Illuminate\Routing\Route>
+     * @return Collection<int, \Illuminate\Routing\Route>
      */
     private function publicRoutes()
     {
         return collect(Route::getRoutes())
-            ->filter(fn($route) => in_array('GET', $route->methods())
+            ->filter(fn ($route) => in_array('GET', $route->methods())
                 && $route->getName() !== null
                 && ! str_starts_with($route->getName(), 'livewire.')
                 && empty($route->parameterNames()));

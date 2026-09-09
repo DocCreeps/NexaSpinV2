@@ -16,14 +16,18 @@ use Livewire\Component;
  */
 class CoinFlipPage extends Component
 {
-    private const SIDES = ['Pile', 'Face'];
     private const MAX_HISTORY = 5000;
+
     private const MIN_AUTO_FLIPS = 2;
+
     private const MAX_AUTO_FLIPS = 500;
+
     private const MAX_LABEL_LENGTH = 16;
 
     public ?string $result = null;
+
     public array $history = [];
+
     public ?string $error = null;
 
     /** Si > 1, bascule automatiquement en tirage multiple */
@@ -31,11 +35,14 @@ class CoinFlipPage extends Component
 
     #[Locked]
     public ?string $bet = null;
+
     public ?bool $lastBetWon = null;
+
     public array $betHistory = [];
 
     /** Libellés personnalisables des faces */
     public string $pileLabel = 'Pile';
+
     public string $faceLabel = 'Face';
 
     /**
@@ -50,7 +57,7 @@ class CoinFlipPage extends Component
         foreach ($historyStore->all(GameModeType::COIN_FLIP) as $entry) {
             $this->history[] = $entry;
 
-            if (($entry['type'] ?? 'single') === 'single' && isset($entry['bet_won']) && $entry['bet_won'] !== null) {
+            if (($entry['type'] ?? 'single') === 'single' && isset($entry['bet_won'])) {
                 $this->betHistory[] = $entry['bet_won'];
             }
         }
@@ -192,7 +199,7 @@ class CoinFlipPage extends Component
         foreach ($this->pendingHistoryEntries as $entry) {
             $this->history[] = $entry;
 
-            if (($entry['type'] ?? 'single') === 'single' && isset($entry['bet_won']) && $entry['bet_won'] !== null) {
+            if (($entry['type'] ?? 'single') === 'single' && isset($entry['bet_won'])) {
                 $this->betHistory[] = $entry['bet_won'];
             }
 
@@ -261,12 +268,12 @@ class CoinFlipPage extends Component
 
     public function betWinCount(): int
     {
-        return count(array_filter($this->betHistory, fn(bool $won) => $won));
+        return count(array_filter($this->betHistory, fn (bool $won) => $won));
     }
 
     public function betLossCount(): int
     {
-        return count(array_filter($this->betHistory, fn(bool $won) => ! $won));
+        return count(array_filter($this->betHistory, fn (bool $won) => ! $won));
     }
 
     public function betTotal(): int

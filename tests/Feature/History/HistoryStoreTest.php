@@ -2,19 +2,20 @@
 
 use App\Application\History\HistoryStore;
 use App\Application\Home\Enums\GameModeType;
+use Illuminate\Support\Carbon;
 
 afterEach(function () {
-    Illuminate\Support\Carbon::setTestNow();
+    Carbon::setTestNow();
 });
 
 it('returns an empty history for a mode with no entries yet', function () {
-    $store = new HistoryStore();
+    $store = new HistoryStore;
 
     expect($store->all(GameModeType::CLASSIC))->toBe([]);
 });
 
 it('remembers a pushed entry and puts the most recent one first', function () {
-    $store = new HistoryStore();
+    $store = new HistoryStore;
 
     $store->push(GameModeType::CLASSIC, ['winner' => 'Alice']);
     $store->push(GameModeType::CLASSIC, ['winner' => 'Bob']);
@@ -27,7 +28,7 @@ it('remembers a pushed entry and puts the most recent one first', function () {
 });
 
 it('stamps every pushed entry with a recorded_at timestamp', function () {
-    $store = new HistoryStore();
+    $store = new HistoryStore;
 
     $store->push(GameModeType::CLASSIC, ['winner' => 'Alice']);
 
@@ -35,7 +36,7 @@ it('stamps every pushed entry with a recorded_at timestamp', function () {
 });
 
 it('keeps each game mode history separate', function () {
-    $store = new HistoryStore();
+    $store = new HistoryStore;
 
     $store->push(GameModeType::CLASSIC, ['winner' => 'Alice']);
     $store->push(GameModeType::COIN_FLIP, ['side' => 'pile']);
@@ -45,7 +46,7 @@ it('keeps each game mode history separate', function () {
 });
 
 it('limits how many entries are returned when a limit is given', function () {
-    $store = new HistoryStore();
+    $store = new HistoryStore;
 
     for ($i = 0; $i < 5; $i++) {
         $store->push(GameModeType::CLASSIC, ['winner' => "Player{$i}"]);
@@ -56,7 +57,7 @@ it('limits how many entries are returned when a limit is given', function () {
 });
 
 it('clears the history of a single mode without affecting the others', function () {
-    $store = new HistoryStore();
+    $store = new HistoryStore;
 
     $store->push(GameModeType::CLASSIC, ['winner' => 'Alice']);
     $store->push(GameModeType::COIN_FLIP, ['side' => 'pile']);
@@ -68,7 +69,7 @@ it('clears the history of a single mode without affecting the others', function 
 });
 
 it('clears every mode at once with clearAll', function () {
-    $store = new HistoryStore();
+    $store = new HistoryStore;
 
     $store->push(GameModeType::CLASSIC, ['winner' => 'Alice']);
     $store->push(GameModeType::COIN_FLIP, ['side' => 'pile']);
@@ -80,12 +81,12 @@ it('clears every mode at once with clearAll', function () {
 });
 
 it('merges every mode together, most recent entry first, tagged with its mode', function () {
-    $store = new HistoryStore();
+    $store = new HistoryStore;
 
-    Illuminate\Support\Carbon::setTestNow('2024-01-01 10:00:00');
+    Carbon::setTestNow('2024-01-01 10:00:00');
     $store->push(GameModeType::CLASSIC, ['winner' => 'Alice']);
 
-    Illuminate\Support\Carbon::setTestNow('2024-01-01 10:00:05');
+    Carbon::setTestNow('2024-01-01 10:00:05');
     $store->push(GameModeType::COIN_FLIP, ['side' => 'pile']);
 
     // The cache TTL was computed from the frozen clock above, so it must still be

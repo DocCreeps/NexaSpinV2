@@ -30,7 +30,7 @@ final class DiceCombinationEvaluator
     }
 
     /**
-     * @param array<int> $sorted
+     * @param  array<int>  $sorted
      */
     private static function isConsecutiveSuite(array $sorted): bool
     {

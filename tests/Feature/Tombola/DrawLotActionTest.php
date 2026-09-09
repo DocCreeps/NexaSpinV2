@@ -3,7 +3,7 @@
 use App\Application\Tombola\Actions\DrawLotAction;
 
 it('removes the winner from the pool when duplicates are not allowed', function () {
-    $action = new DrawLotAction();
+    $action = new DrawLotAction;
 
     $result = $action->execute(
         remainingPool: ['Alice', 'Bob', 'Charlie'],
@@ -17,7 +17,7 @@ it('removes the winner from the pool when duplicates are not allowed', function 
 });
 
 it('picks the only remaining participant when the pool has a single entry', function () {
-    $action = new DrawLotAction();
+    $action = new DrawLotAction;
 
     $result = $action->execute(
         remainingPool: ['Alice'],
@@ -30,7 +30,7 @@ it('picks the only remaining participant when the pool has a single entry', func
 });
 
 it('decrements the weight but keeps the participant when duplicates are allowed and weight remains', function () {
-    $action = new DrawLotAction();
+    $action = new DrawLotAction;
 
     $result = $action->execute(
         remainingPool: ['Alice'],
@@ -44,7 +44,7 @@ it('decrements the weight but keeps the participant when duplicates are allowed 
 });
 
 it('removes the participant once their weight reaches zero even with duplicates allowed', function () {
-    $action = new DrawLotAction();
+    $action = new DrawLotAction;
 
     $result = $action->execute(
         remainingPool: ['Alice'],
@@ -57,7 +57,7 @@ it('removes the participant once their weight reaches zero even with duplicates 
 });
 
 it('always draws a name that belongs to the given pool', function () {
-    $action = new DrawLotAction();
+    $action = new DrawLotAction;
 
     for ($i = 0; $i < 20; $i++) {
         $result = $action->execute(
@@ -71,7 +71,7 @@ it('always draws a name that belongs to the given pool', function () {
 });
 
 it('refuses to draw from an empty pool', function () {
-    $action = new DrawLotAction();
+    $action = new DrawLotAction;
 
     $action->execute(remainingPool: [], remainingWeights: [], allowDuplicates: false);
 })->throws(InvalidArgumentException::class);

@@ -8,15 +8,17 @@ namespace App\Application\Draw\Support;
 class WheelSegmentBuilder
 {
     private const RADIUS = 150;
+
     private const CENTER = 150; // Pour viewBox 300x300
+
     private const DEFAULT_SPINS = 6;
 
     /**
      * Génère les données SVG (paths, couleurs, positions de texte) de chaque segment.
      *
      * @param  array<int, string>  $names
-     * @param  array<string, string>|null  $colors Mappage optionnel des couleurs
-     * @param  array<int, int>|null  $weights Poids optionnels par index
+     * @param  array<string, string>|null  $colors  Mappage optionnel des couleurs
+     * @param  array<int, int>|null  $weights  Poids optionnels par index
      * @return array<int, array{name: string, color: string, path: ?string, fullCircle: bool, labelTransform: string}>
      */
     public static function build(array $names, ?array $colors = null, ?array $weights = null): array
@@ -58,7 +60,7 @@ class WheelSegmentBuilder
 
         return collect($names)
             ->values()
-            ->mapWithKeys(fn(string $name, int $index) => [$name => self::colorFor($index, $total)])
+            ->mapWithKeys(fn (string $name, int $index) => [$name => self::colorFor($index, $total)])
             ->all();
     }
 

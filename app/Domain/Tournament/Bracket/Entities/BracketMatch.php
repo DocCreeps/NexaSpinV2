@@ -13,6 +13,7 @@ use App\Domain\Tournament\ValueObjects\Participant;
 final class BracketMatch
 {
     private ?Participant $winner = null;
+
     private readonly bool $bye;
 
     /**

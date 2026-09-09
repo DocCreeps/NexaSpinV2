@@ -14,7 +14,7 @@ use App\Domain\TicTacToe\Enums\Mark;
 final class ReplayMovesAction
 {
     /**
-     * @param array<int, int> $moves Positions jouées, dans l'ordre.
+     * @param  array<int, int>  $moves  Positions jouées, dans l'ordre.
      */
     public function execute(array $moves, Mark $firstPlayer = Mark::X): Board
     {

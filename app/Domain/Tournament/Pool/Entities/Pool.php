@@ -115,7 +115,7 @@ final class Pool
      * petite (une seule paire par journée), ce n'est structurellement pas
      * toujours évitable.
      *
-     * @param array<int, array<int, array{0: Participant, 1: Participant}>> $days
+     * @param  array<int, array<int, array{0: Participant, 1: Participant}>>  $days
      * @return array<int, array<int, array{0: Participant, 1: Participant}>>
      */
     private function orderDaysToAvoidBackToBack(array $days): array
@@ -139,8 +139,8 @@ final class Pool
      * est null, si $pairs a moins de deux éléments, ou si aucune paire
      * "propre" n'existe (poule trop petite pour l'éviter).
      *
-     * @param array<int, array{0: Participant, 1: Participant}> $pairs
-     * @param array{0: Participant, 1: Participant}|null $bannedPair
+     * @param  array<int, array{0: Participant, 1: Participant}>  $pairs
+     * @param  array{0: Participant, 1: Participant}|null  $bannedPair
      * @return array<int, array{0: Participant, 1: Participant}>
      */
     private function moveCleanPairFirst(array $pairs, ?array $bannedPair): array

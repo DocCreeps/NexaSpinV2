@@ -9,7 +9,9 @@ use Illuminate\View\Component;
 class ModeCard extends Component
 {
     public object $mode;
+
     public string $detectedColor;
+
     public array $hoverClasses;
 
     public function __construct(object $mode)
@@ -23,18 +25,28 @@ class ModeCard extends Component
     {
         $color = trim($colorString);
 
-        if (str_contains($color, 'indigo')) return 'indigo';
-        if (str_contains($color, 'rose') || str_contains($color, 'pink')) return 'rose';
-        if (str_contains($color, 'emerald') || str_contains($color, 'green')) return 'emerald';
-        if (str_contains($color, 'amber') || str_contains($color, 'yellow')) return 'amber';
-        if (str_contains($color, 'blue') || str_contains($color, 'cyan') || str_contains($color, 'sky')) return 'blue';
+        if (str_contains($color, 'indigo')) {
+            return 'indigo';
+        }
+        if (str_contains($color, 'rose') || str_contains($color, 'pink')) {
+            return 'rose';
+        }
+        if (str_contains($color, 'emerald') || str_contains($color, 'green')) {
+            return 'emerald';
+        }
+        if (str_contains($color, 'amber') || str_contains($color, 'yellow')) {
+            return 'amber';
+        }
+        if (str_contains($color, 'blue') || str_contains($color, 'cyan') || str_contains($color, 'sky')) {
+            return 'blue';
+        }
 
         return 'default';
     }
 
     private function resolveHoverClasses(): array
     {
-        if (!$this->mode->available) {
+        if (! $this->mode->available) {
             return ['title' => '', 'button' => ''];
         }
 

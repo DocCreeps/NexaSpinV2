@@ -100,7 +100,7 @@ final class PoolStage
      * diffèrent jamais de plus d'une unité (certaines reçoivent un participant
      * de plus quand $count n'est pas un multiple exact de $poolCount).
      *
-     * @param array<int, Participant> $names
+     * @param  array<int, Participant>  $names
      * @return array<int, Pool>
      */
     private function distribute(array $names, int $poolCount): array

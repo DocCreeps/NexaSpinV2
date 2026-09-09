@@ -38,7 +38,7 @@ it('computes a lose outcome when the opponent choice beats the player', function
 });
 
 it('always returns one of the three known choices from the random strategy', function () {
-    $strategy = new RandomRpsStrategy();
+    $strategy = new RandomRpsStrategy;
 
     for ($i = 0; $i < 30; $i++) {
         expect($strategy->choose())->toBeIn(RpsChoice::cases());
@@ -46,7 +46,7 @@ it('always returns one of the three known choices from the random strategy', fun
 });
 
 it('eventually returns every possible choice from the random strategy', function () {
-    $strategy = new RandomRpsStrategy();
+    $strategy = new RandomRpsStrategy;
     $seen = [];
 
     for ($i = 0; $i < 200; $i++) {
@@ -59,7 +59,7 @@ it('eventually returns every possible choice from the random strategy', function
 });
 
 it('delegates the round to the injected opponent strategy', function () {
-    $action = new PlayRpsRoundAction(new RandomRpsStrategy());
+    $action = new PlayRpsRoundAction(new RandomRpsStrategy);
 
     $result = $action->execute(RpsChoice::PAPER);
 

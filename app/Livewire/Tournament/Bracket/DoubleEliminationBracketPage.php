@@ -2,12 +2,12 @@
 
 namespace App\Livewire\Tournament\Bracket;
 
+use App\Application\History\HistoryStore;
+use App\Application\Home\Enums\GameModeType;
 use App\Application\Tournament\Bracket\Actions\CreateDoubleEliminationBracketAction;
 use App\Application\Tournament\Bracket\Actions\RebuildDoubleEliminationBracketAction;
 use App\Application\Tournament\Bracket\Actions\RecordDoubleEliminationMatchResultAction;
 use App\Application\Tournament\DTOs\ParticipantListData;
-use App\Application\History\HistoryStore;
-use App\Application\Home\Enums\GameModeType;
 use App\Application\Tournament\TournamentProgressStore;
 use App\Domain\Tournament\Bracket\Entities\DoubleEliminationBracket;
 use App\Domain\Tournament\Bracket\Exceptions\InvalidBracketException;
@@ -19,7 +19,9 @@ use Livewire\Component;
 class DoubleEliminationBracketPage extends Component
 {
     private const MIN_PARTICIPANTS = 4;
+
     private const MAX_PARTICIPANTS = 32;
+
     private const MAX_PARTICIPANT_NAME_LENGTH = 50;
 
     private const MODE = GameModeType::BRACKETJV;
@@ -39,6 +41,7 @@ class DoubleEliminationBracketPage extends Component
      * collision entre l'upper bracket, le lower bracket et la grande finale :
      * "upper_{round}_{position}_a", "lower_{round}_{position}_b",
      * "grand_final_a", "grand_final_reset_b"...
+     *
      * @var array<string, int|string|null>
      */
     public array $scores = [];
@@ -112,11 +115,13 @@ class DoubleEliminationBracketPage extends Component
 
         if (mb_strlen($name) > self::MAX_PARTICIPANT_NAME_LENGTH) {
             $this->error = sprintf('Le nom du participant ne peut pas dépasser %d caractères.', self::MAX_PARTICIPANT_NAME_LENGTH);
+
             return;
         }
 
         if (count($this->participants) >= self::MAX_PARTICIPANTS) {
             $this->error = sprintf('Vous ne pouvez pas ajouter plus de %d participants.', self::MAX_PARTICIPANTS);
+
             return;
         }
 
@@ -125,6 +130,7 @@ class DoubleEliminationBracketPage extends Component
 
         if ($exists) {
             $this->error = 'Ce participant existe déjà.';
+
             return;
         }
 
@@ -152,6 +158,7 @@ class DoubleEliminationBracketPage extends Component
 
         if (count($this->participants) < self::MIN_PARTICIPANTS) {
             $this->error = sprintf('Ajoutez au moins %d participants avant de générer le bracket.', self::MIN_PARTICIPANTS);
+
             return;
         }
 
@@ -159,6 +166,7 @@ class DoubleEliminationBracketPage extends Component
             app(CreateDoubleEliminationBracketAction::class)->execute(new ParticipantListData($this->participants));
         } catch (InvalidBracketException $e) {
             $this->error = $e->getMessage();
+
             return;
         }
 
@@ -203,6 +211,7 @@ class DoubleEliminationBracketPage extends Component
         if ($manualWinner === null) {
             if (! is_numeric($valA) || ! is_numeric($valB)) {
                 $this->error = 'Veuillez saisir les scores des deux participants.';
+
                 return;
             }
 
@@ -211,6 +220,7 @@ class DoubleEliminationBracketPage extends Component
 
             if ($scoreA === $scoreB) {
                 $this->error = 'Il ne peut pas y avoir d’égalité.';
+
                 return;
             }
 
@@ -221,6 +231,7 @@ class DoubleEliminationBracketPage extends Component
 
         if (! $winnerName) {
             $this->error = 'Impossible de déterminer le vainqueur.';
+
             return;
         }
 
@@ -238,6 +249,7 @@ class DoubleEliminationBracketPage extends Component
 
         if ($existingIndex !== null && $this->bracket()->hasDownstreamResult($section, $round, $position)) {
             $this->error = 'Ce match a déjà influencé un match suivant (vainqueur propagé ou perdant repêché) : impossible de le modifier tant que ce match suivant n’est pas lui-même annulé.';
+
             return;
         }
 
@@ -259,6 +271,7 @@ class DoubleEliminationBracketPage extends Component
             );
         } catch (InvalidMatchResultException $e) {
             $this->error = $e->getMessage();
+
             return;
         }
 

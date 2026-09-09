@@ -1,7 +1,7 @@
 <?php
 
-use App\Domain\Tournament\Collections\Participants;
 use App\Domain\Tournament\Bracket\Entities\DoubleEliminationBracket;
+use App\Domain\Tournament\Collections\Participants;
 use App\Domain\Tournament\ValueObjects\Participant;
 
 function makeParticipants(int $count): Participants

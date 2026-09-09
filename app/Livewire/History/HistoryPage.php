@@ -89,7 +89,7 @@ class HistoryPage extends Component
             $modes = $this->modesForCategory($category);
 
             return collect($store->allModes())
-                ->filter(fn(array $entry) => in_array(GameModeType::from($entry['mode']), $modes, true))
+                ->filter(fn (array $entry) => in_array(GameModeType::from($entry['mode']), $modes, true))
                 ->values()
                 ->all();
         }
@@ -98,7 +98,7 @@ class HistoryPage extends Component
 
         if ($mode !== null) {
             return array_map(
-                static fn(array $entry) => $entry + ['mode' => $mode->value],
+                static fn (array $entry) => $entry + ['mode' => $mode->value],
                 $store->all($mode)
             );
         }
@@ -115,9 +115,9 @@ class HistoryPage extends Component
     public function availableFilters(): array
     {
         return collect(GameModeType::cases())
-            ->map(fn(GameModeType $mode) => [$mode, $mode->toDto()])
-            ->reject(fn(array $pair) => ! $pair[1]->available)
-            ->map(fn(array $pair) => [
+            ->map(fn (GameModeType $mode) => [$mode, $mode->toDto()])
+            ->reject(fn (array $pair) => ! $pair[1]->available)
+            ->map(fn (array $pair) => [
                 'value' => $pair[0]->value,
                 'label' => $pair[1]->title,
             ])
@@ -135,8 +135,8 @@ class HistoryPage extends Component
     public function availableCategoryFilters(): array
     {
         return collect(GameModeType::grouped())
-            ->reject(fn(array $group) => $group['category'] === GameModeCategory::DEV)
-            ->map(fn(array $group) => [
+            ->reject(fn (array $group) => $group['category'] === GameModeCategory::DEV)
+            ->map(fn (array $group) => [
                 'value' => $group['category']->value,
                 'label' => $group['category']->label(),
             ])
@@ -154,7 +154,7 @@ class HistoryPage extends Component
         }
 
         return collect(GameModeType::cases())
-            ->filter(fn(GameModeType $mode) => $mode->toDto()->category === $category)
+            ->filter(fn (GameModeType $mode) => $mode->toDto()->category === $category)
             ->values()
             ->all();
     }

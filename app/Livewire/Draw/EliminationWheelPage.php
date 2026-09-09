@@ -3,9 +3,9 @@
 namespace App\Livewire\Draw;
 
 use App\Application\Draw\Actions\RunDrawAction;
+use App\Application\Draw\Support\WheelSegmentBuilder;
 use App\Application\History\HistoryStore;
 use App\Application\Home\Enums\GameModeType;
-use App\Application\Draw\Support\WheelSegmentBuilder;
 use App\Livewire\Draw\Concerns\HandlesDraw;
 use App\Livewire\Draw\Concerns\ManagesParticipants;
 use Livewire\Attributes\Computed;
@@ -21,7 +21,9 @@ class EliminationWheelPage extends Component
     use ManagesParticipants;
 
     private const MAX_LABELS_ON_WHEEL = 10;
+
     private const MIN_PARTICIPANTS = 5;
+
     private const MAX_HISTORY = 50;
 
     /** Seuil d'abandon en secondes (animation frontend = 4.5s). */
@@ -47,12 +49,17 @@ class EliminationWheelPage extends Component
     public array $colors = [];
 
     public ?string $pendingElimination = null;
+
     public ?string $lastEliminated = null;
+
     public ?string $winner = null;
 
     public bool $processing = false;
+
     public ?float $processingStartedAt = null;
+
     public int $wheelRotation = 0;
+
     public bool $autoMode = false;
 
     protected function participantsAreLocked(): bool
@@ -63,7 +70,7 @@ class EliminationWheelPage extends Component
     public function mount(HistoryStore $historyStore): void
     {
         $this->history = array_map(
-            static fn(array $entry) => [
+            static fn (array $entry) => [
                 'winner' => $entry['winner'],
                 'participants' => $entry['participants'],
                 'eliminations' => $entry['eliminations'],
@@ -284,7 +291,7 @@ class EliminationWheelPage extends Component
         $this->processing = false;
         $this->processingStartedAt = null;
         $this->pendingElimination = null;
-        $this->error = "La roue semble bloquée : nouvelle tentative possible.";
+        $this->error = 'La roue semble bloquée : nouvelle tentative possible.';
     }
 
     public function started(): bool

@@ -4,10 +4,10 @@ namespace App\Livewire\Tournament\Pool;
 
 use App\Application\History\HistoryStore;
 use App\Application\Home\Enums\GameModeType;
+use App\Application\Tournament\DTOs\ParticipantListData;
 use App\Application\Tournament\Pool\Actions\CreatePoolStageAction;
 use App\Application\Tournament\Pool\Actions\RebuildPoolStageAction;
 use App\Application\Tournament\Pool\Actions\RecordPoolMatchResultAction;
-use App\Application\Tournament\DTOs\ParticipantListData;
 use App\Application\Tournament\TournamentProgressStore;
 use App\Domain\Tournament\Pool\Entities\PoolStage;
 use App\Domain\Tournament\Pool\Exceptions\InvalidPoolMatchResultException;
@@ -19,7 +19,9 @@ use Livewire\Component;
 class PoolStagePage extends Component
 {
     private const MIN_PARTICIPANTS = 4;
+
     private const MAX_PARTICIPANTS = 48;
+
     private const MAX_PARTICIPANT_NAME_LENGTH = 50;
 
     private const MODE = GameModeType::POOL;
@@ -125,11 +127,13 @@ class PoolStagePage extends Component
 
         if (mb_strlen($name) > self::MAX_PARTICIPANT_NAME_LENGTH) {
             $this->error = sprintf('Le nom du participant ne peut pas dépasser %d caractères.', self::MAX_PARTICIPANT_NAME_LENGTH);
+
             return;
         }
 
         if (count($this->participants) >= self::MAX_PARTICIPANTS) {
             $this->error = sprintf('Vous ne pouvez pas ajouter plus de %d participants.', self::MAX_PARTICIPANTS);
+
             return;
         }
 
@@ -138,6 +142,7 @@ class PoolStagePage extends Component
 
         if ($exists) {
             $this->error = 'Ce participant existe déjà.';
+
             return;
         }
 
@@ -165,6 +170,7 @@ class PoolStagePage extends Component
 
         if (count($this->participants) < self::MIN_PARTICIPANTS) {
             $this->error = sprintf('Ajoutez au moins %d participants avant de générer les poules.', self::MIN_PARTICIPANTS);
+
             return;
         }
 
@@ -180,6 +186,7 @@ class PoolStagePage extends Component
             app(CreatePoolStageAction::class)->execute(new ParticipantListData($this->participants));
         } catch (InvalidPoolStageException $e) {
             $this->error = $e->getMessage();
+
             return;
         }
 
@@ -230,6 +237,7 @@ class PoolStagePage extends Component
         if (! $isDraw && $manualWinner === null) {
             if (! is_numeric($valA) || ! is_numeric($valB)) {
                 $this->error = 'Veuillez saisir les scores des deux participants (ou déclarer un match nul).';
+
                 return;
             }
 
@@ -265,6 +273,7 @@ class PoolStagePage extends Component
             );
         } catch (InvalidPoolMatchResultException $e) {
             $this->error = $e->getMessage();
+
             return;
         }
 
@@ -304,7 +313,6 @@ class PoolStagePage extends Component
 
         $this->saveProgress();
     }
-
 
     /**
      * Valide automatiquement un match dès que les deux scores sont saisis

@@ -13,7 +13,7 @@ use App\Domain\DiceRoller\Enums\DiceFaceCount;
 final readonly class DiceRollResult
 {
     /**
-     * @param array<int, int> $values Une valeur par dé lancé, dans l'ordre.
+     * @param  array<int, int>  $values  Une valeur par dé lancé, dans l'ordre.
      */
     public function __construct(
         public DiceFaceCount $faces,

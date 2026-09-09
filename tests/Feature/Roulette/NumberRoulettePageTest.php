@@ -187,3 +187,19 @@ it('can only spin when there is at least one bet and the wheel is not already sp
 
     expect($component->instance()->canSpin())->toBeTrue();
 });
+
+it('marks the spin as won if at least one bet is winning among multiple bets', function () {
+    $component = Livewire::test(NumberRoulettePage::class)
+        ->set('selectedBetType', 'red')
+        ->set('stake', 50)
+        ->call('addBet')
+        ->set('selectedBetType', 'black')
+        ->set('stake', 50)
+        ->call('addBet')
+        ->call('spin');
+
+    $entry = $component->get('pendingHistoryEntry');
+
+    expect($entry['total_return'])->toBeGreaterThan(0)
+        ->and($entry['won'])->toBeTrue(); // <-- Correction ici ('won' au lieu de 'status')
+});
