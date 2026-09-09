@@ -58,29 +58,30 @@
             {{-- Contenu central --}}
             <div class="mx-auto my-auto w-full max-w-3xl py-4 text-center sm:py-8">
                 <p class="mb-3 font-mono text-[10px] tracking-widest text-subtle sm:mb-5 sm:text-xs">
-                    <span aria-hidden="true">◆</span> GÉNÉRATEUR DE DÉCISION ALÉATOIRE <span aria-hidden="true">◆</span>
+                    <span aria-hidden="true">◆</span> TIRAGES, JEUX DE HASARD & OUTILS DE TOURNOI <span aria-hidden="true">◆</span>
                 </p>
 
                 <h1 class="font-display text-[1.75rem] leading-[1.2] text-ink xs:text-3xl sm:text-6xl sm:leading-[1.15]">
-                    Tranchez vos choix
+                    Tirez au sort, jouez
                     <br class="hidden sm:inline" />
-                    <span class="text-outline text-secondary">sans perdre de temps.</span>
+                    <span class="text-outline text-secondary">et organisez vos défis.</span>
                 </h1>
 
                 <p class="mx-auto mt-4 max-w-2xl px-1 text-sm leading-relaxed text-muted sm:mt-7 sm:px-2 sm:text-lg">
-                    Choix du restaurant, arbitrage entre amis ou décision rapide :
-                    sélectionnez l’outil et laissez un tirage impartial trancher.
+                    Roue de la fortune, mini-jeux instantanés (421, Morpion,...) ou gestion de tournois :
+                    découvrez notre suite d’outils gratuits pour trancher vos choix et animer vos parties.
                 </p>
 
                 <div class="mt-6 sm:mt-10">
                     <button type="button" @click="hideHero()" class="btn-press inline-flex w-full items-center justify-center gap-2 rounded-xl border-2 border-ink bg-primary px-8 py-3.5 font-display text-xs text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-info focus-visible:ring-offset-2 sm:w-auto sm:py-4 sm:text-sm">
-                        <span aria-hidden="true">▶</span> LANCER UN TIRAGE
+                        <span aria-hidden="true">▶</span> EXPLORER LE CATALOGUE
                     </button>
 
                     <p class="mt-3 text-xs text-subtle sm:mt-4 sm:text-sm">
-                        Départager un débat, choisir un resto, ou trancher un jeu.
+                        Roues personnalisées, jeux de dés, duels & tableaux de compétition.
                     </p>
                 </div>
+
 
                 {{-- Stats --}}
                 <div class="mx-auto mt-6 grid max-w-lg grid-cols-3 gap-2 sm:mt-10 sm:gap-5">
