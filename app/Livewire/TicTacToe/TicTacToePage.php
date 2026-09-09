@@ -196,7 +196,7 @@ class TicTacToePage extends Component
     {
         return TicTacToeOpponentType::from($this->opponentType);
     }
-
+    
     #[Computed]
     public function board(): Board
     {
