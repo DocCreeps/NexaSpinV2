@@ -9,8 +9,8 @@ use App\Domain\Tournament\ValueObjects\Participant;
 final class RebuildPoolStageAction
 {
     /**
-     * @param array<int, string> $participants
-     * @param array<int, array{pool: string, matchIndex: int, winner: string|null}> $results
+     * @param  array<int, string>  $participants
+     * @param  array<int, array{pool: string, matchIndex: int, winner: string|null}>  $results
      */
     public function execute(array $participants, array $results): PoolStage
     {

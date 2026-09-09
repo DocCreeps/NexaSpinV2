@@ -4,11 +4,11 @@ namespace App\Providers;
 
 use App\Domain\CoinFlip\Contracts\CoinFlipStrategy;
 use App\Domain\CoinFlip\Strategies\RandomCoinFlipStrategy;
-use Illuminate\Support\ServiceProvider;
 use App\Domain\RockPaperScissors\Contracts\RpsOpponentStrategy;
 use App\Domain\RockPaperScissors\Strategies\RandomRpsStrategy;
 use App\Domain\TicTacToe\Contracts\TicTacToeOpponentStrategy;
 use App\Domain\TicTacToe\Strategies\HeuristicTicTacToeStrategy;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {

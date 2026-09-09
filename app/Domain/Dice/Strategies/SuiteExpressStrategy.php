@@ -15,6 +15,7 @@ use App\Domain\Dice\ValueObjects\DiceRoll;
 final class SuiteExpressStrategy implements DiceGameStrategy
 {
     private const DICE_COUNT = 3;
+
     private const MAX_THROWS = 2;
 
     public function diceCount(): int

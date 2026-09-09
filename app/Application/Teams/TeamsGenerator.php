@@ -33,7 +33,7 @@ final class TeamsGenerator
         }
 
         return [
-            'teams' => array_values($teams),
+            'teams' => $teams,
             'substitutes' => $substitutes,
         ];
     }

@@ -6,7 +6,7 @@ use App\Domain\TicTacToe\Enums\Mark;
 use App\Domain\TicTacToe\Exceptions\InvalidMoveException;
 
 it('starts with an empty board and X to play by default', function () {
-    $board = new Board();
+    $board = new Board;
 
     expect($board->cells())->toBe(array_fill(0, 9, null))
         ->and($board->currentTurn())->toBe(Mark::X)
@@ -14,7 +14,7 @@ it('starts with an empty board and X to play by default', function () {
 });
 
 it('alternates turns after each move', function () {
-    $board = new Board();
+    $board = new Board;
 
     $board->play(0);
     expect($board->currentTurn())->toBe(Mark::O);
@@ -24,7 +24,7 @@ it('alternates turns after each move', function () {
 });
 
 it('detects a horizontal line win', function () {
-    $board = new Board();
+    $board = new Board;
 
     $board->play(0); // X
     $board->play(3); // O
@@ -37,7 +37,7 @@ it('detects a horizontal line win', function () {
 });
 
 it('detects a vertical line win', function () {
-    $board = new Board();
+    $board = new Board;
 
     $board->play(0); // X
     $board->play(1); // O
@@ -49,7 +49,7 @@ it('detects a vertical line win', function () {
 });
 
 it('detects a diagonal win', function () {
-    $board = new Board();
+    $board = new Board;
 
     $board->play(0); // X
     $board->play(1); // O
@@ -61,7 +61,7 @@ it('detects a diagonal win', function () {
 });
 
 it('declares a draw when the board is full without any winning line', function () {
-    $board = new Board();
+    $board = new Board;
 
     // Grille classique de match nul :
     // X O X
@@ -77,18 +77,18 @@ it('declares a draw when the board is full without any winning line', function (
 });
 
 it('refuses to play on an already occupied cell', function () {
-    $board = new Board();
+    $board = new Board;
 
     $board->play(0);
     $board->play(0);
 })->throws(InvalidMoveException::class);
 
 it('refuses a position outside the 0-8 range', function (int $position) {
-    (new Board())->play($position);
+    (new Board)->play($position);
 })->with([-1, 9, 100])->throws(InvalidMoveException::class);
 
 it('refuses to play once the game is already over', function () {
-    $board = new Board();
+    $board = new Board;
 
     $board->play(0); // X
     $board->play(3); // O
@@ -102,14 +102,14 @@ it('refuses to play once the game is already over', function () {
 it('replays a sequence of moves to reconstruct the same board state', function () {
     $moves = [0, 3, 1, 4, 2]; // X gagne sur la ligne du haut
 
-    $board = (new ReplayMovesAction())->execute($moves);
+    $board = (new ReplayMovesAction)->execute($moves);
 
     expect($board->winner())->toBe(Mark::X)
         ->and($board->isOver())->toBeTrue();
 });
 
 it('replays an empty move list into a fresh board', function () {
-    $board = (new ReplayMovesAction())->execute([]);
+    $board = (new ReplayMovesAction)->execute([]);
 
     expect($board->cells())->toBe(array_fill(0, 9, null))
         ->and($board->isOver())->toBeFalse();

@@ -28,7 +28,9 @@ trait ManagesParticipants
      * @var array<int, string>
      */
     public array $participants = [];
+
     public array $participantWeights = [];
+
     /**
      * Champ de saisie lié au formulaire d'ajout d'un participant.
      */
@@ -136,6 +138,7 @@ trait ManagesParticipants
             $this->afterParticipantsChanged();
         }
     }
+
     /**
      * Met à jour le poids d'un participant (utilisé par les modes de tirage pondérés uniquement).
      */
@@ -165,6 +168,7 @@ trait ManagesParticipants
 
         $this->afterParticipantsChanged();
     }
+
     /**
      * Supprime un participant et réindexe proprement le tableau.
      */

@@ -23,9 +23,9 @@ final class RollDiceAction
     ) {}
 
     /**
-     * @param array<int> $currentValues Valeurs actuelles des dés (avant relance)
-     * @param array<bool> $kept Dés à conserver (même index que $currentValues) ; un dé
-     *                          absent ou marqué false est relancé via random_int (CSPRNG)
+     * @param  array<int>  $currentValues  Valeurs actuelles des dés (avant relance)
+     * @param  array<bool>  $kept  Dés à conserver (même index que $currentValues) ; un dé
+     *                             absent ou marqué false est relancé via random_int (CSPRNG)
      */
     public function execute(array $currentValues, array $kept, int $throwCount): DiceThrowResult
     {

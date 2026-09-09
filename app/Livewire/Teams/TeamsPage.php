@@ -14,8 +14,11 @@ class TeamsPage extends Component
     use ManagesParticipants;
 
     private const MIN_PARTICIPANTS = 4;
+
     private const MIN_TEAMS = 2;
+
     private const MAX_TEAMS = 20;
+
     private const MAX_HISTORY = 50;
 
     public int $teamsCount = 2;
@@ -33,12 +36,16 @@ class TeamsPage extends Component
     public array $substitutes = [];
 
     public bool $hasResult = false;
+
     public bool $drawing = false;
+
     public bool $slowMode = true;
+
     public bool $autoAdvance = true;
 
     /** @var array<int, array{player: string, type: 'team'|'substitute', team_index: int}> */
     public array $stepsSequence = [];
+
     public int $currentStepIndex = 0;
 
     /**
@@ -98,7 +105,7 @@ class TeamsPage extends Component
             $members = $this->teams[$i] ?? [];
 
             $teamSubs = array_keys(
-                array_filter($this->substitutes ?? [], fn($teamIdx) => $teamIdx === $i)
+                array_filter($this->substitutes, fn ($teamIdx) => $teamIdx === $i)
             );
 
             $formatted[] = [
@@ -135,7 +142,7 @@ class TeamsPage extends Component
 
         $result = $generator->generate($this->participants, $this->teamsCount);
         $rawTeams = $result['teams'];
-        $rawSubstitutes = $result['substitutes'] ?? [];
+        $rawSubstitutes = $result['substitutes'];
 
         $this->fullTeams = [];
         foreach ($rawTeams as $index => $members) {

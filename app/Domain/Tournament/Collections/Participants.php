@@ -2,44 +2,27 @@
 
 namespace App\Domain\Tournament\Collections;
 
+use App\Domain\Shared\Collections\ParticipantsCollection;
 use App\Domain\Tournament\ValueObjects\Participant;
-use ArrayIterator;
-use Countable;
 use InvalidArgumentException;
-use IteratorAggregate;
-use Traversable;
+use Throwable;
 
 /**
  * Collection typée de participants, partagée entre les sous-domaines Bracket
  * et Pool.
+ *
+ * @extends ParticipantsCollection<Participant>
  */
-final class Participants implements Countable, IteratorAggregate
+final class Participants extends ParticipantsCollection
 {
-    /**
-     * @param array<int, Participant> $items
-     */
-    public function __construct(private array $items)
+    protected function itemClass(): string
     {
-        $this->validate();
+        return Participant::class;
     }
 
-    private function validate(): void
+    protected function invalidItemException(string $message): Throwable
     {
-        foreach ($this->items as $participant) {
-            if (! $participant instanceof Participant) {
-                throw new InvalidArgumentException('Invalid participant collection.');
-            }
-        }
-    }
-
-    public function count(): int
-    {
-        return count($this->items);
-    }
-
-    public function getIterator(): Traversable
-    {
-        return new ArrayIterator($this->items);
+        return new InvalidArgumentException($message);
     }
 
     /**
@@ -47,6 +30,6 @@ final class Participants implements Countable, IteratorAggregate
      */
     public function all(): array
     {
-        return array_values($this->items);
+        return array_values(parent::all());
     }
 }

@@ -40,27 +40,27 @@ it('detects no combination for an unrelated roll', function () {
 });
 
 it('exposes the classic 421 rules (3 dice, 3 throws)', function () {
-    $strategy = new FourTwoOneStrategy();
+    $strategy = new FourTwoOneStrategy;
 
     expect($strategy->diceCount())->toBe(3)
         ->and($strategy->maxThrows())->toBe(3);
 });
 
 it('considers a 4-2-1 roll a winning roll for the 421 strategy', function () {
-    $strategy = new FourTwoOneStrategy();
+    $strategy = new FourTwoOneStrategy;
 
     expect($strategy->isWinningRoll(new DiceRoll([4, 2, 1])))->toBeTrue();
 });
 
 it('does not consider any other roll a winning roll for the 421 strategy', function () {
-    $strategy = new FourTwoOneStrategy();
+    $strategy = new FourTwoOneStrategy;
 
     expect($strategy->isWinningRoll(new DiceRoll([5, 5, 5])))->toBeFalse()
         ->and($strategy->isWinningRoll(new DiceRoll([2, 3, 4])))->toBeFalse();
 });
 
 it('rerolls only the dice that were not kept', function () {
-    $action = new RollDiceAction(new FourTwoOneStrategy());
+    $action = new RollDiceAction(new FourTwoOneStrategy);
 
     $result = $action->execute(
         currentValues: [6, 6, 6],
@@ -72,7 +72,7 @@ it('rerolls only the dice that were not kept', function () {
 });
 
 it('ends the game as soon as a winning roll (421) is thrown', function () {
-    $action = new RollDiceAction(new FourTwoOneStrategy());
+    $action = new RollDiceAction(new FourTwoOneStrategy);
 
     $result = $action->execute(
         currentValues: [4, 2, 1],
@@ -86,7 +86,7 @@ it('ends the game as soon as a winning roll (421) is thrown', function () {
 });
 
 it('ends the game after reaching the maximum number of throws even without winning', function () {
-    $action = new RollDiceAction(new FourTwoOneStrategy());
+    $action = new RollDiceAction(new FourTwoOneStrategy);
 
     // Third throw (throwCount goes from 2 to 3, the strategy's max), with dice
     // kept so the roll deterministically avoids a win.
@@ -102,7 +102,7 @@ it('ends the game after reaching the maximum number of throws even without winni
 });
 
 it('does not end the game before the winning roll or the throw limit', function () {
-    $action = new RollDiceAction(new FourTwoOneStrategy());
+    $action = new RollDiceAction(new FourTwoOneStrategy);
 
     $result = $action->execute(
         currentValues: [3, 3, 3],

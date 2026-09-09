@@ -57,7 +57,7 @@ it('assigns the correct column to a number', function () {
 });
 
 it('evaluates a straight bet as winning only on the exact number', function () {
-    $evaluator = new RouletteBetEvaluator();
+    $evaluator = new RouletteBetEvaluator;
 
     expect($evaluator->isWinning(RouletteBetType::STRAIGHT, '17', '17'))->toBeTrue()
         ->and($evaluator->isWinning(RouletteBetType::STRAIGHT, '17', '18'))->toBeFalse()
@@ -65,7 +65,7 @@ it('evaluates a straight bet as winning only on the exact number', function () {
 });
 
 it('evaluates simple chances bets against a black even number', function () {
-    $evaluator = new RouletteBetEvaluator();
+    $evaluator = new RouletteBetEvaluator;
 
     // 2 is black and even, and within the "low" (manque) range.
     expect($evaluator->isWinning(RouletteBetType::BLACK, null, '2'))->toBeTrue()
@@ -77,7 +77,7 @@ it('evaluates simple chances bets against a black even number', function () {
 });
 
 it('never pays out any simple chance bet on zero or double-zero', function ($betType) {
-    $evaluator = new RouletteBetEvaluator();
+    $evaluator = new RouletteBetEvaluator;
 
     expect($evaluator->isWinning($betType, null, '0'))->toBeFalse()
         ->and($evaluator->isWinning($betType, null, '00'))->toBeFalse();
@@ -91,7 +91,7 @@ it('never pays out any simple chance bet on zero or double-zero', function ($bet
 ]);
 
 it('evaluates dozen and column bets', function () {
-    $evaluator = new RouletteBetEvaluator();
+    $evaluator = new RouletteBetEvaluator;
 
     expect($evaluator->isWinning(RouletteBetType::DOZEN_1, null, '5'))->toBeTrue()
         ->and($evaluator->isWinning(RouletteBetType::DOZEN_2, null, '5'))->toBeFalse()
@@ -100,7 +100,7 @@ it('evaluates dozen and column bets', function () {
 });
 
 it('evaluates a top line bet as winning only on 0, 00, 1, 2 or 3', function () {
-    $evaluator = new RouletteBetEvaluator();
+    $evaluator = new RouletteBetEvaluator;
 
     foreach (['0', '00', '1', '2', '3'] as $winningNumber) {
         expect($evaluator->isWinning(RouletteBetType::TOP_LINE, null, $winningNumber))->toBeTrue();

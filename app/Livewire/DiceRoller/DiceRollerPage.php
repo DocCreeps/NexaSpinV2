@@ -22,6 +22,7 @@ use Livewire\Component;
 class DiceRollerPage extends Component
 {
     private const MIN_DICE = 1;
+
     private const MAX_DICE = 20;
 
     /** Borne défensive sur la taille de $rolls : ce tableau est renvoyé au

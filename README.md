@@ -24,6 +24,7 @@
 - [🔍 Exemple concret : un tirage pondéré](#-ce-qui-se-passe-réellement-quand-on-lance-un-tirage-pondéré)
 - [⚠️ Dette technique et limites connues](#-dette-technique-et-limites-connues)
   - [Fonctionnel mais incomplet](#-fonctionnel-mais-incomplet)
+  - [Code mort / ébauche non branchée](#-code-mort--ébauche-non-branchée)
   - [Corrigé récemment](#-corrigé-récemment)
 - [📚 Ce que ce projet m’a servi à travailler](#-ce-que-ce-projet-ma-servi-à-travailler)
 - [🚀 Installation](#-installation)
@@ -48,6 +49,9 @@
 | 🎰 Roulette numérique | Roulette américaine (0, 00, 1-36) avec mises casino (plein, chances simples, douzaines, colonnes) et cagnotte persistée. | ✅ Fonctionnel | `RoulettePocket`, `RouletteBetEvaluator`, `BankrollStore`, `NumberRoulettePage` (`/roulette`). |
 | 🛡️ Tournoi à double élimination | Tableau principal (Upper Bracket) + tableau de repêchage (Lower Bracket) et grande finale. | ✅ Fonctionnel | `DoubleEliminationBracket`, `DoubleEliminationBracketPage` (`/bracket`). |
 | 🔄 Phase de poules | Répartition automatique en poules équilibrées (round-robin complet, taille calculée à partir du nombre de participants). | ✅ Fonctionnel | `PoolStage`, `PoolStagePage` (`/poules`). |
+| ✂️ Pierre-feuille-ciseaux | Manche après manche contre un adversaire local (2 joueurs au même écran) ou une IA aléatoire, au choix. | ✅ Fonctionnel | `RpsPage` (`/pierre-feuille-ciseaux`), historique groupé par partie via `HistoryStore::pushSession()`. |
+| ⭕ Morpion | Grille 3×3 classique, à deux joueurs locaux ou contre une IA heuristique, au choix. | ✅ Fonctionnel | `TicTacToePage` (`/morpion`), `HeuristicTicTacToeStrategy`, historique groupé par partie. |
+| 🎲 Lanceur de dés | Choix d’un type de dé façon JDR (d4 à d100) et du nombre de dés à lancer d’un coup. | ✅ Fonctionnel | `DiceRollerPage` (`/lanceur-de-des`). Volontairement exclu de l’historique en cache (pas de notion de "gagnant", résultats jetables). |
 
 
 
@@ -96,10 +100,16 @@
 ### Découpage par domaine métier
 ```
 app/
+├── Domain/Shared/Collections/   # ParticipantsCollection (générique, @template) : itération/comptage/
+│                                 # validation de type communs à toutes les collections de participants
+│                                 # par domaine ; chaque domaine fournit son Participant et sa propre
+│                                 # exception via itemClass()/invalidItemException(), sans coupler les
+│                                 # domaines entre eux au niveau métier
+│
 ├── Domain/Draw/               # Règles métier pures (0 dépendance à Laravel)
 │   ├── Entities/              # Draw (garantit l'invariant "≥ 2 participants")
 │   ├── ValueObjects/          # Participant (nom + poids), DrawResult (immuables)
-│   ├── Collections/           # Participants (typée, itérable)
+│   ├── Collections/           # Participants (étend Shared\ParticipantsCollection, ajoute first()/random())
 │   ├── Enums/                 # DrawType (Random, Weighted), DrawDisplay
 │   ├── Strategies/            # RandomDrawStrategy, WeightedDrawStrategy
 │   ├── Contracts/             # DrawStrategy (interface)
@@ -132,6 +142,9 @@ app/
 ├── Application/Dice/           # Orchestration du 421
 │   └── Actions/                 # RollDiceAction (relance les dés non gardés, détecte fin de partie)
 │
+├── Application/DiceRoller/      # Orchestration du lanceur de dés JDR
+│   └── Actions/                  # RollDiceSetAction (d4 à d100, N dés d'un coup)
+│
 ├── Application/Home/           # Read-model de la page d'accueil
 │   ├── DTOs/                    # GameMode (carte affichée sur la home)
 │   └── Enums/                   # GameModeType, GameModeCategory (regroupement de la home)
@@ -142,7 +155,7 @@ app/
 ├── Domain/Tournament/           # Règles métier des formats de tournoi
 │   ├── Bracket/Entities/         # BracketMatch, DoubleEliminationBracket (Upper/Lower Bracket + grande finale)
 │   ├── Pool/Entities/            # Pool, PoolMatch, PoolStage (répartition + round-robin équilibré)
-│   ├── Collections/              # Participants
+│   ├── Collections/              # Participants (étend Shared\ParticipantsCollection)
 │   └── ValueObjects/             # Participant
 │
 ├── Application/Tournament/      # Orchestration des tournois
@@ -154,9 +167,26 @@ app/
 │   ├── RoulettePocket.php          # Couleur, parité, douzaine, colonne pour chaque case
 │   └── Enums/RouletteBetType.php   # Types de mises + multiplicateurs de gain
 │
+├── Domain/RockPaperScissors/      # Pierre-feuille-ciseaux
+│   ├── Enums/                      # RpsChoice, RpsOutcome, RpsOpponentType (Local/IA)
+│   ├── Strategies/                 # RandomRpsStrategy (contrat RpsOpponentStrategy)
+│   └── ValueObjects/                # RpsResult
+│
+├── Domain/TicTacToe/               # Morpion
+│   ├── Entities/                    # Board (grille 3×3, détection de victoire/nul)
+│   ├── Enums/                       # Mark, TicTacToeOpponentType (Local/IA)
+│   ├── Strategies/                  # HeuristicTicTacToeStrategy (IA)
+│   └── Exceptions/                  # InvalidMoveException
+│
 ├── Application/Roulette/         # Orchestration de la roulette numérique
 │   ├── RouletteBetEvaluator.php    # Détermine si une mise est gagnante
 │   └── BankrollStore.php           # Cagnotte persistée en cache, rattachée à la session
+│
+├── Application/RockPaperScissors/ # Orchestration du pierre-feuille-ciseaux
+│   └── Actions/                     # PlayRpsRoundAction
+│
+├── Application/TicTacToe/          # Orchestration du morpion
+│   └── Actions/                     # ChooseAiMoveAction, ReplayMovesAction (reconstruction du plateau)
 │
 ├── Application/Teams/            # Tirage par équipes
 │   └── TeamsGenerator.php          # Répartit les participants en N équipes + remplaçants
@@ -178,6 +208,12 @@ app/
     │   └── CoinFlipPage.php    # Tirage simple/multiple + paris + libellés personnalisables
     ├── Dice/
     │   └── Dice421Page.php     # Partie de 421 : lancers, dés gardés, historique local
+    ├── DiceRoller/
+    │   └── DiceRollerPage.php  # Lanceur de dés JDR (/lanceur-de-des), pas d'historique
+    ├── RockPaperScissors/
+    │   └── RpsPage.php         # Pierre-feuille-ciseaux, adversaire local ou IA (/pierre-feuille-ciseaux)
+    ├── TicTacToe/
+    │   └── TicTacToePage.php   # Morpion, adversaire local ou IA (/morpion)
     ├── Teams/
     │   └── TeamsPage.php       # Répartition en équipes (/equipes)
     ├── Tombola/
@@ -252,8 +288,14 @@ app/
 - **Déploiement sans porte de qualité** : Le workflow GitHub Actions déploie directement sur `master` sans exécuter `composer test` ou `composer run analyse`.
 - **Pas de persistance** : Les tirages ne sont pas sauvegardés en base de données (choix assumé pour l’instant).
 
+### 🟠 Code mort / ébauche non branchée
+- **`SuiteExpressStrategy`** (`app/Domain/Dice/Strategies/`) : variante du 421 (viser une Suite en 2 lancers) entièrement écrite au niveau Domain, avec sa vue Blade dédiée (`resources/views/livewire/dice/suite-express-page.blade.php`, 175 lignes) — mais **jamais branchée** : pas d'action `Application`, pas de composant Livewire, pas de route, pas de carte sur l'accueil. À finir ou à supprimer selon l'intérêt du mode.
+
 ### ✅ Corrigé récemment
 *Historique complet (y compris les correctifs plus anciens) dans la section « 📜 Historique des commits clés » plus bas.*
+- **Passe de cohérence sur toute la codebase** : `vendor/bin/pint` appliqué sur l'ensemble du projet — 57 problèmes de style corrigés dans 154 fichiers (espacement autour de `!`, position des accolades, ordre des imports, lignes vides entre attributs de classe, `new Foo()` uniforme dans les tests...). Suppression de petits bouts de code mort (constante `CoinFlipPage::SIDES` inutilisée, vérifications `isset() && !== null` redondantes, `?? []` sans effet dans `TeamsPage`/`TeamsGenerator`). Suite de tests (291 tests) revérifiée au vert après coup.
+- **`Domain\Draw\Collections\Participants` et `Domain\Tournament\Collections\Participants` dédupliquées** : les deux classes étaient quasi identiques (itération, comptage, validation de type) et ne différaient que par le Participant attendu et l'exception levée en cas de type invalide — chacune avait donc sa propre entrée dans `phpstan.neon` pour justifier ce garde-fou runtime que l'analyse statique croit mort. Factorisées dans `Domain\Shared\Collections\ParticipantsCollection` (classe abstraite générique, `@template T of object`) : chaque domaine ne fournit plus que son `itemClass()` et son `invalidItemException()` pour rediriger la validation vers sa propre exception métier, sans que les deux domaines ne partagent leur Participant (Value Object) ni ne se couplent entre eux. Bénéfice inattendu : PHPStan ne considère plus le check comme "toujours vrai" une fois indirection via `itemClass()`, donc les deux entrées `ignoreErrors` ont pu être supprimées entièrement de `phpstan.neon`.
+- **README à jour avec Pierre-feuille-ciseaux, Morpion et Lanceur de dés** : ces trois modes étaient fonctionnels, testés et actifs sur l'accueil depuis un moment, mais absents de ce README (tableau de statut, architecture, tests).
 - **Nouveaux modes actifs** : Tirage par équipes (`TeamsGenerator`), Tombola (tirage pondéré sans/avec remise), Roulette numérique américaine avec cagnotte persistée (`BankrollStore`), tournois à double élimination et phases de poules (`Application/Tournament`) — tous intégrés à l'historique unifié `/historique`.
 - **Historique en cache unifié** : `HistoryStore` enregistre chaque tirage (tous modes) rattaché à la session ; page `/historique` filtrable par mode/catégorie ; le résultat n'atterrit dans l'historique qu'après la fin de l'animation côté client (`pendingHistoryEntry`/`confirmDraw()` et équivalents par mode), pour ne pas spoiler avant l'animation.
 - **Tombola alignée sur l'architecture Domain/Application** : le tirage pondéré (avec le cas particulier à un seul candidat restant, non géré par l'entité `Draw`) est désormais extrait dans `Domain\Draw\Support\WeightedRandomPicker` et `Application\Tombola\Actions\DrawLotAction`, au lieu de vivre dans le composant Livewire.
@@ -356,7 +398,7 @@ L’application sera accessible sur **[http://localhost:8000](http://localhost:8
 ```bash
 composer test
 ```
-- Suite de tests Pest organisée par domaine sous `tests/Feature/` (`Draw/`, `CoinFlip/`, `Dice/`, `Teams/`, `Tombola/`, `Roulette/`, `History/`, `Tournament/`), couvrant :
+- Suite de tests Pest organisée par domaine sous `tests/Feature/` (`Draw/`, `CoinFlip/`, `Dice/`, `DiceRoller/`, `Teams/`, `Tombola/`, `Roulette/`, `RockPaperScissors/`, `TicTacToe/`, `History/`, `Tournament/`), couvrant :
   - Domain/Application de chaque mode (participants, stratégies de tirage, actions) — cas nominaux et cas d'erreur (effectifs insuffisants, pool vide, mise invalide...).
   - Composants Livewire (validation, verrouillage des propriétés sensibles, persistance en historique, événements dispatchés) plutôt que leur implémentation interne.
   - Tournois à double élimination (y compris effectifs qui ne sont pas une puissance de 2) et phases de poules.

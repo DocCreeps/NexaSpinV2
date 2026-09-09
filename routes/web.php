@@ -3,19 +3,18 @@
 use App\Http\Controllers\HomeController;
 use App\Livewire\CoinFlip\CoinFlipPage;
 use App\Livewire\Dice\Dice421Page;
+use App\Livewire\DiceRoller\DiceRollerPage;
 use App\Livewire\Draw\EliminationWheelPage;
 use App\Livewire\Draw\WeightedWheelPage;
 use App\Livewire\Draw\WheelPage;
 use App\Livewire\History\HistoryPage;
+use App\Livewire\RockPaperScissors\RpsPage;
 use App\Livewire\Roulette\NumberRoulettePage;
 use App\Livewire\Teams\TeamsPage;
+use App\Livewire\TicTacToe\TicTacToePage;
+use App\Livewire\Tombola\TombolaPage;
 use App\Livewire\Tournament\Bracket\DoubleEliminationBracketPage;
 use App\Livewire\Tournament\Pool\PoolStagePage;
-use App\Livewire\Tombola\TombolaPage;
-use App\Livewire\DiceRoller\DiceRollerPage;
-use App\Livewire\RockPaperScissors\RpsPage;
-use App\Livewire\TicTacToe\TicTacToePage;
-
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
@@ -36,5 +35,3 @@ Route::middleware('throttle:120,1')->group(function (): void {
     Route::get('/morpion', TicTacToePage::class)->name('tictactoe');
     Route::get('/lanceur-de-des', DiceRollerPage::class)->name('dice.roller');
 });
-
-

@@ -14,6 +14,7 @@ use App\Domain\DiceRoller\ValueObjects\DiceRollResult;
 final class RollDiceSetAction
 {
     private const MIN_DICE = 1;
+
     private const MAX_DICE = 20;
 
     public function execute(DiceFaceCount $faces, int $diceCount): DiceRollResult

@@ -206,7 +206,7 @@ enum GameModeType: string
     public static function all(): array
     {
         return array_map(
-            fn(self $mode) => $mode->toDto(),
+            fn (self $mode) => $mode->toDto(),
             self::cases()
         );
     }
@@ -219,15 +219,15 @@ enum GameModeType: string
     public static function grouped(): array
     {
         $modesByCategory = collect(self::all())->groupBy(
-            fn(GameMode $mode) => $mode->category->value
+            fn (GameMode $mode) => $mode->category->value
         );
 
         return collect(GameModeCategory::cases())
-            ->map(fn(GameModeCategory $category) => [
+            ->map(fn (GameModeCategory $category) => [
                 'category' => $category,
                 'modes' => $modesByCategory->get($category->value, collect())->all(),
             ])
-            ->filter(fn(array $group) => $group['modes'] !== [])
+            ->filter(fn (array $group) => $group['modes'] !== [])
             ->values()
             ->all();
     }

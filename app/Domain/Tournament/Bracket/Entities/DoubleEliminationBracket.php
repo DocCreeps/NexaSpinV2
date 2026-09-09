@@ -2,8 +2,8 @@
 
 namespace App\Domain\Tournament\Bracket\Entities;
 
-use App\Domain\Tournament\Collections\Participants;
 use App\Domain\Tournament\Bracket\Exceptions\InvalidBracketException;
+use App\Domain\Tournament\Collections\Participants;
 use App\Domain\Tournament\ValueObjects\Participant;
 
 /**
@@ -82,7 +82,7 @@ final class DoubleEliminationBracket
     }
 
     /**
-     * @param array<int, Participant> $names
+     * @param  array<int, Participant>  $names
      */
     private function buildUpperBracket(array $names, int $count): void
     {
@@ -223,7 +223,7 @@ final class DoubleEliminationBracket
     }
 
     /**
-     * @param array<int, array<int, BracketMatch>> $rounds
+     * @param  array<int, array<int, BracketMatch>>  $rounds
      */
     private function recordResultOn(array $rounds, int $round, int $position, Participant $winner): void
     {

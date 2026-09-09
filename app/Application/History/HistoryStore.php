@@ -3,8 +3,8 @@
 namespace App\Application\History;
 
 use App\Application\Home\Enums\GameModeType;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Stocke et relit l'historique des tirages d'un visiteur, en cache, par mode de jeu.
@@ -105,7 +105,7 @@ class HistoryStore
 
         usort(
             $merged,
-            fn(array $a, array $b) => $b['recorded_at'] <=> $a['recorded_at']
+            fn (array $a, array $b) => $b['recorded_at'] <=> $a['recorded_at']
         );
 
         return $merged;

@@ -26,7 +26,7 @@ it('delegates the actual selection to whichever strategy it is given', function 
     $participants = drawWith([new Participant('Alice'), new Participant('Bob')]);
     $draw = new Draw($participants);
 
-    $result = $draw->execute(new RandomDrawStrategy());
+    $result = $draw->execute(new RandomDrawStrategy);
 
     expect(['Alice', 'Bob'])->toContain($result->winner->name);
 });
@@ -38,7 +38,7 @@ it('gives every participant a realistic chance of winning a uniform random draw'
         new Participant('Charlie'),
         new Participant('Dana'),
     ]);
-    $strategy = new RandomDrawStrategy();
+    $strategy = new RandomDrawStrategy;
 
     $wins = ['Alice' => 0, 'Bob' => 0, 'Charlie' => 0, 'Dana' => 0];
 
@@ -60,7 +60,7 @@ it('makes a heavily-weighted participant win far more often than a lightly-weigh
         new Participant('Heavy', weight: 90),
         new Participant('Light', weight: 10),
     ]);
-    $strategy = new WeightedDrawStrategy();
+    $strategy = new WeightedDrawStrategy;
 
     $wins = ['Heavy' => 0, 'Light' => 0];
 
@@ -79,7 +79,7 @@ it('always lets an equally-weighted participant win roughly as often as the othe
         new Participant('Alice', weight: 5),
         new Participant('Bob', weight: 5),
     ]);
-    $strategy = new WeightedDrawStrategy();
+    $strategy = new WeightedDrawStrategy;
 
     $aliceWins = 0;
 
@@ -96,7 +96,7 @@ it('never selects a participant with zero total remaining chance', function () {
     // Un seul participant restant avec un poids : il doit systématiquement
     // gagner, ce qui couvre le cas limite d'un tirage pondéré à 1 candidat.
     $participants = drawWith([new Participant('OnlyOne', weight: 3)]);
-    $strategy = new WeightedDrawStrategy();
+    $strategy = new WeightedDrawStrategy;
 
     for ($i = 0; $i < 20; $i++) {
         expect($strategy->draw($participants)->winner->name)->toBe('OnlyOne');

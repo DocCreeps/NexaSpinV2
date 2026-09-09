@@ -4,51 +4,35 @@ namespace App\Domain\Draw\Collections;
 
 use App\Domain\Draw\Exceptions\InvalidDrawException;
 use App\Domain\Draw\ValueObjects\Participant;
-use ArrayIterator;
-use Countable;
-use IteratorAggregate;
-use Traversable;
+use App\Domain\Shared\Collections\ParticipantsCollection;
+use Throwable;
 
 /**
  * Collection typée de participants du Domaine.
+ *
+ * @extends ParticipantsCollection<Participant>
  */
-final class Participants implements Countable, IteratorAggregate
+final class Participants extends ParticipantsCollection
 {
-    /**
-     * @param array<int, Participant> $items
-     */
-    public function __construct(
-        private array $items
-    ) {
-        $this->validate();
+    protected function itemClass(): string
+    {
+        return Participant::class;
     }
 
-    private function validate(): void
+    protected function invalidItemException(string $message): Throwable
     {
-        foreach ($this->items as $participant) {
-            if (! $participant instanceof Participant) {
-                throw new InvalidDrawException('Invalid participant collection.');
-            }
-        }
-    }
-
-    public function count(): int
-    {
-        return count($this->items);
-    }
-
-    public function getIterator(): Traversable
-    {
-        return new ArrayIterator($this->items);
+        return new InvalidDrawException($message);
     }
 
     public function first(): Participant
     {
-        if ($this->count() === 0) {
+        $items = $this->all();
+
+        if ($items === []) {
             throw new InvalidDrawException('Cannot get first participant from empty collection.');
         }
 
-        return reset($this->items);
+        return reset($items);
     }
 
     /**
@@ -56,20 +40,12 @@ final class Participants implements Countable, IteratorAggregate
      */
     public function random(): Participant
     {
-        if ($this->count() === 0) {
+        $items = array_values($this->all());
+
+        if ($items === []) {
             throw new InvalidDrawException('Cannot select random participant from empty collection.');
         }
 
-        $values = array_values($this->items);
-
-        return $values[random_int(0, count($values) - 1)];
-    }
-
-    /**
-     * @return array<int, Participant>
-     */
-    public function all(): array
-    {
-        return $this->items;
+        return $items[random_int(0, count($items) - 1)];
     }
 }

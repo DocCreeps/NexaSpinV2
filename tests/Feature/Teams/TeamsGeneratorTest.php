@@ -3,7 +3,7 @@
 use App\Application\Teams\TeamsGenerator;
 
 it('splits participants evenly across teams when the count divides exactly', function () {
-    $generator = new TeamsGenerator();
+    $generator = new TeamsGenerator;
 
     $result = $generator->generate(['A', 'B', 'C', 'D', 'E', 'F'], teamsCount: 3);
 
@@ -16,7 +16,7 @@ it('splits participants evenly across teams when the count divides exactly', fun
 });
 
 it('sends the leftover participants to the substitutes bench', function () {
-    $generator = new TeamsGenerator();
+    $generator = new TeamsGenerator;
 
     // 7 participants across 3 teams: 1 per team = 6 placed, 1 leftover substitute.
     $result = $generator->generate(['A', 'B', 'C', 'D', 'E', 'F', 'G'], teamsCount: 3);
@@ -29,7 +29,7 @@ it('sends the leftover participants to the substitutes bench', function () {
 });
 
 it('never loses or duplicates a participant across teams and substitutes', function () {
-    $generator = new TeamsGenerator();
+    $generator = new TeamsGenerator;
     $participants = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
 
     $result = $generator->generate($participants, teamsCount: 4);
@@ -43,7 +43,7 @@ it('never loses or duplicates a participant across teams and substitutes', funct
 });
 
 it('returns as many team slots as requested even if some end up empty-free of substitutes', function () {
-    $generator = new TeamsGenerator();
+    $generator = new TeamsGenerator;
 
     $result = $generator->generate(['A', 'B', 'C', 'D'], teamsCount: 4);
 
@@ -56,7 +56,7 @@ it('returns as many team slots as requested even if some end up empty-free of su
 });
 
 it('shuffles participants (does not always keep them in the same team across runs)', function () {
-    $generator = new TeamsGenerator();
+    $generator = new TeamsGenerator;
     $participants = array_map(fn (int $i) => "P{$i}", range(1, 20));
 
     $firstRun = $generator->generate($participants, teamsCount: 2)['teams'][0];

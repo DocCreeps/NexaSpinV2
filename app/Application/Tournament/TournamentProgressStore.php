@@ -3,8 +3,8 @@
 namespace App\Application\Tournament;
 
 use App\Application\Home\Enums\GameModeType;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Sauvegarde l'état d'un tournoi EN COURS (bracket, double élimination, poules...)

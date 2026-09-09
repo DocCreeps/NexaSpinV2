@@ -7,7 +7,7 @@ use App\Domain\CoinFlip\ValueObjects\CoinFlipBet;
 use App\Domain\CoinFlip\ValueObjects\CoinFlipResult;
 
 it('always flips to one of the two known sides', function () {
-    $strategy = new RandomCoinFlipStrategy();
+    $strategy = new RandomCoinFlipStrategy;
 
     for ($i = 0; $i < 30; $i++) {
         $result = $strategy->flip();
@@ -17,7 +17,7 @@ it('always flips to one of the two known sides', function () {
 });
 
 it('flips both sides over many attempts (never always the same side)', function () {
-    $strategy = new RandomCoinFlipStrategy();
+    $strategy = new RandomCoinFlipStrategy;
     $sides = [];
 
     for ($i = 0; $i < 100; $i++) {
@@ -40,7 +40,7 @@ it('declares a bet lost when the chosen side does not match the result', functio
 });
 
 it('delegates the flip to the injected strategy', function () {
-    $action = new FlipCoinAction(new RandomCoinFlipStrategy());
+    $action = new FlipCoinAction(new RandomCoinFlipStrategy);
 
     $result = $action->execute();
 

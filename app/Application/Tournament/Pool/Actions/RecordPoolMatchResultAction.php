@@ -13,9 +13,9 @@ final class RecordPoolMatchResultAction
     ) {}
 
     /**
-     * @param array<int, string> $participants
-     * @param array<int, array{pool: string, matchIndex: int, winner: string|null}> $previousResults
-     * @param string|null $winnerName Nom du vainqueur, ou null pour enregistrer un match nul.
+     * @param  array<int, string>  $participants
+     * @param  array<int, array{pool: string, matchIndex: int, winner: string|null}>  $previousResults
+     * @param  string|null  $winnerName  Nom du vainqueur, ou null pour enregistrer un match nul.
      */
     public function execute(
         array $participants,

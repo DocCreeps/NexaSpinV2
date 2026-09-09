@@ -13,6 +13,7 @@ use App\Domain\Dice\ValueObjects\DiceRoll;
 final class FourTwoOneStrategy implements DiceGameStrategy
 {
     private const DICE_COUNT = 3;
+
     private const MAX_THROWS = 3;
 
     public function diceCount(): int

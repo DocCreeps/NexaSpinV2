@@ -2,8 +2,8 @@
 
 namespace App\Application\Tournament\Bracket\Actions;
 
-use App\Domain\Tournament\Collections\Participants;
 use App\Domain\Tournament\Bracket\Entities\DoubleEliminationBracket;
+use App\Domain\Tournament\Collections\Participants;
 use App\Domain\Tournament\ValueObjects\Participant;
 
 /**
@@ -15,8 +15,8 @@ use App\Domain\Tournament\ValueObjects\Participant;
 final class RebuildDoubleEliminationBracketAction
 {
     /**
-     * @param array<int, string> $participants
-     * @param array<int, array{section: string, round: int|null, position: int|null, winner: string}> $results
+     * @param  array<int, string>  $participants
+     * @param  array<int, array{section: string, round: int|null, position: int|null, winner: string}>  $results
      */
     public function execute(array $participants, array $results): DoubleEliminationBracket
     {

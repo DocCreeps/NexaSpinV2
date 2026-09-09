@@ -37,7 +37,7 @@ final readonly class DrawData
     {
         return new Participants(
             array_map(
-                fn(string $name, int $index) => new Participant(
+                fn (string $name, int $index) => new Participant(
                     name: $name,
                     weight: $this->weights[$index] ?? 1,
                 ),

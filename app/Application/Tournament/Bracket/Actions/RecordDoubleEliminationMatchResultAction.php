@@ -12,8 +12,8 @@ final class RecordDoubleEliminationMatchResultAction
     ) {}
 
     /**
-     * @param array<int, string> $participantNames
-     * @param array<int, array{section: string, round: int|null, position: int|null, winner: string}> $previousResults
+     * @param  array<int, string>  $participantNames
+     * @param  array<int, array{section: string, round: int|null, position: int|null, winner: string}>  $previousResults
      */
     public function execute(
         array $participantNames,

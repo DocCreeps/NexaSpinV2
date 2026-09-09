@@ -17,7 +17,7 @@ use App\Domain\Tournament\ValueObjects\Participant;
 final readonly class ParticipantListData
 {
     /**
-     * @param array<int, string> $participants Liste brute des noms, ordre de saisie.
+     * @param  array<int, string>  $participants  Liste brute des noms, ordre de saisie.
      */
     public function __construct(
         public array $participants,

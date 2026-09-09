@@ -8,7 +8,7 @@ namespace App\Domain\Dice\ValueObjects;
 final readonly class DiceRoll
 {
     /**
-     * @param array<int> $values
+     * @param  array<int>  $values
      */
     public function __construct(
         public array $values,

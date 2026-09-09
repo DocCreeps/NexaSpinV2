@@ -35,7 +35,9 @@ class RpsPage extends Component
     public string $opponentType = RpsOpponentType::AI->value;
 
     public ?string $playerChoice = null;
+
     public ?string $opponentChoice = null;
+
     public ?string $outcome = null;
 
     /** Choix du premier joueur en mode local, caché jusqu'au choix du second. */

@@ -3,9 +3,9 @@
 namespace App\Livewire\Draw;
 
 use App\Application\Draw\Actions\RunDrawAction;
+use App\Application\Draw\Support\WheelSegmentBuilder;
 use App\Application\History\HistoryStore;
 use App\Application\Home\Enums\GameModeType;
-use App\Application\Draw\Support\WheelSegmentBuilder;
 use App\Livewire\Draw\Concerns\HandlesDraw;
 use App\Livewire\Draw\Concerns\ManagesParticipants;
 use Livewire\Attributes\Computed;
@@ -21,7 +21,9 @@ class WheelPage extends Component
     use ManagesParticipants;
 
     private const MAX_LABELS_ON_WHEEL = 10;
+
     private const MIN_PARTICIPANTS = 3;
+
     private const MAX_HISTORY = 100;
 
     public ?string $result = null;
@@ -46,7 +48,7 @@ class WheelPage extends Component
     public function mount(HistoryStore $historyStore): void
     {
         $this->history = array_map(
-            static fn(array $entry) => [
+            static fn (array $entry) => [
                 'winner' => $entry['winner'],
                 'participants' => $entry['participants'],
             ],
