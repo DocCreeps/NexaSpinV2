@@ -1,25 +1,14 @@
-{{--
-    Popup de détails d'une entrée d'historique (roue, tombola, roulette,
-    équipes). Ne prend aucun prop : entièrement piloté par `openEntry` dans
-    le x-data du parent (null = fermé, sinon l'entrée d'historique brute,
-    enrichie de `modeLabel`). Le parent doit fournir `openEntry` et est
-    responsable de le peupler au clic (voir history-page.blade.php).
-    Le contenu affiché dépend de `openEntry.mode` :
-      - classic / weighted / elimination : participants, poids, éliminations
-      - tombola : lots attribués, participants
-      - number_roulette : détail de chaque pari
-      - teams : composition de chaque équipe (titulaires + remplaçants)
-      - rock_paper_scissors / tic_tac_toe : détail manche par manche / partie
-        par partie d'une session groupée (voir HistoryStore::pushSession)
---}}
 <div x-show="openEntry" x-cloak class="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
 
+    {{-- Backdrop --}}
     <div x-show="openEntry" x-on:click="openEntry = null" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="absolute inset-0 bg-ink/60 backdrop-blur-sm"></div>
 
+    {{-- Modal Box --}}
     <div x-show="openEntry" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="card-hard relative max-h-[85vh] w-full max-w-md overflow-y-auto rounded-t-2xl border-2 border-ink bg-panel sm:rounded-2xl">
+
         <template x-if="openEntry">
             <div>
-                {{-- En-tête --}}
+                {{-- EN-TÊTE --}}
                 <div class="sticky top-0 flex items-start justify-between gap-3 rounded-t-2xl border-b-2 border-ink bg-secondary/20 px-5 py-4 sm:px-6">
                     <div class="min-w-0">
                         <p class="font-mono text-[10px] uppercase tracking-widest text-subtle" x-text="openEntry.modeLabel"></p>
@@ -55,27 +44,237 @@
                         <template x-if="openEntry.mode === 'rock_paper_scissors'">
                             <div class="mt-1 flex items-center gap-2">
                                 <span class="text-2xl leading-none">✂️</span>
-                                <p class="truncate font-display text-2xl leading-tight text-ink" x-text="openEntry.score.a + 'V · ' + openEntry.score.draw + 'N · ' + openEntry.score.b + 'D'"></p>
+                                <p class="truncate font-display text-2xl leading-tight text-ink" x-text="((openEntry.score?.a ?? openEntry.score?.x ?? 0) + 'V · ' + (openEntry.score?.draw ?? 0) + 'N · ' + (openEntry.score?.b ?? openEntry.score?.o ?? 0) + 'D')"></p>
                             </div>
                         </template>
 
                         <template x-if="openEntry.mode === 'tic_tac_toe'">
                             <div class="mt-1 flex items-center gap-2">
                                 <span class="text-2xl leading-none">⭕</span>
-                                <p class="truncate font-display text-2xl leading-tight text-ink" x-text="openEntry.score.x + ' - ' + openEntry.score.o"></p>
+                                <p class="truncate font-display text-2xl leading-tight text-ink" x-text="(openEntry.score ? openEntry.score.x : 0) + ' - ' + (openEntry.score ? openEntry.score.o : 0)"></p>
                             </div>
                         </template>
                     </div>
+
                     <button type="button" x-on:click="openEntry = null" aria-label="Fermer" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-ink bg-panel font-mono text-xs text-subtle transition hover:bg-ink hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-info focus-visible:ring-offset-2">
                         ✕
                     </button>
                 </div>
 
+                {{-- CONTENU DU MODAL --}}
                 <div class="space-y-5 px-5 py-5 sm:px-6">
-                    {{-- ROUES (classique / pondérée / élimination) --}}
+
+                    {{-- PIERRE-FEUILLE-CISEAUX (PFC / RPS) --}}
+                    <template x-if="openEntry.mode === 'rock_paper_scissors'">
+                        <div class="space-y-4">
+                            {{-- En-tête Global avec bordure colorée --}}
+                            <div class="rounded-xl border-2 p-3.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]" :class="{
+                                'border-emerald-500 bg-emerald-100/60': String(openEntry.difficulty).toLowerCase().includes('eas') || String(openEntry.difficulty).toLowerCase().includes('fac'),
+                                'border-amber-500 bg-amber-100/60': String(openEntry.difficulty).toLowerCase().includes('med') || String(openEntry.difficulty).toLowerCase().includes('moy'),
+                                'border-rose-500 bg-rose-100/60': String(openEntry.difficulty).toLowerCase().includes('hard') || String(openEntry.difficulty).toLowerCase().includes('dif'),
+                                'border-purple-600 bg-purple-100/60': String(openEntry.difficulty).toLowerCase().includes('imp') || String(openEntry.difficulty).toLowerCase().includes('exp'),
+                                'border-ink bg-wash': !openEntry.difficulty
+                            }">
+
+                                <div class="relative flex items-center justify-center min-h-[28px]">
+                                    {{-- VS Centré --}}
+                                    <div class="font-mono text-sm text-ink">
+                                        <span class="font-bold" x-text="openEntry.a_label || openEntry.x_label || 'Vous'"></span>
+                                        <span class="px-1 text-xs text-subtle">vs</span>
+                                        <span class="font-bold" x-text="openEntry.b_label || openEntry.o_label || (openEntry.vs_ai !== false ? 'IA' : 'Joueur 2')"></span>
+                                    </div>
+
+                                    {{-- Badge de difficulté globale --}}
+                                    <template x-if="openEntry.difficulty || openEntry.difficulty_label">
+                                        <span class="absolute right-0 rounded-md border-2 border-ink px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-ink shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]" :class="{
+                                            'bg-emerald-400': String(openEntry.difficulty).toLowerCase().includes('eas') || String(openEntry.difficulty).toLowerCase().includes('fac'),
+                                            'bg-amber-400': String(openEntry.difficulty).toLowerCase().includes('med') || String(openEntry.difficulty).toLowerCase().includes('moy'),
+                                            'bg-rose-400': String(openEntry.difficulty).toLowerCase().includes('hard') || String(openEntry.difficulty).toLowerCase().includes('dif'),
+                                            'bg-purple-400': String(openEntry.difficulty).toLowerCase().includes('imp') || String(openEntry.difficulty).toLowerCase().includes('exp'),
+                                            'bg-wash': !openEntry.difficulty
+                                        }" x-text="openEntry.difficulty_label || openEntry.difficulty">
+                                        </span>
+                                    </template>
+                                </div>
+
+                                {{-- Parties & Score retravaillés --}}
+                                <div class="mt-3.5 space-y-2 font-mono text-xs">
+                                    {{-- Ligne Parties --}}
+                                    <div class="flex items-center justify-between rounded-lg border border-ink/20 bg-black/5 px-2.5 py-1">
+                                        <span class="font-medium text-subtle">Parties jouées</span>
+                                        <span class="rounded border border-ink bg-panel px-1.5 py-0.5 font-bold text-ink shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]" x-text="openEntry.games_count || (openEntry.games ? openEntry.games.length : 0)">
+                                        </span>
+                                    </div>
+
+                                    {{-- Ligne Score --}}
+                                    <div class="flex items-center justify-between rounded-lg border border-ink/20 bg-black/5 px-2.5 py-1">
+                                        <span class="font-medium text-subtle">Score</span>
+                                        <div class="flex items-center gap-1.5 font-bold">
+                                            <span class="rounded border border-ink bg-emerald-300 px-1.5 py-0.5 text-ink shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]" x-text="(openEntry.score?.a ?? openEntry.score?.x ?? 0) + 'V'">
+                                            </span>
+                                            <span class="rounded border border-ink bg-amber-200 px-1.5 py-0.5 text-ink shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]" x-text="(openEntry.score?.draw || 0) + 'N'">
+                                            </span>
+                                            <span class="rounded border border-ink bg-rose-300 px-1.5 py-0.5 text-ink shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]" x-text="(openEntry.score?.b ?? openEntry.score?.o ?? 0) + 'D'">
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            {{-- Historique des parties --}}
+                            <template x-if="openEntry.games && openEntry.games.length">
+                                <div class="space-y-2">
+                                    <p class="font-mono text-[10px] font-bold uppercase tracking-widest text-subtle">Historique des parties</p>
+                                    <div class="max-h-52 space-y-2 overflow-y-auto pr-1">
+                                        <template x-for="(game, index) in openEntry.games" :key="index">
+                                            <div class="flex items-center justify-between rounded-xl border-2 bg-panel px-3 py-2 font-mono text-xs shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]" :class="{
+                                                'border-emerald-500': String(game.difficulty || openEntry.difficulty).toLowerCase().includes('eas') || String(game.difficulty || openEntry.difficulty).toLowerCase().includes('fac'),
+                                                'border-amber-500': String(game.difficulty || openEntry.difficulty).toLowerCase().includes('med') || String(game.difficulty || openEntry.difficulty).toLowerCase().includes('moy'),
+                                                'border-rose-500': String(game.difficulty || openEntry.difficulty).toLowerCase().includes('hard') || String(game.difficulty || openEntry.difficulty).toLowerCase().includes('dif'),
+                                                'border-purple-600': String(game.difficulty || openEntry.difficulty).toLowerCase().includes('imp') || String(game.difficulty || openEntry.difficulty).toLowerCase().includes('exp'),
+                                                'border-ink': !(game.difficulty || openEntry.difficulty)
+                                            }">
+
+                                                <div class="flex items-center gap-2">
+                                                    <span class="font-bold text-subtle" x-text="'#' + (index + 1)"></span>
+
+                                                    {{-- Badge de difficulté spécifique à la partie --}}
+                                                    <template x-if="game.difficulty || openEntry.difficulty">
+                                                        <span class="rounded border border-ink px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase text-ink shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]" :class="{
+                                                            'bg-emerald-300': String(game.difficulty || openEntry.difficulty).toLowerCase().includes('eas') || String(game.difficulty || openEntry.difficulty).toLowerCase().includes('fac'),
+                                                            'bg-amber-300': String(game.difficulty || openEntry.difficulty).toLowerCase().includes('med') || String(game.difficulty || openEntry.difficulty).toLowerCase().includes('moy'),
+                                                            'bg-rose-300': String(game.difficulty || openEntry.difficulty).toLowerCase().includes('hard') || String(game.difficulty || openEntry.difficulty).toLowerCase().includes('dif'),
+                                                            'bg-purple-300': String(game.difficulty || openEntry.difficulty).toLowerCase().includes('imp') || String(game.difficulty || openEntry.difficulty).toLowerCase().includes('exp'),
+                                                            'bg-wash': !(game.difficulty || openEntry.difficulty)
+                                                        }" x-text="game.difficulty || openEntry.difficulty">
+                                                        </span>
+                                                    </template>
+                                                </div>
+
+                                                {{-- Libellé du résultat --}}
+                                                <div class="font-bold" :class="{
+                                                    'text-emerald-600': game.winner && (game.winner === 'a' || game.winner === 'X' || game.winner === 'x' || String(game.winner).toLowerCase().includes('vous')),
+                                                    'text-rose-600': game.winner && (game.winner === 'b' || game.winner === 'O' || game.winner === 'o' || String(game.winner).toLowerCase().includes('ia')),
+                                                    'text-subtle': !game.winner
+                                                }" x-text="
+                                                    !game.winner ? 'Égalité' :
+                                                    (openEntry.vs_ai !== false) ? (
+                                                        (game.winner === 'a' || game.winner === 'X' || game.winner === 'x' || String(game.winner).toLowerCase().includes('vous')) ? 'Victoire' : 'Défaite'
+                                                    ) : (
+                                                        (game.winner === 'a' || game.winner === 'X' || game.winner === 'x') ? (openEntry.a_label || openEntry.x_label || 'Joueur 1') : (openEntry.b_label || openEntry.o_label || 'Joueur 2')
+                                                    )
+                                                ">
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+
+                    {{-- TIC TAC TOE (MORPION) --}}
+                    <template x-if="openEntry.mode === 'tic_tac_toe'">
+                        <div class="space-y-4">
+                            {{-- En-tête Global avec bordure colorée --}}
+                            <div class="rounded-xl border-2 p-3.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]" :class="{
+                                'border-emerald-500 bg-emerald-100/60': String(openEntry.difficulty).toLowerCase().includes('eas') || String(openEntry.difficulty).toLowerCase().includes('fac'),
+                                'border-amber-500 bg-amber-100/60': String(openEntry.difficulty).toLowerCase().includes('med') || String(openEntry.difficulty).toLowerCase().includes('moy'),
+                                'border-rose-500 bg-rose-100/60': String(openEntry.difficulty).toLowerCase().includes('hard') || String(openEntry.difficulty).toLowerCase().includes('dif'),
+                                'border-purple-600 bg-purple-100/60': String(openEntry.difficulty).toLowerCase().includes('imp') || String(openEntry.difficulty).toLowerCase().includes('exp'),
+                                'border-ink bg-wash': !openEntry.difficulty
+                            }">
+
+                                <div class="relative flex items-center justify-center min-h-[28px]">
+                                    {{-- VS Centré --}}
+                                    <div class="font-mono text-sm text-ink">
+                                        <span class="font-bold" x-text="openEntry.x_label || 'Vous'"></span>
+                                        <span class="text-subtle text-xs px-1">vs</span>
+                                        <span class="font-bold" x-text="openEntry.o_label || (openEntry.vs_ai !== false ? 'IA' : 'Joueur 2')"></span>
+                                    </div>
+                                </div>
+
+                                {{-- Parties & Score retravaillés --}}
+                                <div class="mt-3.5 space-y-2 font-mono text-xs">
+                                    {{-- Ligne Parties --}}
+                                    <div class="flex items-center justify-between rounded-lg border border-ink/20 bg-black/5 px-2.5 py-1">
+                                        <span class="text-subtle font-medium">Parties jouées</span>
+                                        <span class="rounded bg-panel border border-ink px-1.5 py-0.5 font-bold text-ink shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]" x-text="openEntry.games_count || (openEntry.games ? openEntry.games.length : 0)">
+                                        </span>
+                                    </div>
+
+                                    {{-- Ligne Score --}}
+                                    <div class="flex items-center justify-between rounded-lg border border-ink/20 bg-black/5 px-2.5 py-1">
+                                        <span class="text-subtle font-medium">Score</span>
+                                        <div class="flex items-center gap-1.5 font-bold">
+                                            <span class="rounded bg-emerald-300 border border-ink px-1.5 py-0.5 text-ink shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]" x-text="(openEntry.score?.x || 0) + 'V'">
+                                            </span>
+                                            <span class="rounded bg-amber-200 border border-ink px-1.5 py-0.5 text-ink shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]" x-text="(openEntry.score?.draw || 0) + 'N'">
+                                            </span>
+                                            <span class="rounded bg-rose-300 border border-ink px-1.5 py-0.5 text-ink shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]" x-text="(openEntry.score?.o || 0) + 'D'">
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            {{-- Historique des parties --}}
+                            <template x-if="openEntry.games && openEntry.games.length">
+                                <div class="space-y-2">
+                                    <p class="font-mono text-[10px] font-bold uppercase tracking-widest text-subtle">Historique des parties</p>
+                                    <div class="max-h-52 space-y-2 overflow-y-auto pr-1">
+                                        <template x-for="(game, index) in openEntry.games" :key="index">
+                                            <div class="flex items-center justify-between rounded-xl border-2 bg-panel px-3 py-2 text-xs font-mono shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]" :class="{
+                                                'border-emerald-500': String(game.difficulty || openEntry.difficulty).toLowerCase().includes('eas') || String(game.difficulty || openEntry.difficulty).toLowerCase().includes('fac'),
+                                                'border-amber-500': String(game.difficulty || openEntry.difficulty).toLowerCase().includes('med') || String(game.difficulty || openEntry.difficulty).toLowerCase().includes('moy'),
+                                                'border-rose-500': String(game.difficulty || openEntry.difficulty).toLowerCase().includes('hard') || String(game.difficulty || openEntry.difficulty).toLowerCase().includes('dif'),
+                                                'border-purple-600': String(game.difficulty || openEntry.difficulty).toLowerCase().includes('imp') || String(game.difficulty || openEntry.difficulty).toLowerCase().includes('exp'),
+                                                'border-ink': !(game.difficulty || openEntry.difficulty)
+                                            }">
+
+                                                <div class="flex items-center gap-2">
+                                                    <span class="font-bold text-subtle" x-text="'#' + (index + 1)"></span>
+
+                                                    {{-- Badge de difficulté spécifique à la partie --}}
+                                                    <template x-if="game.difficulty || openEntry.difficulty">
+                                                        <span class="rounded border border-ink px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase text-ink shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]" :class="{
+                                                            'bg-emerald-300': String(game.difficulty || openEntry.difficulty).toLowerCase().includes('eas') || String(game.difficulty || openEntry.difficulty).toLowerCase().includes('fac'),
+                                                            'bg-amber-300': String(game.difficulty || openEntry.difficulty).toLowerCase().includes('med') || String(game.difficulty || openEntry.difficulty).toLowerCase().includes('moy'),
+                                                            'bg-rose-300': String(game.difficulty || openEntry.difficulty).toLowerCase().includes('hard') || String(game.difficulty || openEntry.difficulty).toLowerCase().includes('dif'),
+                                                            'bg-purple-300': String(game.difficulty || openEntry.difficulty).toLowerCase().includes('imp') || String(game.difficulty || openEntry.difficulty).toLowerCase().includes('exp'),
+                                                            'bg-wash': !(game.difficulty || openEntry.difficulty)
+                                                        }" x-text="game.difficulty || openEntry.difficulty">
+                                                        </span>
+                                                    </template>
+                                                </div>
+
+                                                {{-- Libellé du résultat --}}
+                                                <div class="font-bold" :class="{
+                                                    'text-emerald-600': game.winner && (game.winner === 'X' || game.winner === 'x' || String(game.winner).toLowerCase().includes('vous')),
+                                                    'text-rose-600': game.winner && (game.winner === 'O' || game.winner === 'o' || String(game.winner).toLowerCase().includes('ia')),
+                                                    'text-subtle': !game.winner
+                                                }" x-text="
+                                                    !game.winner ? 'Égalité' :
+                                                    (openEntry.vs_ai !== false) ? (
+                                                        (game.winner === 'X' || game.winner === 'x' || String(game.winner).toLowerCase().includes('vous')) ? 'Victoire' : 'Défaite'
+                                                    ) : (
+                                                        (game.winner === 'X' || game.winner === 'x') ? (openEntry.x_label || 'Joueur 1') : (openEntry.o_label || 'Joueur 2')
+                                                    )
+                                                ">
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+
+                    {{-- ROUES / TOMBOLA / AUTRES --}}
                     <template x-if="['classic', 'weighted', 'elimination'].includes(openEntry.mode)">
                         <div class="space-y-5">
-                            {{-- Participants (roue classique / élimination) --}}
                             <template x-if="!openEntry.weights">
                                 <div>
                                     <p class="mb-2 font-mono text-[10px] uppercase tracking-widest text-faint">
@@ -91,181 +290,9 @@
                                     </div>
                                 </div>
                             </template>
-
-                            {{-- Participants + poids (roue pondérée), triés par poids décroissant, barre proportionnelle --}}
-                            <template x-if="openEntry.weights">
-                                <div>
-                                    <p class="mb-2 font-mono text-[10px] uppercase tracking-widest text-faint">
-                                        Participants et poids (<span x-text="openEntry.participants ? openEntry.participants.length : 0"></span>)
-                                    </p>
-                                    <div class="space-y-1.5">
-                                        <template x-for="name in (openEntry.participants || []).slice().sort((a, b) => (openEntry.weights[b] || 0) - (openEntry.weights[a] || 0))" :key="name">
-                                            <div class="flex items-center gap-2">
-                                                <span class="w-24 shrink-0 truncate font-mono text-[11px]" :class="name === openEntry.winner ? 'font-bold text-ink' : 'text-subtle'" x-text="(name === openEntry.winner ? '🏆 ' : '') + name"></span>
-                                                <div class="h-2 flex-1 overflow-hidden rounded-full border border-ink/20 bg-wash">
-                                                    <div class="h-full rounded-full transition-all" :class="name === openEntry.winner ? 'bg-secondary' : 'bg-ink/25'" :style="'width:' + Math.max(6, (openEntry.weights[name] || 0) / Math.max(...Object.values(openEntry.weights)) * 100) + '%'"></div>
-                                                </div>
-                                                <span class="w-6 shrink-0 text-right font-mono text-[11px] text-subtle" x-text="openEntry.weights[name]"></span>
-                                            </div>
-                                        </template>
-                                    </div>
-                                </div>
-                            </template>
-
-                            {{-- Ordre des éliminations (roue d'élimination), sous forme de timeline --}}
-                            <template x-if="openEntry.eliminations && openEntry.eliminations.length">
-                                <div>
-                                    <p class="mb-2 font-mono text-[10px] uppercase tracking-widest text-faint">
-                                        Ordre des éliminations
-                                    </p>
-                                    <ol class="relative space-y-0 border-l-2 border-dashed border-line pl-4">
-                                        <template x-for="(name, i) in openEntry.eliminations" :key="i">
-                                            <li class="relative pb-2.5">
-                                                <span class="absolute -left-[21px] flex h-4 w-4 items-center justify-center rounded-full border-2 border-ink bg-wash font-mono text-[9px] text-subtle" x-text="i + 1"></span>
-                                                <span class="font-mono text-[12px] text-ink" x-text="name"></span>
-                                            </li>
-                                        </template>
-                                        <li class="relative">
-                                            <span class="absolute -left-[21px] flex h-4 w-4 items-center justify-center rounded-full border-2 border-ink bg-secondary text-[9px]">🏆</span>
-                                            <span class="font-mono text-[12px] font-bold text-ink" x-text="openEntry.winner"></span>
-                                        </li>
-                                    </ol>
-                                </div>
-                            </template>
                         </div>
                     </template>
 
-                    {{-- TOMBOLA : lots attribués (dans l'ordre de tirage) + liste des participants --}}
-                    <template x-if="openEntry.mode === 'tombola'">
-                        <div class="space-y-5">
-                            <div>
-                                <p class="mb-2 font-mono text-[10px] uppercase tracking-widest text-faint">
-                                    Lots (<span x-text="openEntry.winners ? openEntry.winners.length : 0"></span>)
-                                </p>
-                                <div class="space-y-1.5">
-                                    <template x-for="(name, i) in (openEntry.winners || [])" :key="i">
-                                        <div class="flex items-center justify-between gap-2 rounded-lg border-2 border-ink bg-wash px-3 py-1.5">
-                                            <span class="font-mono text-[11px] text-subtle">Lot #<span x-text="i + 1"></span></span>
-                                            <span class="font-display text-sm text-ink" x-text="name"></span>
-                                        </div>
-                                    </template>
-                                </div>
-                            </div>
-                            <div>
-                                <p class="mb-2 font-mono text-[10px] uppercase tracking-widest text-faint">
-                                    Participants (<span x-text="openEntry.participants ? openEntry.participants.length : 0"></span>)
-                                </p>
-                                <div class="flex flex-wrap gap-1.5">
-                                    <template x-for="name in (openEntry.participants || [])" :key="name">
-                                        <span class="inline-flex items-center rounded-md border-2 border-ink bg-wash px-2 py-1 font-mono text-[11px] text-ink" x-text="name"></span>
-                                    </template>
-                                </div>
-                            </div>
-                        </div>
-                    </template>
-
-                    {{-- ROULETTE : détail de chaque pari placé sur ce coup --}}
-                    <template x-if="openEntry.mode === 'number_roulette'">
-                        <div class="space-y-4">
-                            <div class="flex items-center justify-between rounded-lg border-2 border-ink bg-wash px-3 py-2">
-                                <span class="font-mono text-[11px] uppercase tracking-widest text-subtle">Mise totale</span>
-                                <span class="font-display text-base text-ink" x-text="openEntry.total_stake"></span>
-                            </div>
-                            <div>
-                                <p class="mb-2 font-mono text-[10px] uppercase tracking-widest text-faint">
-                                    Paris (<span x-text="openEntry.bets ? openEntry.bets.length : 0"></span>)
-                                </p>
-                                <div class="space-y-1.5">
-                                    <template x-for="(bet, i) in (openEntry.bets || [])" :key="i">
-                                        <div class="flex items-center justify-between gap-2 rounded-lg border-2 px-3 py-1.5" :class="bet.won ? 'border-ink bg-secondary/20' : 'border-line bg-wash'">
-                                            <div class="min-w-0">
-                                                <p class="truncate font-display text-sm text-ink" x-text="bet.label + ((bet.number !== null && bet.number !== undefined) ? ' · ' + bet.number : '')"></p>
-                                                <p class="font-mono text-[10px] text-faint" x-text="'mise ' + bet.stake"></p>
-                                            </div>
-                                            <span class="shrink-0 rounded-md border px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase" :class="bet.won ? 'border-ink bg-secondary text-ink' : 'border-danger/30 bg-danger/10 text-danger'" x-text="(bet.won ? '+' : '') + bet.net_profit"></span>
-                                        </div>
-                                    </template>
-                                </div>
-                            </div>
-                        </div>
-                    </template>
-
-                    {{-- ÉQUIPES : composition de chaque équipe (titulaires + remplaçants assignés) --}}
-                    <template x-if="openEntry.mode === 'teams'">
-                        <div class="space-y-4">
-                            <template x-for="(members, i) in (openEntry.teams || [])" :key="i">
-                                <div>
-                                    <p class="mb-1.5 font-mono text-[10px] uppercase tracking-widest text-faint" x-text="'Équipe ' + (i + 1) + ' (' + members.length + ')'"></p>
-                                    <div class="flex flex-wrap gap-1.5">
-                                        <template x-for="name in members" :key="name">
-                                            <span class="inline-flex items-center rounded-md border-2 border-ink bg-wash px-2 py-1 font-mono text-[11px] text-ink" x-text="name"></span>
-                                        </template>
-                                        <template x-for="(teamIdx, subName) in (openEntry.substitutes || {})" :key="subName">
-                                            <template x-if="teamIdx === i">
-                                                <span class="inline-flex items-center gap-1 rounded-md border-2 border-dashed border-ink px-2 py-1 font-mono text-[11px] text-subtle" x-text="'🔁 ' + subName"></span>
-                                            </template>
-                                        </template>
-                                    </div>
-                                </div>
-                            </template>
-                        </div>
-                    </template>
-
-                    {{-- PIERRE-FEUILLE-CISEAUX : détail de chaque manche de la session --}}
-                    <template x-if="openEntry.mode === 'rock_paper_scissors'">
-                        <div>
-                            <p class="mb-2 font-mono text-[10px] uppercase tracking-widest text-faint" x-text="openEntry.a_label + ' vs ' + openEntry.b_label + ' · ' + (openEntry.rounds ? openEntry.rounds.length : 0) + ' manche(s)'"></p>
-                            <div class="space-y-1.5">
-                                <template x-for="(round, i) in (openEntry.rounds || [])" :key="i">
-                                    <div class="flex items-center justify-between gap-2 rounded-lg border-2 px-3 py-1.5" :class="round.outcome === 'win' ? 'border-ink bg-secondary/20' : (round.outcome === 'lose' ? 'border-danger/30 bg-danger/5' : 'border-line bg-wash')">
-                                        <span class="font-mono text-[11px] text-subtle" x-text="'Manche ' + (i + 1)"></span>
-                                        <span class="text-sm text-ink" x-text="({rock:'🪨',paper:'📄',scissors:'✂️'}[round.a] || '?') + ' vs ' + ({rock:'🪨',paper:'📄',scissors:'✂️'}[round.b] || '?')"></span>
-                                        <span class="shrink-0 rounded-md border px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase" :class="round.outcome === 'win' ? 'border-ink bg-secondary text-ink' : (round.outcome === 'lose' ? 'border-danger/30 bg-danger/10 text-danger' : 'border-ink/20 bg-panel text-subtle')" x-text="round.outcome === 'win' ? openEntry.a_label : (round.outcome === 'lose' ? openEntry.b_label : 'Nul')"></span>
-                                    </div>
-                                </template>
-                            </div>
-                        </div>
-                    </template>
-
-                    {{-- MORPION : détail de chaque partie de la session --}}
-                    <template x-if="openEntry.mode === 'tic_tac_toe'">
-                        <div>
-                            {{-- En-tête de la session --}}
-                            <div class="mb-2 flex items-center justify-between font-mono text-[10px] uppercase tracking-widest text-faint">
-                                <span x-text="openEntry.x_label + ' (✕) vs ' + openEntry.o_label + ' (◯)'"></span>
-                                <span x-text="(openEntry.games ? openEntry.games.length : 0) + ' partie(s)'"></span>
-                            </div>
-
-                            {{-- Liste des parties --}}
-                            <div class="space-y-1.5">
-                                <template x-for="(game, i) in (openEntry.games || [])" :key="i">
-                                    <div class="flex items-center justify-between gap-2 rounded-lg border-2 px-3 py-1.5" :class="game.winner ? 'border-ink bg-secondary/20' : 'border-line bg-wash'">
-
-                                        {{-- Numéro de partie + Badge difficulté de CETTE partie --}}
-                                        <div class="flex items-center gap-1.5 min-w-0">
-                                            <span class="font-mono text-[11px] text-subtle shrink-0" x-text="'Partie ' + (i + 1)"></span>
-
-                                            <template x-if="game.difficulty_label || game.difficulty">
-                                                <span class="rounded border border-ink/30 bg-panel px-1.5 py-0.5 font-mono text-[9px] text-ink truncate" x-text="game.difficulty_label || game.difficulty">
-                                                </span>
-                                            </template>
-                                        </div>
-
-                                        {{-- Résultat --}}
-                                        <span class="text-sm font-medium text-ink truncate" x-text="game.winner === 'x' ? (openEntry.x_label + ' (✕)') : (game.winner === 'o' ? (openEntry.o_label + ' (◯)') : 'Égalité')"></span>
-
-                                        {{-- Nombre de coups --}}
-                                        <span class="shrink-0 font-mono text-[10px] text-faint" x-text="(game.moves_count ?? game.moves) + ' coups'"></span>
-                                    </div>
-                                </template>
-                            </div>
-                        </div>
-                    </template>
-
-
-                            </div>
-                        </div>
-                    </template>
                 </div>
             </div>
         </template>
