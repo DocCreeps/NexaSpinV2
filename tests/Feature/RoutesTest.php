@@ -15,6 +15,7 @@ it('loads every game mode page successfully', function (string $routeName) {
     'teams',
     'tombola',
     'roulette.number',
+    'secret-number',
     'history',
     'draw.bracket',
     'draw.pools',

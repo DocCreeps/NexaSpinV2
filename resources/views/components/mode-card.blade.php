@@ -2,6 +2,44 @@
 
 @php
 $isAvailable = $mode->available;
+
+
+$formatParticipantsDesktop = function($mode) {
+
+if ($mode->isSolo && $mode->minParticipants !== null) {
+$count = is_numeric($mode->minParticipants) ? $mode->minParticipants : 2;
+$plus = $mode->needsPlus ? '+' : '';
+return 'Solo ou ' . $count . $plus . ' personnes';
+}
+
+if ($mode->isSolo) {
+return 'Solo';
+}
+
+if ($mode->minParticipants !== null) {
+return $mode->minParticipants . ($mode->needsPlus ? '+' : '') . ' personnes';
+}
+
+return 'Solo';
+};
+
+$formatParticipantsMobile = function($mode) {
+if ($mode->isSolo && $mode->minParticipants !== null) {
+$count = is_numeric($mode->minParticipants) ? $mode->minParticipants : 2;
+$plus = $mode->needsPlus ? '+' : '';
+return 'Solo ou ' . $count . $plus . ' pers.';
+}
+
+if ($mode->isSolo) {
+return 'Solo';
+}
+
+if ($mode->minParticipants !== null) {
+return $mode->minParticipants . ($mode->needsPlus ? '+' : '') . ' pers.';
+}
+
+return 'Solo';
+};
 @endphp
 
 <{{ $isAvailable ? 'a' : 'div' }} @if($isAvailable) href="{{ $mode->route }}" class="card-hard card-hard-hover group relative flex h-full flex-row items-start gap-3 rounded-xl border-2 border-ink bg-panel p-3 no-underline !text-inherit transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:flex-col sm:items-stretch sm:justify-between sm:gap-0 sm:p-5" @else role="region" aria-label="{{ $mode->title }} (non disponible)" class="relative flex h-full cursor-not-allowed select-none flex-row items-start gap-3 rounded-xl border-2 border-ink/30 bg-[repeating-linear-gradient(45deg,var(--color-wash),var(--color-wash)_6px,var(--color-surface)_6px,var(--color-surface)_12px)] p-3 opacity-70 sm:flex-col sm:items-stretch sm:justify-between sm:gap-0 sm:p-5" @endif>
@@ -34,7 +72,7 @@ $isAvailable = $mode->available;
             @endif
         </div>
 
-        {{-- Description complète (line-clamp supprimé) --}}
+        {{-- Description complète --}}
         <p class="mt-1 text-xs leading-relaxed text-muted sm:mt-2 sm:text-sm">
             {{ $mode->description }}
         </p>
@@ -48,13 +86,13 @@ $isAvailable = $mode->available;
             <span class="font-mono text-[8px] tracking-widest text-faint">{{ Str::upper($category) }}</span>
             <span aria-hidden="true">·</span>
             @endif
-            <span>{{ $mode->minParticipants ? $mode->minParticipants.'+ pers.' : 'Solo' }}</span>
+            <span>{{ $formatParticipantsMobile($mode) }}</span>
         </div>
     </div>
 
     {{-- Footer desktop --}}
     <div class="mt-6 hidden items-center justify-between border-t-2 border-dashed border-line pt-3 text-xs text-subtle sm:flex">
-        <span>{{ $mode->minParticipants ? $mode->minParticipants.'+ personnes' : 'Solo' }}</span>
+        <span>{{ $formatParticipantsDesktop($mode) }}</span>
 
         @if($isAvailable)
         <span class="font-display text-[10px] text-primary">
