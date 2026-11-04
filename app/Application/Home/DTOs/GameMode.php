@@ -18,7 +18,9 @@ final readonly class GameMode
         public string $color,
         public string $shadow,
         public GameModeCategory $category,
-        public ?int $minParticipants = null,
+        public int|string|null $minParticipants = null,
+        public bool $needsPlus = false, //si plusieurs joueurs
+        public bool $isSolo = false,
 
         public ?string $metaTitle = null,
         public ?string $metaDescription = null,

@@ -19,6 +19,9 @@ enum GameModeType: string
     case ROCK_PAPER_SCISSORS = 'rock_paper_scissors';
     case TIC_TAC_TOE = 'tic_tac_toe';
     case DICE_ROLLER = 'dice_roller';
+    case SECRET_NUMBER = 'secret_number';
+    case STICKS_GAME = 'sticks_game';
+    case CURSED_BOX = 'cursed_box';
 
     /**
      * Transforme l'enum en objet de présentation (DTO).
@@ -36,6 +39,8 @@ enum GameModeType: string
                 shadow: 'shadow-indigo-500/10 hover:shadow-indigo-500/20',
                 category: GameModeCategory::WHEEL,
                 minParticipants: 2,
+                needsPlus: true,
+                isSolo: false,
                 metaTitle: 'Roue Classique — Tirage au Sort Instantané | NexaSpin',
                 metaDescription: 'Créez votre roue de la fortune en ligne : ajoutez vos participants, lancez le tirage et désignez un gagnant en un clic. 100% gratuit, sans inscription.',
             ),
@@ -49,6 +54,8 @@ enum GameModeType: string
                 shadow: 'shadow-rose-500/10 hover:shadow-rose-500/20',
                 category: GameModeCategory::WHEEL,
                 minParticipants: 5,
+                needsPlus: true,
+                isSolo: false,
                 metaTitle: 'Roue par Élimination — Tirage au Sort Progressif | NexaSpin',
                 metaDescription: 'Éliminez vos participants un par un jusqu’au dernier survivant. Idéal pour vos concours, jeux entre amis ou sélections progressives, gratuit et sans inscription.',
             ),
@@ -62,6 +69,8 @@ enum GameModeType: string
                 shadow: 'shadow-emerald-500/10 hover:shadow-emerald-500/20',
                 category: GameModeCategory::WHEEL,
                 minParticipants: 3,
+                needsPlus: true,
+                isSolo: false,
                 metaTitle: 'Tirage au Sort Pondéré — Chances Personnalisées | NexaSpin',
                 metaDescription: 'Donnez plus ou moins de chances à chaque participant grâce à un système de poids personnalisable. Le tirage au sort équitable et flexible, gratuit en ligne.',
             ),
@@ -75,6 +84,8 @@ enum GameModeType: string
                 shadow: 'shadow-amber-500/10 hover:shadow-amber-500/20',
                 category: GameModeCategory::OTHER,
                 minParticipants: null,
+                needsPlus: false,
+                isSolo: false,
                 metaTitle: 'Pile ou Face — Tirage Aléatoire Rapide | NexaSpin',
                 metaDescription: 'Lancez une pièce virtuelle et enchaînez les tirages "Pile ou Face" en un clic. Historique des résultats inclus, 100% gratuit et sans inscription.',
             ),
@@ -88,6 +99,8 @@ enum GameModeType: string
                 shadow: 'shadow-blue-500/10 hover:shadow-blue-500/20',
                 category: GameModeCategory::GAME,
                 minParticipants: null,
+                needsPlus: false,
+                isSolo: true,
                 metaTitle: 'Jeu du 421 en Ligne — Lancez les Dés | NexaSpin',
                 metaDescription: 'Jouez au mythique jeu de dés du 421 gratuitement en ligne. Lancez les dés, tentez de faire 4-2-1 et suivez vos meilleurs tirages sans inscription.',
             ),
@@ -100,7 +113,9 @@ enum GameModeType: string
                 color: 'from-orange-500 to-red-500',
                 shadow: 'shadow-orange-500/10 hover:shadow-orange-500/20',
                 category: GameModeCategory::GAME,
-                minParticipants: null,
+                minParticipants: 'solo ou 2',
+                needsPlus: false,
+                isSolo: true,
                 metaTitle: 'Pierre-Feuille-Ciseaux en Ligne | NexaSpin',
                 metaDescription: 'Jouez à pierre-feuille-ciseaux gratuitement contre un adversaire aléatoire. Historique des manches inclus, sans inscription.',
             ),
@@ -114,21 +129,56 @@ enum GameModeType: string
                 shadow: 'shadow-sky-500/10 hover:shadow-sky-500/20',
                 category: GameModeCategory::GAME,
                 minParticipants: 2,
+                needsPlus: false,
+                isSolo: true,
                 metaTitle: 'Morpion en Ligne à Deux Joueurs | NexaSpin',
                 metaDescription: 'Jouez au morpion à deux sur le même écran. Gratuit, sans inscription, avec historique des parties.',
             ),
-            self::DICE_ROLLER => new GameMode(
-                icon: '🎲',
-                title: 'Lanceur de dés',
-                description: 'Choisissez un type de dé façon JDR (d4 à d100) et le nombre à lancer d’un coup.',
-                route: route('dice.roller'),
+
+            self::SECRET_NUMBER => new GameMode(
+                icon: '🔐',
+                title: 'Nombre secret',
+                description: 'Devinez un nombre choisi par l’IA, affrontez-vous en duel ou défiez-vous à deux en versus.',
+                route: route('secret-number'),
                 available: true,
-                color: 'from-teal-500 to-emerald-600',
-                shadow: 'shadow-teal-500/10 hover:shadow-teal-500/20',
+                color: 'from-violet-500 to-indigo-600',
+                shadow: 'shadow-violet-500/10 hover:shadow-violet-500/20',
+                category: GameModeCategory::GAME,
+                minParticipants: 2,
+                needsPlus: true,
+                isSolo: true,
+                metaTitle: 'Nombre Secret — Jeu de Devinette | NexaSpin',
+                metaDescription: 'Jouez au nombre secret : contre l’IA, en duel jusqu’à 10 joueurs ou en versus à deux. Les indices « plus » et « moins » vous guident.',
+            ),
+            self::STICKS_GAME => new GameMode(
+                icon: '🥢',
+                title: 'Jeu des bâtonnets',
+                description: 'Ne prenez pas le dernier bâtonnet ! Affrontez l’IA ou un adversaire dans ce jeu de stratégie et de calcul.',
+                route: '',
+                available: false,
+                color: 'from-amber-600 to-orange-700',
+                shadow: 'shadow-amber-500/10 hover:shadow-amber-500/20',
+                category: GameModeCategory::GAME,
+                minParticipants: 'Solo ou 2',
+                needsPlus: false,
+                isSolo: true,
+                metaTitle: 'Jeu des Bâtonnets en Ligne — Stratégie & Réflexion | NexaSpin',
+                metaDescription: 'Jouez au célèbre jeu des bâtonnets (jeu de Nim) contre l’IA ou à deux. Retirez 1 à 3 bâtonnets et évitez de ramasser le dernier.',
+            ),
+            self::CURSED_BOX => new GameMode(
+                icon: '📦',
+                title: 'Boîte maudite',
+                description: 'Choisissez parmi plusieurs boîtes mystères : certaines cachent un trésor, d’autres la malédiction !',
+                route: '',
+                available: false,
+                color: 'from-purple-900 to-slate-900',
+                shadow: 'shadow-purple-500/10 hover:shadow-purple-500/20',
                 category: GameModeCategory::GAME,
                 minParticipants: null,
-                metaTitle: 'Lanceur de Dés en Ligne (d4 à d100) | NexaSpin',
-                metaDescription: 'Lancez des dés de jeu de rôle (d4, d6, d8, d10, d12, d20, d100) en choisissant le nombre de dés. Gratuit et sans inscription.',
+                needsPlus: false,
+                isSolo: true,
+                metaTitle: 'Boîte Maudite — Jeu de Hasard et Mystère | NexaSpin',
+                metaDescription: 'Tentez votre chance avec la boîte maudite ! Choisissez une boîte mystère, évitez le piège et repartez avec le magot dans ce jeu de suspense.',
             ),
             self::TEAMS => new GameMode(
                 icon: '👥',
@@ -140,7 +190,9 @@ enum GameModeType: string
                 shadow: 'shadow-cyan-500/10 hover:shadow-cyan-500/20',
                 category: GameModeCategory::OTHER,
                 minParticipants: 4,
-                metaTitle: 'Tirage par Équipes — Répartition Aléatoire | NexaSpin',
+                needsPlus: true,
+                isSolo: false,
+                metaTitle: 'Tirage au Sort — Répartition Aléatoire | NexaSpin',
                 metaDescription: 'Répartissez vos participants en équipes aléatoires et équilibrées en un clic. Choisissez le nombre d’équipes, gratuit et sans inscription.',
             ),
             self::TOMBOLA => new GameMode(
@@ -153,8 +205,10 @@ enum GameModeType: string
                 shadow: 'shadow-fuchsia-500/10 hover:shadow-fuchsia-500/20',
                 category: GameModeCategory::OTHER,
                 minParticipants: 3,
+                needsPlus: true,
+                isSolo: false,
                 metaTitle: 'Tombola en Ligne — Tirage de Plusieurs Gagnants | NexaSpin',
-                metaDescription: 'Tirez me plusieurs gagnants d’un coup parmi une liste de participants pondérés : 1er lot, 2e lot, 3e lot... Gratuit et sans inscription.',
+                metaDescription: 'Tirez plusieurs gagnants d’un coup parmi une liste de participants pondérés : 1er lot, 2e lot, 3e lot... Gratuit et sans inscription.',
             ),
             self::BRACKETJV => new GameMode(
                 icon: '🛡️',
@@ -166,8 +220,25 @@ enum GameModeType: string
                 shadow: 'shadow-fuchsia-500/10 hover:shadow-fuchsia-500/20',
                 category: GameModeCategory::TOOLS,
                 minParticipants: 4,
+                needsPlus: true,
+                isSolo: false,
                 metaTitle: 'Tournoi Double Élimination — Upper & Lower Bracket | NexaSpin',
                 metaDescription: 'Générez un tournoi avec tableau principal et repêchage (Upper et Lower Bracket). Deux chances pour chaque joueur d’atteindre la finale.',
+            ),
+            self::DICE_ROLLER => new GameMode(
+                icon: '🎲',
+                title: 'Lanceur de dés',
+                description: 'Choisissez un type de dé façon JDR (d4 à d100) et le nombre à lancer d’un coup.',
+                route: route('dice.roller'),
+                available: true,
+                color: 'from-teal-500 to-emerald-600',
+                shadow: 'shadow-teal-500/10 hover:shadow-teal-500/20',
+                category: GameModeCategory::TOOLS,
+                minParticipants: null,
+                needsPlus: false,
+                isSolo: true,
+                metaTitle: 'Lanceur de Dés en Ligne (d4 à d100) | NexaSpin',
+                metaDescription: 'Lancez des dés de jeu de rôle (d4, d6, d8, d10, d12, d20, d100) en choisissant le nombre de dés. Gratuit et sans inscription.',
             ),
             self::POOL => new GameMode(
                 icon: '🔄',
@@ -179,6 +250,8 @@ enum GameModeType: string
                 shadow: 'shadow-cyan-500/10 hover:shadow-cyan-500/20',
                 category: GameModeCategory::TOOLS,
                 minParticipants: 4,
+                needsPlus: true,
+                isSolo: false,
                 metaTitle: 'Phase de Poules — Round-Robin Équilibré | NexaSpin',
                 metaDescription: 'Générez une phase de poules équilibrée à partir de vos participants : chacun affronte tous les membres de sa poule, sans aucun match vide.',
             ),
@@ -192,9 +265,12 @@ enum GameModeType: string
                 shadow: 'shadow-red-500/10 hover:shadow-red-500/20',
                 category: GameModeCategory::GAME,
                 minParticipants: null,
+                needsPlus: false,
+                isSolo: true,
                 metaTitle: 'Roulette Numérique Américaine — Jouez avec une Cagnotte | NexaSpin',
                 metaDescription: 'Jouez à la roulette américaine en ligne : misez sur un numéro, une couleur, une douzaine ou une colonne et suivez votre cagnotte. Gratuit et sans inscription.',
             ),
+
         };
     }
 
@@ -206,7 +282,7 @@ enum GameModeType: string
     public static function all(): array
     {
         return array_map(
-            fn (self $mode) => $mode->toDto(),
+            fn(self $mode) => $mode->toDto(),
             self::cases()
         );
     }
@@ -219,15 +295,15 @@ enum GameModeType: string
     public static function grouped(): array
     {
         $modesByCategory = collect(self::all())->groupBy(
-            fn (GameMode $mode) => $mode->category->value
+            fn(GameMode $mode) => $mode->category->value
         );
 
         return collect(GameModeCategory::cases())
-            ->map(fn (GameModeCategory $category) => [
+            ->map(fn(GameModeCategory $category) => [
                 'category' => $category,
                 'modes' => $modesByCategory->get($category->value, collect())->all(),
             ])
-            ->filter(fn (array $group) => $group['modes'] !== [])
+            ->filter(fn(array $group) => $group['modes'] !== [])
             ->values()
             ->all();
     }
