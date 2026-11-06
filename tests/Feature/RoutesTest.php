@@ -19,4 +19,5 @@ it('loads every game mode page successfully', function (string $routeName) {
     'history',
     'draw.bracket',
     'draw.pools',
+    'sticks',
 ]);
