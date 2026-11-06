@@ -16,6 +16,7 @@ use App\Livewire\Tombola\TombolaPage;
 use App\Livewire\Tournament\Bracket\DoubleEliminationBracketPage;
 use App\Livewire\Tournament\Pool\PoolStagePage;
 use App\Livewire\SecretNumber\SecretNumberPage;
+use App\Livewire\Sticks\SticksPage;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
@@ -36,4 +37,5 @@ Route::middleware('throttle:120,1')->group(function (): void {
     Route::get('/morpion', TicTacToePage::class)->name('tictactoe');
     Route::get('/lanceur-de-des', DiceRollerPage::class)->name('dice.roller');
     Route::get('secret-number', SecretNumberPage::class)->name('secret-number');
+    Route::get('/jeu-des-batonnets', SticksPage::class)->name('sticks');
 });

@@ -20,7 +20,7 @@ enum GameModeType: string
     case TIC_TAC_TOE = 'tic_tac_toe';
     case DICE_ROLLER = 'dice_roller';
     case SECRET_NUMBER = 'secret_number';
-    case STICKS_GAME = 'sticks_game';
+    case STICKS = 'sticks';
     case CURSED_BOX = 'cursed_box';
 
     /**
@@ -150,20 +150,20 @@ enum GameModeType: string
                 metaTitle: 'Nombre Secret — Jeu de Devinette | NexaSpin',
                 metaDescription: 'Jouez au nombre secret : contre l’IA, en duel jusqu’à 10 joueurs ou en versus à deux. Les indices « plus » et « moins » vous guident.',
             ),
-            self::STICKS_GAME => new GameMode(
-                icon: '🥢',
+            self::STICKS => new GameMode(
+                icon: '🪵',
                 title: 'Jeu des bâtonnets',
-                description: 'Ne prenez pas le dernier bâtonnet ! Affrontez l’IA ou un adversaire dans ce jeu de stratégie et de calcul.',
-                route: '',
-                available: false,
+                description: 'Retirez 1, 2 ou 3 bâtonnets à tour de rôle : le dernier bâtonnet fait perdre… ou gagner, au choix. Contre l’IA ou en duel.',
+                route: route('sticks'),
+                available: true,
                 color: 'from-amber-600 to-orange-700',
                 shadow: 'shadow-amber-500/10 hover:shadow-amber-500/20',
                 category: GameModeCategory::GAME,
                 minParticipants: 'Solo ou 2',
                 needsPlus: false,
                 isSolo: true,
-                metaTitle: 'Jeu des Bâtonnets en Ligne — Stratégie & Réflexion | NexaSpin',
-                metaDescription: 'Jouez au célèbre jeu des bâtonnets (jeu de Nim) contre l’IA ou à deux. Retirez 1 à 3 bâtonnets et évitez de ramasser le dernier.',
+                metaTitle: 'Jeu des Bâtonnets en Ligne — Ne Prenez pas le Dernier | NexaSpin',
+                metaDescription: 'Jouez au jeu des bâtonnets : retirez 1 à 3 bâtonnets à tour de rôle, le dernier perd (ou gagne, en variante). Contre l’IA ou en duel, gratuit et sans inscription.',
             ),
             self::CURSED_BOX => new GameMode(
                 icon: '📦',

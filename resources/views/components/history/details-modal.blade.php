@@ -54,6 +54,13 @@
                                 <p class="truncate font-display text-2xl leading-tight text-ink" x-text="(openEntry.score ? openEntry.score.x : 0) + ' - ' + (openEntry.score ? openEntry.score.o : 0)"></p>
                             </div>
                         </template>
+
+                        <template x-if="openEntry.mode === 'sticks'">
+                            <div class="mt-1 flex items-center gap-2">
+                                <span class="text-2xl leading-none">🪵</span>
+                                <p class="truncate font-display text-2xl leading-tight text-ink" x-text="(openEntry.score ? openEntry.score.p1 : 0) + ' - ' + (openEntry.score ? openEntry.score.p2 : 0)"></p>
+                            </div>
+                        </template>
                     </div>
 
                     <button type="button" x-on:click="openEntry = null" aria-label="Fermer" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-ink bg-panel font-mono text-xs text-subtle transition hover:bg-ink hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-info focus-visible:ring-offset-2">
@@ -205,6 +212,57 @@
                         </div>
                     </template>
 
+                    {{-- JEU DES BÂTONNETS : score de la session + détail de chaque partie --}}
+                    <template x-if="openEntry.mode === 'sticks'">
+                        <div class="space-y-4">
+                            <div class="rounded-xl border-2 border-ink bg-wash p-3.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                                <div class="relative flex min-h-[28px] items-center justify-center">
+                                    <div class="font-mono text-sm text-ink">
+                                        <span class="font-bold" x-text="openEntry.p1_label || 'Joueur 1'"></span>
+                                        <span class="px-1 text-xs text-subtle">vs</span>
+                                        <span class="font-bold" x-text="openEntry.p2_label || 'Joueur 2'"></span>
+                                    </div>
+
+                                    <template x-if="openEntry.vs_ai && openEntry.difficulty_label">
+                                        <span class="absolute right-0 rounded-md border-2 border-ink bg-wash px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-ink" x-text="openEntry.difficulty_label"></span>
+                                    </template>
+                                </div>
+
+                                <div class="mt-3.5 space-y-2 font-mono text-xs">
+                                    <div class="flex items-center justify-between rounded-lg border border-ink/20 bg-black/5 px-2.5 py-1">
+                                        <span class="font-medium text-subtle">Parties jouées</span>
+                                        <span class="rounded border border-ink bg-panel px-1.5 py-0.5 font-bold text-ink" x-text="(openEntry.games || []).length"></span>
+                                    </div>
+
+                                    <div class="flex items-center justify-between rounded-lg border border-ink/20 bg-black/5 px-2.5 py-1">
+                                        <span class="font-medium text-subtle">Score</span>
+                                        <div class="flex items-center gap-1.5 font-bold">
+                                            <span class="rounded border border-ink bg-emerald-300 px-1.5 py-0.5 text-ink" x-text="(openEntry.score?.p1 || 0) + ' · ' + (openEntry.p1_label || 'J1')"></span>
+                                            <span class="rounded border border-ink bg-rose-300 px-1.5 py-0.5 text-ink" x-text="(openEntry.score?.p2 || 0) + ' · ' + (openEntry.p2_label || 'J2')"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="space-y-2">
+                                <p class="font-mono text-[10px] font-bold uppercase tracking-widest text-subtle">Détail des parties</p>
+
+                                <div class="max-h-56 space-y-2 overflow-y-auto pr-1">
+                                    <template x-for="(game, index) in (openEntry.games || [])" :key="index">
+                                        <div class="flex items-center justify-between gap-2 rounded-xl border-2 border-ink bg-panel p-2.5 font-mono text-xs shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                                            <div class="flex items-center gap-2">
+                                                <span class="shrink-0 rounded bg-black/5 px-1.5 py-0.5 font-bold text-subtle" x-text="'#' + (index + 1)"></span>
+                                                <span class="text-subtle" x-text="game.stick_count + ' bâtonnets · ' + game.moves_count + ' coups'"></span>
+                                                <span x-show="game.variant === 'last_wins'" x-cloak class="rounded bg-secondary/60 px-1.5 py-0.5 text-[9px] font-bold uppercase text-ink">Dernier gagne</span>
+                                            </div>
+
+                                            <span class="shrink-0 rounded-md border border-ink px-2 py-0.5 font-bold" :class="game.winner === 1 ? 'bg-emerald-300 text-ink' : 'bg-rose-300 text-ink'" x-text="'🏆 ' + (game.winner === 1 ? (openEntry.p1_label || 'Joueur 1') : (openEntry.p2_label || 'Joueur 2'))"></span>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
 
                     {{-- TIC TAC TOE (MORPION) --}}
                     <template x-if="openEntry.mode === 'tic_tac_toe'">

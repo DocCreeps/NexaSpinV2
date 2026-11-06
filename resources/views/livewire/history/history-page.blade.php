@@ -88,7 +88,7 @@
         @if(count($this->entries))
         <div class="custom-scrollbar space-y-2.5">
             @foreach($this->entries as $entry)
-            @php $hasDetails = in_array($entry['mode'], ['classic', 'weighted', 'elimination', 'tombola', 'number_roulette', 'teams', 'rock_paper_scissors', 'tic_tac_toe'], true); @endphp
+            @php $hasDetails = in_array($entry['mode'], ['classic', 'weighted', 'elimination', 'tombola', 'number_roulette', 'teams', 'rock_paper_scissors', 'tic_tac_toe', 'sticks'], true); @endphp
             <div class="card-hard rounded-2xl border-2 border-ink bg-panel px-4 py-3.5 sm:px-5">
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <span class="rounded-md border-2 border-ink bg-wash px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-widest text-subtle">
@@ -291,6 +291,29 @@
                             </span>
 
                             <span class="font-mono text-[11px] text-faint">
+                                {{ $entry['games_count'] ?? 0 }} partie{{ ($entry['games_count'] ?? 0) > 1 ? 's' : '' }}
+                            </span>
+                        </div>
+                        @break
+
+                        @case('sticks')
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="text-lg leading-none">🪵</span>
+                            <span class="font-mono text-sm text-ink">
+                                <span class="font-bold">{{ $entry['p1_label'] ?? 'Joueur 1' }}</span>
+                                <span class="px-1 text-xs text-subtle">vs</span>
+                                <span class="font-bold">{{ $entry['p2_label'] ?? 'Joueur 2' }}</span>
+                            </span>
+
+                            @if(($entry['vs_ai'] ?? false) && ! empty($entry['difficulty_label']))
+                            <span class="rounded bg-line px-1.5 py-0.5 font-mono text-[9px] uppercase text-muted">{{ $entry['difficulty_label'] }}</span>
+                            @endif
+
+                            <span class="font-display text-base tracking-wide">
+                                {{ $entry['score']['p1'] ?? 0 }} – {{ $entry['score']['p2'] ?? 0 }}
+                            </span>
+
+                            <span class="font-mono text-[11px] text-subtle">
                                 {{ $entry['games_count'] ?? 0 }} partie{{ ($entry['games_count'] ?? 0) > 1 ? 's' : '' }}
                             </span>
                         </div>
