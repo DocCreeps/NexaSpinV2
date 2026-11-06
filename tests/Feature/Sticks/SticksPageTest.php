@@ -414,7 +414,7 @@ it('goes back to the settings, without swapping the starter, with the other-sett
         ->and($component->get('moves'))->toBe([]);
 });
 
-it('starts a fresh score when switching the opponent type', function () {
+it('keeps a separate score and history for each opponent type', function () {
     $component = Livewire::test(SticksPage::class)
         ->call('setOpponentType', 'local')
         ->call('startGame');
@@ -425,18 +425,59 @@ it('starts a fresh score when switching the opponent type', function () {
 
     $component->call('revealResult');
 
+    $localSession = $component->get('sessionId');
+
     expect($component->instance()->score())->toBe(['p1' => 0, 'p2' => 1]);
 
-    $component->call('restart');
+    // Même type d'adversaire : rien ne change.
+    $component->call('restart')->call('setOpponentType', 'local');
+    expect($component->instance()->score())->toBe(['p1' => 0, 'p2' => 1])
+        ->and($component->get('sessionId'))->toBe($localSession);
 
-    // Même type d'adversaire : le score est conservé.
-    $component->call('setOpponentType', 'local');
-    expect($component->instance()->score())->toBe(['p1' => 0, 'p2' => 1]);
-
-    // Autre type d'adversaire : le score repart de zéro.
+    // Contre l'IA : série vierge, dans une autre session d'historique.
     $component->call('setOpponentType', 'ai');
     expect($component->instance()->score())->toBe(['p1' => 0, 'p2' => 0])
-        ->and($component->get('history'))->toBe([]);
+        ->and($component->get('history'))->toBe([])
+        ->and($component->get('sessionId'))->not->toBe($localSession);
+
+    $aiSession = $component->get('sessionId');
+
+    // Retour au duel local : la série locale est retrouvée telle quelle.
+    $component->call('setOpponentType', 'local');
+    expect($component->instance()->score())->toBe(['p1' => 0, 'p2' => 1])
+        ->and($component->get('history'))->toHaveCount(1)
+        ->and($component->get('sessionId'))->toBe($localSession);
+
+    // Et la série contre l'IA, si on y revient, garde la même session.
+    $component->call('setOpponentType', 'ai');
+    expect($component->get('sessionId'))->toBe($aiSession);
+});
+
+it('records games of each opponent type in its own history session', function () {
+    $component = Livewire::test(SticksPage::class)
+        ->call('setOpponentType', 'local')
+        ->call('startGame');
+
+    while (! $component->instance()->game->isOver()) {
+        $component->call('take', [$component->instance()->game->remainingSticks()[0]]);
+    }
+
+    $component->call('revealResult')->call('restart');
+    $component->call('setOpponentType', 'ai')->call('startGame');
+
+    while (! $component->instance()->game->isOver()) {
+        $component->instance()->aiPending()
+            ? $component->call('playAiTurn')
+            : $component->call('take', [$component->instance()->game->remainingSticks()[0]]);
+    }
+
+    $component->call('revealResult');
+
+    $sessions = app(HistoryStore::class)->all(GameModeType::STICKS);
+
+    expect($sessions)->toHaveCount(2)
+        ->and(collect($sessions)->pluck('opponent_type')->sort()->values()->all())->toBe(['ai', 'local'])
+        ->and(collect($sessions)->every(fn (array $session) => count($session['games']) === 1))->toBeTrue();
 });
 
 it('undoes the last move in a local duel only', function () {

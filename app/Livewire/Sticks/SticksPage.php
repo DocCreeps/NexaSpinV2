@@ -83,9 +83,18 @@ class SticksPage extends Component
 
     public ?string $error = null;
 
-    /** @var array<int, array<string, mixed>> Parties de la session en cours. */
+    /** @var array<int, array<string, mixed>> Parties de la série en cours (mode de versus actuel). */
     #[Locked]
     public array $history = [];
+
+    /**
+     * Série (parties + identifiant de session) de l'autre mode de versus, remise de côté
+     * quand on change de mode et retrouvée quand on y revient.
+     *
+     * @var array<string, array{history: array<int, array<string, mixed>>, sessionId: string}>
+     */
+    #[Locked]
+    public array $stash = [];
 
     public function mount(): void
     {
@@ -104,11 +113,17 @@ class SticksPage extends Component
             return;
         }
 
-        $this->opponentType = $opponent->value;
+        // Chaque mode de versus a sa propre série (score + historique) : on met celle du mode
+        // quitté de côté et on retrouve celle du mode choisi (ou on en ouvre une nouvelle).
+        $this->stash[$this->opponentType] = ['history' => $this->history, 'sessionId' => $this->sessionId];
 
-        // Changer de mode de versus repart d'un score vierge : nouvelle série de parties.
-        $this->history = [];
-        $this->sessionId = (string) Str::uuid();
+        $next = $this->stash[$opponent->value] ?? ['history' => [], 'sessionId' => (string) Str::uuid()];
+
+        $this->opponentType = $opponent->value;
+        $this->history = $next['history'];
+        $this->sessionId = $next['sessionId'];
+
+        unset($this->stash[$opponent->value]);
     }
 
     public function setDifficulty(string $difficulty): void
@@ -400,6 +415,7 @@ class SticksPage extends Component
     public function clearHistory(): void
     {
         $this->history = [];
+        $this->stash = [];
         $this->sessionId = (string) Str::uuid();
 
         app(HistoryStore::class)->clear(GameModeType::STICKS);
